@@ -102,7 +102,8 @@ class AdminPanelProvider extends PanelProvider
     private function getPlugins(): array
     {
         $plugins = [
-            FilamentBackgroundsPlugin::make(),
+            FilamentBackgroundsPlugin::make()
+            ->showAttribution(false),
             ThemesPlugin::make(),
             FilamentShieldPlugin::make(),
             ApiServicePlugin::make(),
