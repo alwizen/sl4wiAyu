@@ -25,7 +25,8 @@ class DatabaseSeeder extends Seeder
                 BookSeeder::class,
                 WarehouseCategorySeeder::class,
 //                NutrientSeeder::class,
-                TargetGroupSeeder::class
+                TargetGroupSeeder::class,
+                WarehouseItemSeeder::class
             ]
         );
     }

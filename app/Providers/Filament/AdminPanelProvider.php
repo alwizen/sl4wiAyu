@@ -28,6 +28,7 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Rupadana\ApiService\ApiServicePlugin;
+use Swis\Filament\Backgrounds\FilamentBackgroundsPlugin;
 
 use Laravel\Socialite\Contracts\User as SocialiteUserContract;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -101,6 +102,7 @@ class AdminPanelProvider extends PanelProvider
     private function getPlugins(): array
     {
         $plugins = [
+            FilamentBackgroundsPlugin::make(),
             ThemesPlugin::make(),
             FilamentShieldPlugin::make(),
             ApiServicePlugin::make(),
