@@ -25,49 +25,47 @@ class WarehouseItemResource extends Resource
 
     protected static ?string $navigationGroup = 'Warehouse';
 
-    
-public static function form(Form $form): Form
-{
-    return $form->schema([
-        Section::make('Informasi Barang')
-            ->description('Detail informasi barang')
-            ->columns(2)
-            ->schema([
-                Select::make('warehouse_category_id')
-                    ->relationship('category', 'name')
-                    ->label('Kategori')
-                    ->required()
-                    ->columnSpan(1)
-                    ->createOptionForm([
-                        TextInput::make('name')->label('Nama Kategori')->required(),
-                    ]),
 
-                TextInput::make('name')
-                    ->label('Nama Barang')
-                    ->required()
-                    ->columnSpan(1),
-            ]),
+    public static function form(Form $form): Form
+    {
+        return $form->schema([
+            Section::make('Informasi Barang')
+                ->description('Detail informasi barang')
+                ->columns(2)
+                ->schema([
+                    Select::make('warehouse_category_id')
+                        ->relationship('category', 'name')
+                        ->label('Kategori')
+                        ->required()
+                        ->columnSpan(1)
+                        ->createOptionForm([
+                            TextInput::make('name')->label('Nama Kategori')->required(),
+                        ]),
 
-        Section::make('Detail Stok')
-            ->description('Informasi satuan dan stok barang')
-            ->columns(2)
-            ->schema([
-                TextInput::make('unit')
-                    ->label('Satuan (kg, liter, pcs)')
-                    ->required()
-                    ->columnSpan(1),
+                    TextInput::make('name')
+                        ->label('Nama Barang')
+                        ->required()
+                        ->columnSpan(1),
+                ]),
 
-                TextInput::make('stock')
-                    ->label('Stok')
-                    ->numeric()
-                    ->default(0)
-                    ->disabled() // input hanya dari proses lain
-                    ->columnSpan(1),
-            ]),
-    ]);
-}
+            Section::make('Detail Stok')
+                ->description('Informasi satuan dan stok barang')
+                ->columns(2)
+                ->schema([
+                    TextInput::make('unit')
+                        ->label('Satuan (kg, liter, pcs)')
+                        ->required()
+                        ->columnSpan(1),
 
-
+                    TextInput::make('stock')
+                        ->label('Stok')
+                        ->numeric()
+                        ->default(0)
+                        ->disabled() // input hanya dari proses lain
+                        ->columnSpan(1),
+                ]),
+        ]);
+    }
 
     public static function table(Table $table): Table
     {
@@ -89,18 +87,23 @@ public static function form(Form $form): Form
                 TextColumn::make('stock')
                     ->label('Stok')
                     ->numeric()
-                    ->formatStateUsing(fn ($state, $record) => number_format($state, 0, ',', '.') . ' ' . $record->unit)
+                    ->formatStateUsing(fn($state, $record) => number_format($state, 0, ',', '.') . ' ' . $record->unit)
                     ->sortable(),
 
-                TextColumn::make('created_at')
-                    ->label('Dibuat')
-                    ->dateTime('d M Y')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('updated_at')
+                    ->label('Stok Diperbarui pada')
+                    //                    ->dateTime('d M Y')
+                    ->sortable(),
+                //                    ->toggleable(isToggledHiddenByDefault: true)
             ])
             ->defaultSort('name')
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('warehouse_category_id')
+                    ->options([
+                        '1' => 'Kering',
+                        '2' => 'Basah',
+                        '3' => 'Bumbu',
+                    ])
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

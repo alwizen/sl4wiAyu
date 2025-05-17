@@ -136,17 +136,17 @@ class NutritionPlanResource extends Resource
                                     ->numeric()
                                     ->required(),
                                 
-                                TextInput::make('vitamin')
-                                    ->label('Vitamin')
-                                    ->numeric()
-                                    ->required(),
+                                // TextInput::make('vitamin')
+                                //     ->label('Vitamin')
+                                //     ->numeric()
+                                //     ->required(),
                                 
                                 TextInput::make('mineral')
                                     ->label('Mineral')
                                     ->numeric()
                                     ->required(),
                             ])
-                            ->columns(8),
+                            ->columns(7),
                     ]),
             ]);
     }

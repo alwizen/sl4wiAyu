@@ -90,8 +90,25 @@ class DailyMenuResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('menu_date')
                     ->date()
-                    ->sortable(),
-//                Tables\Columns\TextColumn::make('menu.menu_name'),
+                    ->searchable()
+                    ->sortable()
+                    ->label('Tanggal Menu'),
+                Tables\Columns\TextColumn::make('dailyMenuItems.menu.menu_name')
+                    ->label('Menu')
+                    ->searchable()
+                    ->listWithLineBreaks(),
+                Tables\Columns\TextColumn::make('dailyMenuItems.targetGroup.name')
+                    ->label('Target Group')
+                    ->listWithLineBreaks(),
+                Tables\Columns\TextColumn::make('dailyMenuItems.target_quantity')
+                    ->label('Jumlah Target')
+                    ->numeric(
+                        decimalPlaces: 0,
+                        decimalSeparator: ',',
+                        thousandsSeparator: '.'
+                    )
+                    ->suffix(' porsi')
+                    ->listWithLineBreaks(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -102,13 +119,11 @@ class DailyMenuResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
-
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

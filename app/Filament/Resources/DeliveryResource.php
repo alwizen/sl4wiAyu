@@ -3,6 +3,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\DeliveryResource\Pages;
 use App\Filament\Resources\DeliveryResource\RelationManagers;
 use App\Models\Delivery;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -12,8 +13,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use Filament\Notifications\Notification;
 
-class DeliveryResource extends Resource
+class DeliveryResource extends Resource implements HasShieldPermissions
 {
     protected static ?string $model = Delivery::class;
 
@@ -42,7 +44,7 @@ class DeliveryResource extends Resource
                     ->relationship('recipient', 'name')
                     ->required(),
                 Forms\Components\TextInput::make('qty')
-                ->prefix('Box'),
+                ->suffix('Box'),
                 Forms\Components\Select::make('status')
                 ->label('Status Pengiriman')
                 ->options([
@@ -79,10 +81,6 @@ class DeliveryResource extends Resource
                         default => 'gray',
                     })
                     ->label('Status'),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable(),
@@ -93,6 +91,34 @@ class DeliveryResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
+                Tables\Actions\Action::make('setShipped')
+                    ->label('Dalam Perjalanan')
+                    ->icon('heroicon-o-truck')
+                    ->color('warning')
+                    ->visible(fn (Delivery $record) => $record->status === 'dikemas')
+                    ->action(function (Delivery $record) {
+                        $record->status = 'dalam_perjalanan';
+                        $record->save();
+                        
+                        Notification::make()
+                            ->title('Status berhasil diperbarui ke Dalam Perjalanan')
+                            ->success()
+                            ->send();
+                    }),
+                Tables\Actions\Action::make('setDelivered')
+                    ->label('Terkirim')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->visible(fn (Delivery $record) => $record->status === 'dalam_perjalanan')
+                    ->action(function (Delivery $record) {
+                        $record->status = 'terkirim';
+                        $record->save();
+                        
+                        Notification::make()
+                            ->title('Status berhasil diperbarui ke Terkirim')
+                            ->success()
+                            ->send();
+                    }),
                 Tables\Actions\Action::make('kirimWhatsApp')
                     ->label('Kirim WhatsApp')
                     ->icon('heroicon-o-chat-bubble-left-ellipsis')
@@ -139,6 +165,21 @@ class DeliveryResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+            'setShipped',
+            'setDelivered', 
+            'kirimWhatsApp',
+        ];
     }
 
     public static function getPages(): array

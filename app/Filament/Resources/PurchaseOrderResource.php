@@ -26,7 +26,7 @@ use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Tables\Columns\BadgeColumn;
 
-class PurchaseOrderResource extends Resource
+class PurchaseOrderResource extends Resource implements HasShieldPermissions
 // implements HasShieldPermissions
 {
     protected static ?string $model = PurchaseOrder::class;
@@ -104,6 +104,7 @@ class PurchaseOrderResource extends Resource
 
                                 TextInput::make('unit_price')
                                     ->label('Harga Satuan')
+                                    ->default(0)
                                     ->required()
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, callable $get, callable $set) {
@@ -143,19 +144,6 @@ class PurchaseOrderResource extends Resource
         $set('total_amount', $total);
     }
 
-    // public static function getPermissionPrefixes(): array
-    // {
-    //     return [
-    //         'view',
-    //         'view_any',
-    //         'create',
-    //         'update',
-    //         'delete',
-    //         'delete_any',
-    //         'publish',
-    //         'approve'
-    //     ];
-    // }
 
     public static function table(Table $table): Table
     {
@@ -170,19 +158,19 @@ class PurchaseOrderResource extends Resource
                     ->date('d-m-Y'),
                 Tables\Columns\TextColumn::make('supplier.name')->label('Supplier'),
                 Tables\Columns\TextColumn::make('status')
-                ->label('Status')
-                ->badge()
-                ->color(function ($state) {
-                    return match ($state) {
-                        'Pending' => 'warning',
-                        'Ordered' => 'primary',
-                        'Approved' => 'success',
-                        'Rejected' => 'danger',
-                        'Paid' => 'info',
-                        default => 'secondary',
-                    };
-                })
-                ->sortable(),
+                    ->label('Status')
+                    ->badge()
+                    ->color(function ($state) {
+                        return match ($state) {
+                            'Pending' => 'warning',
+                            'Ordered' => 'primary',
+                            'Approved' => 'success',
+                            'Rejected' => 'danger',
+                            'Paid' => 'info',
+                            default => 'secondary',
+                        };
+                    })
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('total_amount')
                     ->label('Total Amount')
                     ->money('IDR', locale: 'id_ID') // Format ke rupiah
@@ -197,7 +185,11 @@ class PurchaseOrderResource extends Resource
                     ->label('Approve')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
-                    ->visible(fn($record) => $record->status === 'Pending') // hanya muncul jika pending
+                    ->visible(
+                        fn($record) =>
+                        $record->status === 'Pending' &&
+                            auth()->user()?->can('approve_purchase::order')
+                    )
                     ->requiresConfirmation()
                     ->action(function ($record) {
                         $record->update(['status' => 'Approved']);
@@ -236,8 +228,9 @@ class PurchaseOrderResource extends Resource
                     ])
                     ->slideOver(),
 
-                Tables\Actions\EditAction::make()
-                    ->visible(fn(PurchaseOrder $record) => $record->status === 'Pending'),
+                Tables\Actions\EditAction::make(),
+                    // ->visible(fn(PurchaseOrder $record) => $record->status === 'Pending'),
+                    
                 Tables\Actions\Action::make('Send to WhatsApp')
                     ->label('Kirim ke WA')
                     ->tooltip('Kirim Data Pesanan ke Supplier')
@@ -247,24 +240,24 @@ class PurchaseOrderResource extends Resource
                     ->action(function (PurchaseOrder $record) {
                         $record->update(['status' => 'Ordered']);
                     })
-                    ->url(function(PurchaseOrder $record) {
+                    ->url(function (PurchaseOrder $record) {
                         // Ambil nomor telepon supplier
                         $phoneNumber = preg_replace('/[^0-9]/', '', $record->supplier->phone);
-                        
+
                         // Format nomor telepon ke format internasional Indonesia
                         if (strlen($phoneNumber) > 0) {
                             if (substr($phoneNumber, 0, 1) === '0') {
                                 // Jika dimulai dengan 0, ganti dengan 62
                                 $phoneNumber = '62' . substr($phoneNumber, 1);
-                            } 
+                            }
                             // Jika nomor tidak dimulai dengan '62', tambahkan '62'
                             elseif (substr($phoneNumber, 0, 2) !== '62') {
                                 $phoneNumber = '62' . $phoneNumber;
                             }
                         }
-                        
+
                         // Format pesan WhatsApp
-                        $message = "**Purchase Order **". "\n". $record->order_number . "\n" .
+                        $message = "**Purchase Order **" . "\n" . $record->order_number . "\n" .
                             "Tanggal: " . \Carbon\Carbon::parse($record->order_date)->format('d-m-Y') . "\n" .
                             "Supplier: " . $record->supplier->name . "\n\n" .
                             "📦 Daftar Barang:\n" .
@@ -273,14 +266,20 @@ class PurchaseOrderResource extends Resource
                                 "- " . $item->item->name . ": " . $item->quantity . " " . $item->item->unit . " x Rp " . number_format($item->unit_price, 0, ',', '.')
                             )->implode("\n") .
                             "\n\nTotal: Rp " . number_format($record->total_amount, 0, ',', '.');
-                            
+
                         // Encode pesan untuk URL WhatsApp
                         $encodedMessage = urlencode($message);
-                        
+
                         return "https://wa.me/{$phoneNumber}?text={$encodedMessage}";
                     })
                     ->openUrlInNewTab()
-                    ->visible(fn(PurchaseOrder $record) => $record->status === 'Approved'),
+                    ->visible(
+                        fn($record) =>
+                        $record->status === 'Approved' &&
+                            auth()->user()?->can('send_whatsapp_purchase::order')
+                    ),
+                    // ->visible(fn(PurchaseOrder $record) => $record->status === 'Approved'),
+
                 Tables\Actions\Action::make('mark_ordered')
                     ->label('Tandai Sudah kirim Wa')
                     ->tooltip('Tandai Sudah Dikirim')
@@ -288,11 +287,31 @@ class PurchaseOrderResource extends Resource
                     ->color('warning')
                     ->requiresConfirmation()
                     ->action(fn(PurchaseOrder $record) => $record->update(['status' => 'Ordered']))
-                    ->visible(fn($record) => $record->status === 'Approved'), // hanya muncul jika status masih 'Approved'
-
+                    // ->visible(fn($record) => $record->status === 'Approved'), 
+                    ->visible(
+                        fn($record) =>
+                        $record->status === 'Approved' &&
+                            auth()->user()?->can('mark_ordered_purchase::order')
+                    ),
                 Tables\Actions\DeleteAction::make()
                     ->visible(fn(PurchaseOrder $record) => $record->status === 'Pending'),
             ]);
+    }
+
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+            'publish',
+            'approve', 
+            'send_whatsapp', 
+            'mark_ordered'
+        ];
     }
 
 

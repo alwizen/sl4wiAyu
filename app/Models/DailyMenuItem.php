@@ -17,4 +17,9 @@ class DailyMenuItem extends Model
     {
         return $this->belongsTo(TargetGroup::class);
     }
+
+    public function dailyMenu():BelongsTo
+    {
+        return $this->belongsTo(DailyMenu::class);
+    }
 }

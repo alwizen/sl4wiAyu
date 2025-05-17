@@ -78,6 +78,9 @@ class StockReceivingResource extends Resource
                 TextColumn::make('stockReceivingItems.received_quantity')
                     ->label('Jumlah Diterima')
                     ->listWithLineBreaks(),
+                TextColumn::make('updated_at')
+                    ->label('Diperbarui')
+                    ->listWithLineBreaks(),
             ])
             ->filters([
                 //

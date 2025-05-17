@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductionReportResource\Pages;
-use App\Filament\Resources\ProductionReportResource\RelationManagers;
 use App\Models\DailyMenuItem;
 use App\Models\ProductionReport;
 use Filament\Forms;
@@ -16,8 +15,6 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Collection;
 
 class ProductionReportResource extends Resource
@@ -28,99 +25,162 @@ class ProductionReportResource extends Resource
 
     protected static ?string $navigationGroup = 'Produksi & Pengiriman';
 
-
     public static function form(Form $form): Form
     {
         return $form->schema([
-            DatePicker::make('date')
-                ->label('Tanggal')
-                ->required()
-                ->reactive()
-                ->afterStateUpdated(function ($state, callable $set) {
-                    // Reset items when date changes
-                    $set('items', []);
-
-                    if (!$state) {
-                        return;
-                    }
-
-                    // Get daily menu items for the selected date
-                    $dailyMenuItems = self::getDailyMenuItemsForDate($state);
-
-                    if ($dailyMenuItems->isEmpty()) {
-                        return;
-                    }
-
-                    // Prepare items data
-                    $items = $dailyMenuItems->map(function ($item) {
-                        return [
-                            'daily_menu_item_id' => $item->id,
-                            'target_qty' => $item->qty,
-                            'actual_qty' => 0,
-                            'status' => 'kurang',
-                        ];
-                    })->toArray();
-
-                    $set('items', $items);
-                })
-                ->columnSpan('full'),
-
-            Repeater::make('items')
-                ->label('Item Produksi')
-                ->relationship()
+            Forms\Components\Section::make('Informasi Laporan Produksi')
                 ->schema([
-                    Select::make('daily_menu_item_id')
-                        ->label('Menu')
-                        ->options(function (callable $get) {
-                            $date = $get('../../date');
-                            if (!$date) {
-                                return [];
+                    DatePicker::make('production_date')
+                        ->label('Tanggal')
+                        ->required()
+                        ->live()
+                        ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
+                            // Reset items when date changes
+                            $set('items', []);
+                            $set('daily_menu_id', null);
+
+                            if (!$state) {
+                                return;
                             }
-                            return self::getDailyMenuItemsForDate($date)->pluck('menu_name', 'id');
+
+                            // Cari DailyMenu berdasarkan tanggal yang dipilih
+                            $dailyMenu = \App\Models\DailyMenu::where('menu_date', $state)->first();
+
+                            if ($dailyMenu) {
+                                $set('daily_menu_id', $dailyMenu->id);
+
+                                // Siapkan data untuk production report items dari daily menu items
+                                $productionItems = $dailyMenu->dailyMenuItems->map(function ($item) {
+                                    return [
+                                        'daily_menu_item_id' => $item->id,
+                                        'target_qty' => $item->target_quantity ?? 0,
+                                        'actual_qty' => 0,
+                                        'status' => 'kurang',
+                                    ];
+                                })->toArray();
+
+                                $set('items', $productionItems);
+                            }
                         })
-                        ->required()
-                        ->reactive(),
+                        ->columnSpan('full'),
 
-                    TextInput::make('target_qty')
-                        ->label('Target')
-                        ->numeric()
-                        ->required(),
+                    Forms\Components\Hidden::make('daily_menu_id'),
 
-                    TextInput::make('actual_qty')
-                        ->label('Realisasi')
-                        ->numeric()
-                        ->required()
-                        ->default(0)
-                        ->reactive()
-                        ->afterStateUpdated(function ($state, callable $get, callable $set) {
-                            $target = (int)$get('target_qty');
-                            $actual = (int)$state;
+                    // Tampilkan informasi menu harian jika ada
+                    Forms\Components\Placeholder::make('daily_menu_info')
+                        ->label('Informasi Menu Harian')
+                        ->content(function (Forms\Get $get) {
+                            $dailyMenuId = $get('daily_menu_id');
 
-                            $status = match (true) {
-                                $actual == $target => 'tercukupi',   // Ubah dari 'tercukupi' menjadi 'pas'
-                                $actual < $target => 'kurang',
-                                $actual > $target => 'lebih',
-                            };
+                            if (!$dailyMenuId) {
+                                return 'Tidak ada menu harian untuk tanggal yang dipilih.';
+                            }
 
-                            $set('status', $status);
+                            $dailyMenu = \App\Models\DailyMenu::find($dailyMenuId);
+
+                            if (!$dailyMenu) {
+                                return 'Menu harian tidak ditemukan.';
+                            }
+
+                            $menuItems = $dailyMenu->dailyMenuItems()->count();
+
+                            return "Menu Harian Tanggal {$dailyMenu->menu_date} dengan {$menuItems} item menu";
                         }),
+                ]),
 
-                    Select::make('status')
-                        ->label('Status')
-                        ->required()
-                        ->default('kurang')
-                        ->options([
-                            'kurang' => 'Kurang',
-                            'tercukupi' => 'Pas',
-                            'lebih' => 'Lebih',
+            Forms\Components\Section::make('Item Produksi')
+                ->schema([
+                    Repeater::make('items')
+                        ->label('Item Produksi')
+                        ->relationship()
+                        ->schema([
+                            Select::make('daily_menu_item_id')
+                                ->label('Menu')
+                                ->options(function (Forms\Get $get) {
+                                    $dailyMenuId = $get('../../daily_menu_id');
+                                    if (!$dailyMenuId) {
+                                        return [];
+                                    }
+
+                                    return \App\Models\DailyMenuItem::query()
+                                        ->where('daily_menu_id', $dailyMenuId)
+                                        ->with('menu')
+                                        ->get()
+                                        ->mapWithKeys(function ($item) {
+                                            $menuName = $item->menu->menu_name ?? 'Menu Tidak Ditemukan';
+                                            // $targetGroup = $item->targetGroup->name ?? '';
+                                            return [$item->id => "{$menuName} "];
+                                        });
+                                })
+                                ->required()
+                                ->disabled() // Disabled karena diisi otomatis
+                                ->dehydrated(),
+
+                            // Select::make('daily_menu_item_id')
+                            //     ->label('target group')
+                            //     ->options(function (Forms\Get $get) {
+                            //         $dailyMenuId = $get('../../daily_menu_id');
+                            //         if (!$dailyMenuId) {
+                            //             return [];
+                            //         }
+
+                            //         return \App\Models\DailyMenuItem::query()
+                            //             ->where('daily_menu_id', $dailyMenuId)
+                            //             ->with('menu')
+                            //             ->get()
+                            //             ->mapWithKeys(function ($item) {
+                            //                 // $menuName = $item->menu->menu_name ?? 'Menu Tidak Ditemukan';
+                            //                 $targetGroup = $item->targetGroup->name ?? '';
+                            //                 return [$item->id => "{$targetGroup}"];
+                            //             });
+                            //     })
+                            //     ->required()
+                            //     ->disabled() // Disabled karena diisi otomatis
+                            //     ->dehydrated(),
+
+                            TextInput::make('target_qty')
+                                ->label('Target')
+                                ->numeric()
+                                ->required()
+                                ->disabled() // Disabled karena diisi otomatis
+                                ->dehydrated(),
+
+                            TextInput::make('actual_qty')
+                                ->label('Realisasi')
+                                ->numeric()
+                                ->required()
+                                ->default(0)
+                                ->live()
+                                ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                                    $target = (int)$get('target_qty');
+                                    $actual = (int)$state;
+
+                                    $status = match (true) {
+                                        $actual == $target => 'tercukupi',
+                                        $actual < $target => 'kurang',
+                                        $actual > $target => 'lebih',
+                                    };
+
+                                    $set('status', $status);
+                                }),
+
+                            Select::make('status')
+                                ->label('Status')
+                                ->required()
+                                ->default('kurang')
+                                ->options([
+                                    'kurang' => 'Kurang',
+                                    'tercukupi' => 'Tercukupi',
+                                    'lebih' => 'Lebih',
+                                ])
+                                ->disabled()
+                                ->dehydrated()
                         ])
-                        ->disabled() // Disabled karena diisi otomatis
-                        ->reactive()
-                        ->dehydrated()
+                        ->columns(4)
+                        ->columnSpan('full')
+                        ->defaultItems(0)
                 ])
-                ->columns(4)
                 ->columnSpan('full')
-                ->defaultItems(0), // Start with no items
         ]);
     }
 
@@ -128,61 +188,67 @@ class ProductionReportResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('date')
-                    ->label('Tanggal')
-                    ->date(),
+                Tables\Columns\TextColumn::make('production_date')
+                    ->date()
+                    ->searchable()
+                    ->sortable()
+                    ->label('Tanggal Produksi'),
 
-                TextColumn::make('items_count')
-                    ->label('Jumlah Item')
-                    ->counts('items'),
+                Tables\Columns\TextColumn::make('items.dailyMenuItem.menu.menu_name')
+                    ->label('Menu')
+                    ->searchable()
+                    ->listWithLineBreaks(),
 
-                // TextColumn::make('status')
-                //     ->label('Status')
-                //     ->badge()
-                //     ->colors([
-                //         'danger' => 'kurang',
-                //         'success' => 'pas',
-                //         'warning' => 'lebih',
-                //     ]),
+                Tables\Columns\TextColumn::make('items.dailyMenuItem.targetGroup.name')
+                    ->label('Target Group')
+                    ->listWithLineBreaks(),
 
-                TextColumn::make('items_status_summary')
+                Tables\Columns\TextColumn::make('items.target_qty')
+                    ->label('Jumlah Target')
+                    ->numeric(
+                        decimalPlaces: 0,
+                        decimalSeparator: ',',
+                        thousandsSeparator: '.'
+                    )
+                    ->suffix(' porsi')
+                    ->listWithLineBreaks(),
+
+                Tables\Columns\TextColumn::make('items.actual_qty')
+                    ->label('Jumlah Aktual')
+                    ->numeric(
+                        decimalPlaces: 0,
+                        decimalSeparator: ',',
+                        thousandsSeparator: '.'
+                    )
+                    ->suffix(' porsi')
+                    ->listWithLineBreaks(),
+
+                Tables\Columns\TextColumn::make('items.status')
                     ->label('Status')
-                    ->getStateUsing(function (ProductionReport $record): string {
-                        $statusCounts = $record->items()
-                            ->selectRaw('status, COUNT(*) as count')
-                            ->groupBy('status')
-                            ->pluck('count', 'status')
-                            ->toArray();
-
-                        $summary = [];
-
-                        if (isset($statusCounts['kurang']) && $statusCounts['kurang'] > 0) {
-                            $summary[] = "{$statusCounts['kurang']} kurang";
-                        }
-
-                        if (isset($statusCounts['pas']) && $statusCounts['pas'] > 0) {
-                            $summary[] = "{$statusCounts['pas']} pas";
-                        }
-
-                        if (isset($statusCounts['lebih']) && $statusCounts['lebih'] > 0) {
-                            $summary[] = "{$statusCounts['lebih']} lebih";
-                        }
-
-                        return implode(', ', $summary);
+                    ->listWithLineBreaks()
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'kurang' => 'danger',
+                        'tercukupi' => 'success',
+                        'lebih' => 'warning',
                     }),
 
-                TextColumn::make('created_at')
-                    ->label('Dibuat Pada')
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                // Anda dapat menambahkan filter di sini jika diperlukan
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\ViewAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -206,8 +272,9 @@ class ProductionReportResource extends Resource
         }
 
         return DailyMenuItem::query()
+            ->with(['menu', 'targetGroup']) // Eager load the menu and targetGroup relationships
             ->whereHas('dailyMenu', function ($query) use ($date) {
-                $query->where('date', $date);
+                $query->where('menu_date', $date);
             })
             ->get();
     }

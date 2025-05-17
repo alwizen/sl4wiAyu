@@ -24,6 +24,7 @@ use Filament\Tables;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Filament\Facades\Filament;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
@@ -140,13 +141,14 @@ class StockIssueResource extends Resource implements HasShieldPermissions
                     ->label('Tandai Disiapkan')
                     ->color('success')
                     ->icon('heroicon-o-check-circle')
-                    ->visible(fn($record) => $record->status === 'Draft')
+                    ->visible(fn($record) =>
+                        $record->status === 'Draft' &&
+                        auth()->user()?->can('mark_prepared_stock::issue')
+                    )
                     ->requiresConfirmation()
                     ->action(function ($record) {
-                        // Update status
                         $record->update(['status' => 'Submitted']);
 
-                        // Kurangi stok untuk setiap item
                         foreach ($record->items as $item) {
                             $warehouseItem = $item->warehouseItem;
                             $warehouseItem->decrement('stock', $item->requested_quantity);
