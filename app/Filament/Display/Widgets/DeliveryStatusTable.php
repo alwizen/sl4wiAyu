@@ -43,10 +43,11 @@ protected static ?int $sort = 3;
                 Tables\Columns\TextColumn::make('No')
                 ->rowIndex(),
                 Tables\Columns\TextColumn::make('recipient.name')
-                    ->label('Penerima Penerima Manfaat'),
+                    ->label('Penerima Manfaat'),
 
                 Tables\Columns\TextColumn::make('qty')
-                    ->label('Qty'),
+                    ->label('Jml')
+                    ->suffix(' Box'),
 
                 Tables\Columns\BadgeColumn::make('status')
                     ->label('Status Pengiriman')
@@ -54,10 +55,33 @@ protected static ?int $sort = 3;
                         'primary' => 'dikemas',
                         'warning' => 'dalam_perjalanan',
                         'success' => 'terkirim',
-                    ])
-                    ->formatStateUsing(fn ($state) => ucfirst(str_replace('_', ' ', $state))),
-                    Tables\Columns\TextColumn::make('updated_at')
-                    ->label('Terakhir Diperbarui'),
+                        'info' => 'selesai',
+                        'success' => 'kembali',
+                        
+                        // 'dikemas' => 'secondary',
+                        // 'dalam_perjalanan' => 'gray',
+                        // 'terkirim' => 'warning',
+                        // 'selesai' => 'info',
+                        // 'kembali' => 'success',
+                    ]),
+                    Tables\Columns\TextColumn::make('received_qty')
+                    ->label('Jml. Diterima')
+                    ->suffix(' Box'),
+                    Tables\Columns\TextColumn::make('prepared_at')
+                    ->label('Dikemas')
+                    ->dateTime('d/m/Y H:i'),
+                    Tables\Columns\TextColumn::make('shipped_at')
+                    ->label('Perjalanan')
+                    ->dateTime('d/m/Y H:i'),
+                    Tables\Columns\TextColumn::make('received_at')
+                    ->label('Terkirim')
+                    ->dateTime('d/m/Y H:i'),
+                    Tables\Columns\TextColumn::make('returned_at')
+                    ->label('Kembali')
+                    ->dateTime('d/m/Y H:i'), 
+                    // ->formatStateUsing(fn ($state) => ucfirst(str_replace('_', ' ', $state))),
+                    // Tables\Columns\TextColumn::make('updated_at')
+                    // ->label('Terakhir Diperbarui'),
                     // ->label('Qty'),
             ]);
     }

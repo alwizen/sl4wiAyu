@@ -125,7 +125,7 @@ class NutritionPlanResource extends Resource
                                 TextInput::make('energy')
                                     ->label('Energi')
                                     ->numeric()
-                                    ->suffix('gr')
+                                    ->suffix('kkal')
                                     ->required(),
                                 
                                 TextInput::make('protein')

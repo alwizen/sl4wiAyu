@@ -163,6 +163,10 @@ class ProductionReportResource extends Resource
 
                                     $set('status', $status);
                                 }),
+                                TextInput::make('diference_qty')
+                                ->label('Selisih')
+                                ->numeric()
+                                ->disabled(),
 
                             Select::make('status')
                                 ->label('Status')
@@ -175,8 +179,8 @@ class ProductionReportResource extends Resource
                                 ])
                                 ->disabled()
                                 ->dehydrated()
-                        ])
-                        ->columns(4)
+                                ])
+                        ->columns(5)
                         ->columnSpan('full')
                         ->defaultItems(0)
                 ])

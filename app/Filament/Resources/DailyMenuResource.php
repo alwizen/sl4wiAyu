@@ -65,6 +65,9 @@ class DailyMenuResource extends Resource
                                 ->required(),
 
                             Forms\Components\TextInput::make('target_quantity')
+                                ->label('Jumah Target')
+                                ->required()
+                                ->suffix(' Porsi'),
                         ])
                         ->columns(3)
                         ->itemLabel(function (array $state): ?string {

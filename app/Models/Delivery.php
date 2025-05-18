@@ -13,6 +13,10 @@ class Delivery extends Model
         'recipient_id',
         'status',
         'qty',
+        'prepared_at',
+        'shipped_at',
+        'returned_at',
+        'received_qty'
     ];
 
     public function recipient(): BelongsTo
@@ -31,6 +35,10 @@ class Delivery extends Model
     public function isInTransit(): bool
     {
         return $this->status === 'dalam_perjalanan';
+    }
+    public function isReturn(): bool
+    {
+        return $this->status === 'kembali';
     }
     public function markAsDelivered(): void
     {

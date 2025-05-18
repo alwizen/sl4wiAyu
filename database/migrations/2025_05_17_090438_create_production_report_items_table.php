@@ -18,6 +18,7 @@ return new class extends Migration
             $table->integer('target_qty');
             $table->integer('actual_qty');
             $table->enum('status', ['tercukupi', 'kurang', 'lebih']);
+            $table->integer('diference_qty')->nullable();
             $table->timestamps();
         });
     }

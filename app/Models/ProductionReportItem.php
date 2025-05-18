@@ -13,6 +13,7 @@ class ProductionReportItem extends Model
         'target_qty',
         'actual_qty',
         'status',
+        'diference_qty',
     ];
 
     public function productionReport(): BelongsTo

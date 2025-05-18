@@ -17,7 +17,12 @@ return new class extends Migration
             $table->date('delivery_date');
             $table->foreignId('recipient_id')->constrained()->onDelete('cascade');
             $table->integer('qty');
-            $table->enum('status', ['dikemas','dalam_perjalanan', 'terkirim'])->default('dikemas');
+            $table->enum('status', ['dikemas', 'dalam_perjalanan', 'terkirim', 'selesai', 'kembali'])->default('dikemas');
+            $table->timestamp('prepared_at')->nullable();
+            $table->timestamp('shipped_at')->nullable();
+            $table->timestamp('received_at')->nullable();
+            $table->timestamp('returned_at')->nullable();
+            $table->integer('received_qty')->nullable();
             $table->timestamps();
         });
     }
