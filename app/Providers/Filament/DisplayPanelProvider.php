@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Display\Widgets\DeliveryStatusTable;
 use App\Filament\Display\Widgets\MenuDisplayWidget;
+use App\Filament\Display\Widgets\TargetGroupTable;
 use App\Filament\Widgets\DailyMenuToday;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -28,11 +29,14 @@ class DisplayPanelProvider extends PanelProvider
         return $panel
             ->id('display')
             ->path('display')
+            ->brandLogo(asset('images/1.svg'))
             ->colors([
                 'primary' => Color::Amber,
             ])
             ->login()
-            ->sidebarFullyCollapsibleOnDesktop()
+            // ->sidebarFullyCollapsibleOnDesktop()
+            ->navigation(false)
+            ->topbar(false)
             ->discoverResources(in: app_path('Filament/Display/Resources'), for: 'App\\Filament\\Display\\Resources')
             ->discoverPages(in: app_path('Filament/Display/Pages'), for: 'App\\Filament\\Display\\Pages')
             ->pages([
@@ -41,9 +45,8 @@ class DisplayPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Display/Widgets'), for: 'App\\Filament\\Display\\Widgets')
             ->widgets([
                 DailyMenuToday::class,
+                TargetGroupTable::class,
                 DeliveryStatusTable::class,
-                // Widgets\AccountWidget::class,
-                // Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

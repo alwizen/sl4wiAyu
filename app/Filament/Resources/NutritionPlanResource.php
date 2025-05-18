@@ -110,41 +110,47 @@ class NutritionPlanResource extends Resource
                                     ->dehydrated(),
                                 
                                 Select::make('target_group_id')
-                                    ->label('Kelompok Target')
+                                    ->label('Penerima Manfaat')
                                     ->options(TargetGroup::pluck('name', 'id'))
                                     ->required()
                                     ->disabled()
                                     ->dehydrated(),
+
+                                    TextInput::make('netto')
+                                    ->label('Netto')
+                                    ->numeric()
+                                    ->suffix('gr')
+                                    ->required(),
                                 
                                 TextInput::make('energy')
                                     ->label('Energi')
                                     ->numeric()
+                                    ->suffix('gr')
                                     ->required(),
                                 
                                 TextInput::make('protein')
                                     ->label('Protein')
                                     ->numeric()
+                                    ->suffix('gr')
                                     ->required(),
                                 
                                 TextInput::make('fat')
                                     ->label('Lemak')
                                     ->numeric()
+                                    ->suffix('gr')
                                     ->required(),
                                 
                                 TextInput::make('carb')
                                     ->label('Karbohidrat')
                                     ->numeric()
-                                    ->required(),
+                                    ->required()
+                                    ->suffix('gr'),
                                 
                                 // TextInput::make('vitamin')
                                 //     ->label('Vitamin')
                                 //     ->numeric()
                                 //     ->required(),
                                 
-                                TextInput::make('mineral')
-                                    ->label('Mineral')
-                                    ->numeric()
-                                    ->required(),
                             ])
                             ->columns(7),
                     ]),

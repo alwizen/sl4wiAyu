@@ -63,7 +63,7 @@ class DeliveryPolicy
      */
     public function forceDelete(User $user, Delivery $delivery): bool
     {
-        return $user->can('force_delete_delivery');
+        return $user->can('{{ ForceDelete }}');
     }
 
     /**
@@ -71,7 +71,7 @@ class DeliveryPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_delivery');
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
     /**
@@ -79,7 +79,7 @@ class DeliveryPolicy
      */
     public function restore(User $user, Delivery $delivery): bool
     {
-        return $user->can('restore_delivery');
+        return $user->can('{{ Restore }}');
     }
 
     /**
@@ -87,7 +87,7 @@ class DeliveryPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_delivery');
+        return $user->can('{{ RestoreAny }}');
     }
 
     /**
@@ -95,7 +95,7 @@ class DeliveryPolicy
      */
     public function replicate(User $user, Delivery $delivery): bool
     {
-        return $user->can('replicate_delivery');
+        return $user->can('{{ Replicate }}');
     }
 
     /**
@@ -103,6 +103,6 @@ class DeliveryPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_delivery');
+        return $user->can('{{ Reorder }}');
     }
 }

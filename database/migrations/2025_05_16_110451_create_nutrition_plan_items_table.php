@@ -20,8 +20,8 @@ return new class extends Migration
             $table->decimal('protein', 8, 2)->comment('gr');
             $table->decimal('fat', 8, 2)->comment('gr');
             $table->decimal('carb', 8, 2)->comment('gr');
-            $table->decimal('mineral', 8, 2)->comment('gr')->nullable();
             $table->decimal('vitamin', 8, 2)->comment('gr')->nullable();
+            $table->decimal('netto', 8, 2)->comment('gr')->nullable();
             $table->timestamps();
         });
     }

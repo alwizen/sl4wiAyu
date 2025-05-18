@@ -92,6 +92,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\Action::make('setShipped')
+                ->requiresConfirmation()
                     ->label('Dalam Perjalanan')
                     ->icon('heroicon-o-truck')
                     ->color('warning')
@@ -106,6 +107,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                             ->send();
                     }),
                 Tables\Actions\Action::make('setDelivered')
+                ->requiresConfirmation()
                     ->label('Terkirim')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')

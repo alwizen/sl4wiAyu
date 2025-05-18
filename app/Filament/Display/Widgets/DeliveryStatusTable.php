@@ -17,20 +17,33 @@ class DeliveryStatusTable extends TableWidget
 {
 protected static ?string $heading = 'Informasi Pengiriman Hari Ini';
 
+protected static ?int $sort = 3;
+
     protected int | string | array $columnSpan = 'full';
+
+    protected static ?string $maxHeight = '400px';
+
+    // protected static ?string $pollingInterval = '5s';
+
+    // protected static ?bool $showLoadingIndicator = true;
 
     public function table(Table $table): Table
     {
         return $table
+            ->paginated(false)
+            ->poll('5s')
+            // ->paginationPageOptions('false')
+            ->striped()
             ->query(
                 Delivery::query()
                     ->where('delivery_date', Carbon::today())
                     ->with('recipient')
             )
             ->columns([
+                Tables\Columns\TextColumn::make('No')
+                ->rowIndex(),
                 Tables\Columns\TextColumn::make('recipient.name')
-                    ->label('Nama Sekolah Penerima')
-                    ->searchable(),
+                    ->label('Penerima Penerima Manfaat'),
 
                 Tables\Columns\TextColumn::make('qty')
                     ->label('Qty'),
@@ -43,6 +56,9 @@ protected static ?string $heading = 'Informasi Pengiriman Hari Ini';
                         'success' => 'terkirim',
                     ])
                     ->formatStateUsing(fn ($state) => ucfirst(str_replace('_', ' ', $state))),
+                    Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Terakhir Diperbarui'),
+                    // ->label('Qty'),
             ]);
     }
 }

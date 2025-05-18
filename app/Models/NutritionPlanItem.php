@@ -16,7 +16,7 @@ class NutritionPlanItem extends Model
         'fat',
         'carb',
         'vitamin',
-        'mineral'
+        'netto'
         ];
 
     public function menu(): BelongsTo

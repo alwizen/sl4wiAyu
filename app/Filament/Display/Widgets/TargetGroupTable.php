@@ -1,16 +1,15 @@
 <?php
- 
-namespace App\Filament\Widgets;
- 
+
+namespace App\Filament\Display\Widgets;
+
 use App\Models\DailyMenuItem;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
-use Illuminate\Database\Eloquent\Builder;
- 
-class DailyMenuToday extends BaseWidget
+
+class TargetGroupTable extends BaseWidget
 {
-    protected static ?int $sort = 1;
+    protected static ?int $sort = 2;
  
     // protected int | string | array $columnSpan = 'full';
  
@@ -30,14 +29,14 @@ class DailyMenuToday extends BaseWidget
             )
             ->columns([
                 Tables\Columns\TextColumn::make('No')
-                ->rowIndex(),
-                Tables\Columns\TextColumn::make('menu.menu_name')
-                    ->label('Nama Menu'),
-                // Tables\Columns\TextColumn::make('targetGroup.name')
-                //     ->label('Target Group'),
-                // Tables\Columns\TextColumn::make('target_quantity')
-                //     ->label('Jumlah')
-                //     ->suffix(' porsi'),
+                    ->rowIndex(),
+                // Tables\Columns\TextColumn::make('menu.menu_name')
+                //     ->label('Nama Menu'),
+                Tables\Columns\TextColumn::make('targetGroup.name')
+                    ->label('Target Group'),
+                Tables\Columns\TextColumn::make('target_quantity')
+                    ->label('Jumlah')
+                    ->suffix(' porsi'),
             ]);
     }
 }
