@@ -24,9 +24,9 @@ class StockReceivingResource extends Resource
 {
     protected static ?string $model = StockReceiving::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-archive-box';
+    protected static ?string $navigationIcon = 'heroicon-o-arrow-down-on-square';
 
-    protected static ?string $navigationGroup = 'Warehouse';
+    protected static ?string $navigationGroup = 'Gudang';
 
     protected static ?string $label = 'Penerimaan Stok';
 

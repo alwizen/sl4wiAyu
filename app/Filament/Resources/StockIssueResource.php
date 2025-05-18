@@ -32,11 +32,11 @@ class StockIssueResource extends Resource implements HasShieldPermissions
 {
     protected static ?string $model = StockIssue::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-arrow-up-on-square';
 
     protected static ?string $navigationGroup = 'Pengadaan & Permintaan';
 
-    protected static ?string $navigationLabel = 'Permintaan Baahan Masak';
+    protected static ?string $navigationLabel = 'Permintaan Bahan Baku';
 
     public static function form(Form $form): Form
     {

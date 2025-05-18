@@ -21,10 +21,11 @@ class WarehouseItemResource extends Resource
 {
     protected static ?string $model = WarehouseItem::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-circle-stack';
 
-    protected static ?string $navigationGroup = 'Warehouse';
+    protected static ?string $navigationGroup = 'Gudang';
 
+    protected static ?string $navigationLabel = 'Daftar Barang';
 
     public static function form(Form $form): Form
     {

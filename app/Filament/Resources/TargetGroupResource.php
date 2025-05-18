@@ -17,7 +17,11 @@ class TargetGroupResource extends Resource
 {
     protected static ?string $model = TargetGroup::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-beaker';
+
+    protected static ?string $navigationGroup = 'Ahli Gizi';
+
+    protected static ?string $navigationLabel = 'Kelompok Sasaran';
 
     public static function form(Form $form): Form
     {

@@ -17,7 +17,11 @@ class RecipientResource extends Resource
 {
     protected static ?string $model = Recipient::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-star';
+
+    protected static ?string $navigationGroup = 'Produksi & Pengiriman';
+
+    protected static ?string $navigationLabel = 'Daftar Penerima';
 
     public static function form(Form $form): Form
     {

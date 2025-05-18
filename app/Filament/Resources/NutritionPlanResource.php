@@ -25,13 +25,16 @@ class NutritionPlanResource extends Resource
 {
     protected static ?string $model = NutritionPlan::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-heart';
     
     protected static ?string $navigationLabel = 'Rencana Nutrisi';
     
     protected static ?string $modelLabel = 'Rencana Nutrisi';
     
     protected static ?string $pluralModelLabel = 'Rencana Nutrisi';
+
+    protected static ?string $navigationGroup = 'Ahli Gizi';
+
 
     public static function form(Form $form): Form
     {

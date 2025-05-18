@@ -35,7 +35,7 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
 
     protected static ?string $navigationGroup = 'Pengadaan & Permintaan';
 
-    protected static ?string $navigationLabel = 'Pemesanan Pembelian';
+    protected static ?string $navigationLabel = 'Pemesanan Bahan Baku';
 
     public static function form(Form $form): Form
     {
