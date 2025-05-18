@@ -9,7 +9,7 @@ class Employee extends Model
     //
 
     // add fillable
-    protected $fillable = ['nip','name', 'phone', 'address'];
+    protected $fillable = [];
     // add guaded
     protected $guarded = ['id'];
     // add hidden

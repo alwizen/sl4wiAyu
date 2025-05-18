@@ -25,6 +25,8 @@ class DeliveryResource extends Resource implements HasShieldPermissions
 
     protected static ?string $navigationIcon = 'heroicon-o-truck';
 
+    protected static ?string $navigationLabel = 'Pengiriman';
+
     public static function form(Form $form): Form
     {
         return $form

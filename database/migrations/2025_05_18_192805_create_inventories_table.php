@@ -11,12 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('employees', function (Blueprint $table) {
+        Schema::create('inventories', function (Blueprint $table) {
             $table->id();
-            $table->string('nip')->unique();
+            $table->string('code')->unique();
+            $table->date('purchase_date');
             $table->string('name');
-            $table->string('phone');
-            $table->string('address')->nullable();
+            $table->integer('stock_init');
+            $table->integer('addition')->nullable();
+            $table->integer('damaged')->nullable();
+            $table->integer('missing')->nullable();
+            $table->integer('stock_end')->default(0);
             $table->timestamps();
         });
     }
@@ -26,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('employees');
+        Schema::dropIfExists('inventories');
     }
 };

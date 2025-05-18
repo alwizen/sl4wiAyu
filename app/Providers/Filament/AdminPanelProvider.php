@@ -59,7 +59,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(asset('images/1.svg'))
             ->brandLogoHeight('3.5rem')
             ->darkModeBrandLogo(asset('images/2.svg'))
-        ->path('')
+            ->path('')
             ->when($this->settings->login_enabled ?? true, fn($panel) => $panel->login(Login::class))
             // ->when($this->settings->registration_enabled ?? true, fn($panel) => $panel->registration())
             // ->when($this->settings->password_reset_enabled ?? true, fn($panel) => $panel->passwordReset())
@@ -71,6 +71,13 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
                 Pages\Dashboard::class,
+            ])
+            ->navigationGroups([
+                'Ahli Gizi',
+                'Produksi & Pengiriman',
+                'Pengadaan & Permintaan',
+                'Akunting',
+                'Gudang',
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
@@ -106,7 +113,7 @@ class AdminPanelProvider extends PanelProvider
     {
         $plugins = [
             FilamentBackgroundsPlugin::make()
-            ->showAttribution(false),
+                ->showAttribution(false),
             ThemesPlugin::make(),
             FilamentShieldPlugin::make(),
             ApiServicePlugin::make(),

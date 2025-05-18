@@ -22,11 +22,12 @@ class DatabaseSeeder extends Seeder
 
         $this->call(
             [
-                BookSeeder::class,
+                // BookSeeder::class,
                 WarehouseCategorySeeder::class,
 //                NutrientSeeder::class,
                 TargetGroupSeeder::class,
-                WarehouseItemSeeder::class
+                WarehouseItemSeeder::class,
+                DepartmentSeeder::class
             ]
         );
     }

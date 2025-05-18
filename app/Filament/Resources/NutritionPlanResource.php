@@ -31,7 +31,7 @@ class NutritionPlanResource extends Resource
     
     protected static ?string $modelLabel = 'Rencana Nutrisi';
     
-    protected static ?string $pluralModelLabel = 'Rencana Nutrisi';
+    protected static ?string $pluralModelLabel = 'Perencanaan Nutrisi';
 
     protected static ?string $navigationGroup = 'Ahli Gizi';
 
@@ -168,13 +168,56 @@ class NutritionPlanResource extends Resource
                     ->date('d F Y')
                     ->sortable()
                     ->searchable(),
-                \Filament\Tables\Columns\TextColumn::make('dailyMenu.menu.menu_name')
-                    ->label('Menu Harian')
+                // \Filament\Tables\Columns\TextColumn::make('dailyMenu.menu.menu_name')
+                //     ->label('Menu Harian')
+                //     ->searchable(),
+                // \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.count')
+                //     ->label('Jumlah Item')
+                //     ->counts('nutritionPlanItems')
+                //     ->sortable(),
+                    
+                // Kolom baru untuk menampilkan semua item menu
+                \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.menu.menu_name')
+                    ->label('Daftar Menu')
+                    ->listWithLineBreaks()
                     ->searchable(),
-                \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.count')
-                    ->label('Jumlah Item')
-                    ->counts('nutritionPlanItems')
-                    ->sortable(),
+                
+                // Kolom baru untuk menampilkan semua target grup
+                \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.targetGroup.name')
+                    ->label('Daftar Penerima Manfaat')
+                    ->listWithLineBreaks()
+                    ->searchable(),
+                
+                // Kolom untuk menampilkan nilai energi
+                \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.energy')
+                    ->label('Energi (kkal)')
+                    ->listWithLineBreaks()
+                    ->formatStateUsing(fn (string $state): string => "{$state} kkal"),
+                
+                // Kolom untuk menampilkan nilai protein
+                \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.protein')
+                    ->label('Protein (gr)')
+                    ->listWithLineBreaks()
+                    ->formatStateUsing(fn (string $state): string => "{$state} gr"),
+                
+                // Kolom untuk menampilkan nilai lemak
+                \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.fat')
+                    ->label('Lemak (gr)')
+                    ->listWithLineBreaks()
+                    ->formatStateUsing(fn (string $state): string => "{$state} gr"),
+                
+                // Kolom untuk menampilkan nilai karbohidrat
+                \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.carb')
+                    ->label('Karbohidrat (gr)')
+                    ->listWithLineBreaks()
+                    ->formatStateUsing(fn (string $state): string => "{$state} gr"),
+                
+                // Kolom untuk menampilkan nilai netto
+                \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.netto')
+                    ->label('Netto (gr)')
+                    ->listWithLineBreaks()
+                    ->formatStateUsing(fn (string $state): string => "{$state} gr"),
+                
                 \Filament\Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat Pada')
                     ->dateTime('d F Y H:i')

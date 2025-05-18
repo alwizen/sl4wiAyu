@@ -17,11 +17,9 @@ class EmployeeResource extends Resource
 {
     protected static ?string $model = Employee::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-briefcase';
 
-    protected static ?string $navigationGroup = 'Akunting';
-
-    protected static ?string $navigationLabel = 'Karyawan';
+    protected static ?string $navigationGroup = 'Relawan';
 
     public static function form(Form $form): Form
     {
@@ -30,6 +28,12 @@ class EmployeeResource extends Resource
                 Forms\Components\TextInput::make('nip')
                     ->required()
                     ->maxLength(255),
+                Forms\Components\TextInput::make('nik')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('department_id')
+                    ->required()
+                    ->numeric(),
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
@@ -49,27 +53,23 @@ class EmployeeResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('nip')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('nik')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('department_id')
+                    ->numeric()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phone')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('address')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
    Tables\Actions\DeleteAction::make(),
 
             ])
@@ -80,10 +80,19 @@ class EmployeeResource extends Resource
             ]);
     }
 
+    public static function getRelations(): array
+    {
+        return [
+            //
+        ];
+    }
+
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ManageEmployees::route('/'),
+            'index' => Pages\ListEmployees::route('/'),
+            'create' => Pages\CreateEmployee::route('/create'),
+            'edit' => Pages\EditEmployee::route('/{record}/edit'),
         ];
     }
 }

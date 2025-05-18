@@ -142,7 +142,7 @@ class ProductionReportResource extends Resource
                                 ->label('Target')
                                 ->numeric()
                                 ->required()
-                                ->disabled() // Disabled karena diisi otomatis
+                                ->disabled()
                                 ->dehydrated(),
 
                             TextInput::make('actual_qty')
@@ -155,18 +155,24 @@ class ProductionReportResource extends Resource
                                     $target = (int)$get('target_qty');
                                     $actual = (int)$state;
 
+                                    $difference = $actual - $target;
+
                                     $status = match (true) {
                                         $actual == $target => 'tercukupi',
                                         $actual < $target => 'kurang',
                                         $actual > $target => 'lebih',
                                     };
 
+                                    $set('diference_qty', $difference);
                                     $set('status', $status);
                                 }),
-                                TextInput::make('diference_qty')
+
+                            TextInput::make('diference_qty')
                                 ->label('Selisih')
                                 ->numeric()
-                                ->disabled(),
+                                ->disabled()
+                                ->reactive()
+                                ->dehydrated(),
 
                             Select::make('status')
                                 ->label('Status')
@@ -179,7 +185,7 @@ class ProductionReportResource extends Resource
                                 ])
                                 ->disabled()
                                 ->dehydrated()
-                                ])
+                        ])
                         ->columns(5)
                         ->columnSpan('full')
                         ->defaultItems(0)
@@ -236,6 +242,10 @@ class ProductionReportResource extends Resource
                         'tercukupi' => 'success',
                         'lebih' => 'warning',
                     }),
+                Tables\Columns\TextColumn::make('items.diference_qty')
+                    ->label('Selisih')
+                    ->suffix(' porsi')
+                    ->listWithLineBreaks(),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()

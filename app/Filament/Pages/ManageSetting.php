@@ -16,6 +16,9 @@ class ManageSetting extends SettingsPage
     use HasPageShield;
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
 
+    protected static bool $shouldRegisterNavigation = false;
+
+
     protected static string $settings = KaidoSetting::class;
 
     protected static ?string $navigationGroup = 'Settings';
