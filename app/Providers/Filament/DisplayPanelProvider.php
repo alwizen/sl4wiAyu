@@ -36,7 +36,7 @@ class DisplayPanelProvider extends PanelProvider
             ->login()
             // ->sidebarFullyCollapsibleOnDesktop()
             ->navigation(false)
-            ->topbar(false)
+            // ->topbar(false)
             ->discoverResources(in: app_path('Filament/Display/Resources'), for: 'App\\Filament\\Display\\Resources')
             ->discoverPages(in: app_path('Filament/Display/Pages'), for: 'App\\Filament\\Display\\Pages')
             ->pages([

@@ -20,6 +20,7 @@ class DailyMenuToday extends BaseWidget
     {
         return $table
         ->paginated(false)
+        ->poll('5s')
         ->striped()
             ->query(
                 DailyMenuItem::query()
@@ -33,8 +34,8 @@ class DailyMenuToday extends BaseWidget
                 ->rowIndex(),
                 Tables\Columns\TextColumn::make('menu.menu_name')
                     ->label('Nama Menu'),
-                // Tables\Columns\TextColumn::make('targetGroup.name')
-                //     ->label('Target Group'),
+                Tables\Columns\TextColumn::make('targetGroupItems.netto')
+                    ->label('Target Group'),
                 // Tables\Columns\TextColumn::make('target_quantity')
                 //     ->label('Jumlah')
                 //     ->suffix(' porsi'),

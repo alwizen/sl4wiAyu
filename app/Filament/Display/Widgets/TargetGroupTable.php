@@ -4,6 +4,7 @@ namespace App\Filament\Display\Widgets;
 
 use App\Models\DailyMenuItem;
 use Filament\Tables;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 
@@ -13,12 +14,13 @@ class TargetGroupTable extends BaseWidget
  
     // protected int | string | array $columnSpan = 'full';
  
-    protected static ?string $heading = 'Menu Hari Ini';
+    protected static ?string $heading = 'Penerima Manfaat Hari Ini';
  
     public function table(Table $table): Table
     {
         return $table
         ->paginated(false)
+        ->poll('5s')
         ->striped()
             ->query(
                 DailyMenuItem::query()
@@ -37,6 +39,7 @@ class TargetGroupTable extends BaseWidget
                 Tables\Columns\TextColumn::make('target_quantity')
                     ->label('Jumlah')
                     ->suffix(' porsi'),
+                    // ->summarize(Sum::make()),
             ]);
     }
 }

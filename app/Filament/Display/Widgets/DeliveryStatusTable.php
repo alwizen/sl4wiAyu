@@ -5,7 +5,9 @@ namespace App\Filament\Display\Widgets;
 use App\Models\DailyMenu;
 use App\Models\Delivery;
 use App\Models\ProductionReportItem;
+use Blueprint\Models\Column;
 use Filament\Tables;
+use Filament\Tables\Columns\ColumnGroup;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Filament\Widgets\TableWidget;
@@ -15,17 +17,11 @@ use Illuminate\Support\Facades\Log;
 
 class DeliveryStatusTable extends TableWidget
 {
-protected static ?string $heading = 'Informasi Pengiriman Hari Ini';
+    protected static ?string $heading = 'Informasi Pengiriman Hari Ini';
 
-protected static ?int $sort = 3;
+    protected static ?int $sort = 3;
 
     protected int | string | array $columnSpan = 'full';
-
-    protected static ?string $maxHeight = '400px';
-
-    // protected static ?string $pollingInterval = '5s';
-
-    // protected static ?bool $showLoadingIndicator = true;
 
     public function table(Table $table): Table
     {
@@ -40,49 +36,59 @@ protected static ?int $sort = 3;
                     ->with('recipient')
             )
             ->columns([
-                Tables\Columns\TextColumn::make('No')
-                ->rowIndex(),
-                Tables\Columns\TextColumn::make('recipient.name')
-                    ->label('Penerima Manfaat'),
+                ColumnGroup::make('Pengiriman')
+                    ->alignCenter()
+                    ->columns([
+                        Tables\Columns\TextColumn::make('No')
+                            ->rowIndex(),
+                        Tables\Columns\TextColumn::make('recipient.name')
+                            ->label('Penerima Manfaat'),
 
-                Tables\Columns\TextColumn::make('qty')
-                    ->label('Jml')
-                    ->suffix(' Box'),
+                        Tables\Columns\TextColumn::make('qty')
+                            ->label('Jml')
+                            ->suffix(' Box'),
 
-                Tables\Columns\BadgeColumn::make('status')
-                    ->label('Status Pengiriman')
-                    ->colors([
-                        'primary' => 'dikemas',
-                        'warning' => 'dalam_perjalanan',
-                        'success' => 'terkirim',
-                        'info' => 'selesai',
-                        'success' => 'kembali',
-                        
-                        // 'dikemas' => 'secondary',
-                        // 'dalam_perjalanan' => 'gray',
-                        // 'terkirim' => 'warning',
-                        // 'selesai' => 'info',
-                        // 'kembali' => 'success',
+                        Tables\Columns\TextColumn::make('status')
+                            ->badge()
+                            ->label('Status')
+                            ->colors([
+                                'primary' => 'dikemas',
+                                'warning' => 'dalam_perjalanan',
+                                'success' => 'terkirim',
+                                'info' => 'selesai',
+                                'success' => 'kembali',
+
+                                // 'dikemas' => 'secondary',
+                                // 'dalam_perjalanan' => 'gray',
+                                // 'terkirim' => 'warning',
+                                // 'selesai' => 'info',
+                                // 'kembali' => 'success',
+                            ]),
+                        Tables\Columns\TextColumn::make('received_qty')
+                            ->label('Jml. Diterima')
+                            ->suffix(' Box'),
                     ]),
-                    Tables\Columns\TextColumn::make('received_qty')
-                    ->label('Jml. Diterima')
-                    ->suffix(' Box'),
-                    Tables\Columns\TextColumn::make('prepared_at')
-                    ->label('Dikemas')
-                    ->dateTime('d/m/Y H:i'),
-                    Tables\Columns\TextColumn::make('shipped_at')
-                    ->label('Perjalanan')
-                    ->dateTime('d/m/Y H:i'),
-                    Tables\Columns\TextColumn::make('received_at')
-                    ->label('Terkirim')
-                    ->dateTime('d/m/Y H:i'),
-                    Tables\Columns\TextColumn::make('returned_at')
-                    ->label('Kembali')
-                    ->dateTime('d/m/Y H:i'), 
-                    // ->formatStateUsing(fn ($state) => ucfirst(str_replace('_', ' ', $state))),
-                    // Tables\Columns\TextColumn::make('updated_at')
-                    // ->label('Terakhir Diperbarui'),
-                    // ->label('Qty'),
+                ColumnGroup::make('Waktu Pengiriman')
+                    ->wrapHeader()
+                    ->alignCenter()
+                    ->columns([
+                        Tables\Columns\TextColumn::make('prepared_at')
+                            ->label('Dikemas')
+                            ->dateTime('d/m/Y H:i'),
+                        Tables\Columns\TextColumn::make('shipped_at')
+                            ->label('Perjalanan')
+                            ->dateTime('d/m/Y H:i'),
+                        Tables\Columns\TextColumn::make('received_at')
+                            ->label('Terkirim')
+                            ->dateTime('d/m/Y H:i'),
+                        Tables\Columns\TextColumn::make('returned_at')
+                            ->label('Kembali')
+                            ->dateTime('d/m/Y H:i'),
+                    ]),
+                // ->formatStateUsing(fn ($state) => ucfirst(str_replace('_', ' ', $state))),
+                // Tables\Columns\TextColumn::make('updated_at')
+                // ->label('Terakhir Diperbarui'),
+                // ->label('Qty'),
             ]);
     }
 }
