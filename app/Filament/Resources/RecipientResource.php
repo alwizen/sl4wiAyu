@@ -10,6 +10,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
@@ -27,6 +28,9 @@ class RecipientResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\TextInput::make('code')
+                    ->label('NPSN')
+                    ->required(),
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
@@ -50,17 +54,29 @@ class RecipientResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultPaginationPageOption(50)
+//            ->paginated(false)
             ->columns([
+//                Tables\Columns\TextColumn::make('#')
+//                    ->rowIndex(),
+                Tables\Columns\TextColumn::make('code')
+                    ->label('NPSN')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('name')
+                    ->label('Penerima Manfaat')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('address')
+                    ->label('Alamat')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phone')
+                    ->label('No. Telp')
                     ->searchable(),
 //                Tables\Columns\TextColumn::make('targetGroup.name')
 //                    ->numeric()
 //                    ->sortable(),
                 Tables\Columns\TextColumn::make('total_recipients')
+                    ->label('Total Penerima')
+                    ->summarize(Tables\Columns\Summarizers\Sum::make())
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -78,13 +94,13 @@ class RecipientResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
-                Tables\Actions\DeleteAction::make(),
 
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                ExportBulkAction::make()
+//                Tables\Actions\BulkActionGroup::make([
+//                    Tables\Actions\DeleteBulkAction::make(),
+//                ]),
             ]);
     }
 

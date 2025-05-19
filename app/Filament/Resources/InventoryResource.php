@@ -10,6 +10,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
@@ -35,19 +36,22 @@ class InventoryResource extends Resource
                     ->maxLength(255),
                 Forms\Components\TextInput::make('stock_init')
                     ->required()
-                    ->numeric(),
+                    ->numeric()
+                    ->label('Initial Stock'),
                 Forms\Components\TextInput::make('addition')
-                    ->required()
-                    ->numeric(),
+                    ->numeric()
+                    ->disabled()
+                    ->default(0)
+                    ->label('Addition'),
                 Forms\Components\TextInput::make('damaged')
-                    ->required()
-                    ->numeric(),
+                    ->numeric()
+                    ->default(0)
+                    ->label('Damaged'),
                 Forms\Components\TextInput::make('missing')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('stock_end')
-                    ->required()
-                    ->numeric(),
+                    ->numeric()
+                    ->default(0)
+                    ->label('Missing'),
+                // Stock end is calculated, so we don't need it in the form
             ]);
     }
 
@@ -64,9 +68,11 @@ class InventoryResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('stock_init')
                     ->numeric()
+                    ->label('Initial Stock')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('addition')
                     ->numeric()
+                    ->label('Addition')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('damaged')
                     ->numeric()
@@ -76,7 +82,12 @@ class InventoryResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('stock_end')
                     ->numeric()
-                    ->sortable(),
+                    ->label('End Stock')
+                    ->sortable()
+                    ->formatStateUsing(function (Inventory $record) {
+                        // Calculate stock_end
+                        return $record->stock_init + $record->addition - $record->damaged - $record->missing;
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -90,12 +101,36 @@ class InventoryResource extends Resource
                 //
             ])
             ->actions([
+                Tables\Actions\Action::make('inputAddition')
+                    ->label('Input Tambahan')
+                    ->icon('heroicon-o-clipboard-document-check')
+                    ->color('success')
+                    ->form([
+                        Forms\Components\TextInput::make('addition_value')
+                            ->label('Jumlah Tambahan')
+                            ->numeric()
+                            ->required()
+                            ->helperText('Masukkan jumlah tambahan stok')
+                    ])
+                    ->action(function (Inventory $record, array $data) {
+                        // Menambahkan nilai addition yang baru ke nilai yang sudah ada
+                        $record->addition = $record->addition + $data['addition_value'];
+
+                        // Menghitung ulang stock_end
+                        $record->stock_end = $record->stock_init + $record->addition - $record->damaged - $record->missing;
+
+                        $record->save();
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Tambahan stok berhasil disimpan')
+                            ->success()
+                            ->send();
+                    }),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
-   Tables\Actions\DeleteAction::make(),
-
             ])
             ->bulkActions([
+                ExportBulkAction::make(),
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),

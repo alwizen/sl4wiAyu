@@ -13,7 +13,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory(5)->create();
+        User::factory(1)->create();
 
         User::factory()->create([
             'name' => 'admin',
@@ -27,7 +27,8 @@ class DatabaseSeeder extends Seeder
 //                NutrientSeeder::class,
                 TargetGroupSeeder::class,
                 WarehouseItemSeeder::class,
-                DepartmentSeeder::class
+                DepartmentSeeder::class,
+                RecipientSeeder::class
             ]
         );
     }

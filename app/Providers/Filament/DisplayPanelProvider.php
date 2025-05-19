@@ -29,10 +29,11 @@ class DisplayPanelProvider extends PanelProvider
         return $panel
             ->id('display')
             ->path('display')
-            ->brandLogo(asset('images/1.svg'))
+            ->brandLogo(asset('images/ms_light.svg'))
             ->brandLogoHeight('3.5rem')
+            ->darkModeBrandLogo(asset('images/ms_dark.svg'))
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Blue,
             ])
             ->login()
             // ->sidebarFullyCollapsibleOnDesktop()

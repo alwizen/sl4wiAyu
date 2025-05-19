@@ -16,9 +16,4 @@ class Inventory extends Model
         'missing',
         'stock_end'
     ];
-
-    public function getStockEndAttribute()
-    {
-        return $this->stock_init + ($this->addition ?? 0) - ($this->damaged ?? 0) - ($this->missing ?? 0);
-    }
 }

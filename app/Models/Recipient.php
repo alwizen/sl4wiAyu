@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Recipient extends Model
 {
     protected $fillable = [
+        'code',
         'name',
         'address',
         'phone',
