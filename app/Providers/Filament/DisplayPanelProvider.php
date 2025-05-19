@@ -32,6 +32,7 @@ class DisplayPanelProvider extends PanelProvider
             ->brandLogo(asset('images/ms_light.svg'))
             ->brandLogoHeight('3.5rem')
             ->darkModeBrandLogo(asset('images/ms_dark.svg'))
+            ->favicon(asset('images/logo.svg'))
             ->colors([
                 'primary' => Color::Blue,
             ])

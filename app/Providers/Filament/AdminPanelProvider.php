@@ -60,6 +60,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(asset('images/ms_light.svg'))
             ->brandLogoHeight('3.5rem')
             ->darkModeBrandLogo(asset('images/ms_dark.svg'))
+            ->favicon(asset('images/logo.svg'))
             ->path('')
             ->when($this->settings->login_enabled ?? true, fn($panel) => $panel->login(Login::class))
             // ->when($this->settings->registration_enabled ?? true, fn($panel) => $panel->registration())
