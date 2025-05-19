@@ -24,6 +24,8 @@ use Filament\Forms\Components\Section as ComponentsSection;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+
 use Filament\Tables\Columns\BadgeColumn;
 
 class PurchaseOrderResource extends Resource implements HasShieldPermissions
@@ -295,6 +297,13 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                     ),
                 Tables\Actions\DeleteAction::make()
                     ->visible(fn(PurchaseOrder $record) => $record->status === 'Pending'),
+            ])
+
+            ->bulkActions([
+                ExportBulkAction::make()
+//                Tables\Actions\BulkActionGroup::make([
+//                    Tables\Actions\DeleteBulkAction::make(),
+//                ]),
             ]);
     }
 

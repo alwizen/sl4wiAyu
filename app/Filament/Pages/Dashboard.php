@@ -72,7 +72,11 @@ class Dashboard extends BaseDashboard
         ],
         [
             'text' => 'Tidak ada makanan yang lebih baik daripada hasil kerja tangannya sendiri.',
-            'author' => 'HR. Bukhari'
+            'author' => 'Anonim'
+        ],
+        [
+            'text' => 'Jangan lupa scroll Pesbuk.',
+            'author' => 'alwizen'
         ],
         [
             'text' => 'Bekerja bukan sekadar mencari nafkah, tapi bagian dari ibadah jika dilakukan dengan niat yang benar.',

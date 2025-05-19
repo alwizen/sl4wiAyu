@@ -25,6 +25,8 @@ class ProductionReportResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-archive-box-arrow-down';
 
+    protected static ?string $label = 'Laporan Produksi';
+
     protected static ?string $navigationGroup = 'Produksi & Pengiriman';
 
     public static function form(Form $form): Form
@@ -66,7 +68,17 @@ class ProductionReportResource extends Resource
                         })
                         ->columnSpan('full'),
 
-                    Forms\Components\Hidden::make('daily_menu_id'),
+                    Forms\Components\Hidden::make('daily_menu_id')
+                        ->afterStateHydrated(function (Forms\Set $set, Forms\Get $get, $state, ?ProductionReport $record) {
+                            // Jika ini adalah edit form dan daily_menu_id belum diisi
+                            if ($record && !$state) {
+                                // Cari DailyMenu berdasarkan tanggal produksi pada record
+                                $dailyMenu = \App\Models\DailyMenu::where('menu_date', $record->production_date)->first();
+                                if ($dailyMenu) {
+                                    $set('daily_menu_id', $dailyMenu->id);
+                                }
+                            }
+                        }),
 
                     // Tampilkan informasi menu harian jika ada
                     Forms\Components\Placeholder::make('daily_menu_info')
@@ -98,8 +110,19 @@ class ProductionReportResource extends Resource
                         ->schema([
                             Select::make('daily_menu_item_id')
                                 ->label('Menu')
-                                ->options(function (Forms\Get $get) {
+                                ->options(function (Forms\Get $get, ?string $state = null) {
                                     $dailyMenuId = $get('../../daily_menu_id');
+                                    
+                                    // Jika tidak ada daily_menu_id tapi ada state (ID item yang sudah ada)
+                                    if (!$dailyMenuId && $state) {
+                                        // Cari daily_menu_item langsung berdasarkan ID
+                                        $dailyMenuItem = DailyMenuItem::find($state);
+                                        if ($dailyMenuItem) {
+                                            // Dapatkan daily_menu_id dan set ke form
+                                            $dailyMenuId = $dailyMenuItem->daily_menu_id;
+                                        }
+                                    }
+                                    
                                     if (!$dailyMenuId) {
                                         return [];
                                     }
@@ -110,35 +133,22 @@ class ProductionReportResource extends Resource
                                         ->get()
                                         ->mapWithKeys(function ($item) {
                                             $menuName = $item->menu->menu_name ?? 'Menu Tidak Ditemukan';
-                                            // $targetGroup = $item->targetGroup->name ?? '';
-                                            return [$item->id => "{$menuName} "];
+                                            $targetGroup = $item->targetGroup->name ?? '';
+                                            return [$item->id => "{$menuName} - {$targetGroup}"];
                                         });
                                 })
                                 ->required()
                                 ->disabled() // Disabled karena diisi otomatis
-                                ->dehydrated(),
-
-                            // Select::make('daily_menu_item_id')
-                            //     ->label('target group')
-                            //     ->options(function (Forms\Get $get) {
-                            //         $dailyMenuId = $get('../../daily_menu_id');
-                            //         if (!$dailyMenuId) {
-                            //             return [];
-                            //         }
-
-                            //         return \App\Models\DailyMenuItem::query()
-                            //             ->where('daily_menu_id', $dailyMenuId)
-                            //             ->with('menu')
-                            //             ->get()
-                            //             ->mapWithKeys(function ($item) {
-                            //                 // $menuName = $item->menu->menu_name ?? 'Menu Tidak Ditemukan';
-                            //                 $targetGroup = $item->targetGroup->name ?? '';
-                            //                 return [$item->id => "{$targetGroup}"];
-                            //             });
-                            //     })
-                            //     ->required()
-                            //     ->disabled() // Disabled karena diisi otomatis
-                            //     ->dehydrated(),
+                                ->dehydrated()
+                                ->afterStateHydrated(function ($component, $state, Forms\Set $set, $record = null) {
+                                    if ($state) {
+                                        // Dapatkan informasi daily menu item untuk populating fields lain
+                                        $dailyMenuItem = DailyMenuItem::find($state);
+                                        if ($dailyMenuItem) {
+                                            $set('target_qty', $dailyMenuItem->target_quantity ?? 0);
+                                        }
+                                    }
+                                }),
 
                             TextInput::make('target_qty')
                                 ->label('Target')
