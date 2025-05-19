@@ -30,6 +30,7 @@ class DisplayPanelProvider extends PanelProvider
             ->id('display')
             ->path('display')
             ->brandLogo(asset('images/1.svg'))
+            ->brandLogoHeight('3.5rem')
             ->colors([
                 'primary' => Color::Amber,
             ])

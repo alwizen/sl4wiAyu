@@ -11,7 +11,7 @@ class Recipient extends Model
         'name',
         'address',
         'phone',
-        'target_group_id',
+//        'target_group_id',
         'total_recipients'
     ];
 

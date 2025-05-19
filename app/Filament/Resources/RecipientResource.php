@@ -30,9 +30,9 @@ class RecipientResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Select::make('target_group_id')
-                    ->relationship('targetGroup', 'name')
-                    ->required(),
+//                Forms\Components\Select::make('target_group_id')
+//                    ->relationship('targetGroup', 'name')
+//                    ->required(),
                 Forms\Components\TextInput::make('phone')
                     ->tel()
                     ->required()
@@ -57,9 +57,9 @@ class RecipientResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phone')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('targetGroup.name')
-                    ->numeric()
-                    ->sortable(),
+//                Tables\Columns\TextColumn::make('targetGroup.name')
+//                    ->numeric()
+//                    ->sortable(),
                 Tables\Columns\TextColumn::make('total_recipients')
                     ->numeric()
                     ->sortable(),
@@ -78,7 +78,7 @@ class RecipientResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
-   Tables\Actions\DeleteAction::make(),
+                Tables\Actions\DeleteAction::make(),
 
             ])
             ->bulkActions([
