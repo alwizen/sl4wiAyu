@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Filament\Resources;
+
 use App\Filament\Resources\DeliveryResource\Pages;
 use App\Filament\Resources\DeliveryResource\RelationManagers;
 use App\Models\Delivery;
@@ -32,15 +34,15 @@ class DeliveryResource extends Resource implements HasShieldPermissions
         return $form
             ->schema([
                 Forms\Components\TextInput::make('delivery_number')
-                        ->label('No. Pengiriman')
-                        ->default(function() {
-                            $date = Carbon::now();
-                            $randomStr = Str::random(3);
-                            return 'SPPG-SLW/' . $date->format('d/m/Y') . '/' . strtoupper($randomStr);
-                        })
-                        ->disabled()
-                        ->dehydrated()
-                        ->required(),
+                    ->label('No. Pengiriman')
+                    ->default(function () {
+                        $date = Carbon::now();
+                        $randomStr = Str::random(3);
+                        return 'SPPG-SLW/' . $date->format('dmy') . '/' . strtoupper($randomStr);
+                    })
+                    ->disabled()
+                    ->dehydrated()
+                    ->required(),
                 Forms\Components\DatePicker::make('delivery_date')
                     ->default(now())
                     ->required(),
@@ -62,10 +64,10 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                     ->label('Status Pengiriman')
                     ->options([
                         'dikemas' => 'Dikemas',
+                        'disiapkan' => 'Disiapkan',
                         'dalam_perjalanan' => 'Dalam Perjalanan',
                         'terkirim' => 'Terkirim',
                         'selesai' => 'Selesai',
-                        'kembali' => 'Kembali',
                     ])
                     ->default('dikemas')
                     ->disabled()
@@ -73,19 +75,19 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                 DateTimePicker::make('prepared_at')
                     ->label('Disiapkan Pada')
                     ->disabled()
-                    ->visible(fn ($record) => $record && $record->prepared_at),
+                    ->visible(fn($record) => $record && $record->prepared_at),
                 DateTimePicker::make('shipped_at')
                     ->label('Dalam Perjalanan Pada')
                     ->disabled()
-                    ->visible(fn ($record) => $record && $record->shipped_at),
+                    ->visible(fn($record) => $record && $record->shipped_at),
                 DateTimePicker::make('received_at')
                     ->label('Diterima Pada')
                     ->disabled()
-                    ->visible(fn ($record) => $record && $record->received_at),
+                    ->visible(fn($record) => $record && $record->received_at),
                 DateTimePicker::make('returned_at')
                     ->label('Kembali Pada')
                     ->disabled()
-                    ->visible(fn ($record) => $record && $record->returned_at),
+                    ->visible(fn($record) => $record && $record->returned_at),
             ])
             ->columns(1);
     }
@@ -105,19 +107,21 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                     ->sortable()
                     ->label('Penerima'),
                 Tables\Columns\TextColumn::make('qty')
-                    ->label('Jumlah'),
+                    ->label('Jml')
+                    ->suffix(' Box'),
                 Tables\Columns\TextColumn::make('received_qty')
-                    ->label('Jumlah Diterima'),
-                  //  ->visible(fn ($record) => $record->received_qty !== null),
+                    ->label('Jml. Diterima')
+                    ->suffix(' Box'),
+                //  ->visible(fn ($record) => $record->received_qty !== null),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'dikemas' => 'secondary',
-                        'dalam_perjalanan' => 'gray',
-                        'terkirim' => 'warning',
-                        'selesai' => 'info',
-                        'kembali' => 'success',
-                        default => 'gray',
+                        'disiapkan' => 'secondary',
+                        'dalam_perjalanan' => 'warning',
+                        'terkirim' => 'info',
+                        'selesai' => 'success',
+                        default => 'info',
                     })
                     ->label('Status'),
                 Tables\Columns\TextColumn::make('prepared_at')
@@ -138,7 +142,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                 Tables\Columns\TextColumn::make('returned_at')
                     ->dateTime()
                     ->sortable()
-                    ->label('Dikembalikan Pada')
+                    ->label('Selesai Pada')
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
@@ -149,61 +153,11 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\Action::make('setPrepared')
-                    ->label('Disiapkan')
-                    ->icon('heroicon-o-check')
-                    ->color('gray')
-                    ->visible(fn (Delivery $record) => $record->status === 'dikemas' && is_null($record->prepared_at))
-                    ->action(function (Delivery $record) {
-                        $record->prepared_at = now();
-                        $record->save();
-                        
-                        Notification::make()
-                            ->title('Pengiriman berhasil ditandai sebagai Disiapkan')
-                            ->success()
-                            ->send();
-                    }),
-                Tables\Actions\Action::make('setShipped')
-                    ->label('Dalam Perjalanan')
-                    ->icon('heroicon-o-truck')
-                    ->color('warning')
-                    ->visible(fn (Delivery $record) => $record->status === 'dikemas')
-                    ->action(function (Delivery $record) {
-                        $record->status = 'dalam_perjalanan';
-                        $record->shipped_at = now();
-                        // Pastikan prepared_at juga diisi jika belum
-                        if (is_null($record->prepared_at)) {
-                            $record->prepared_at = now();
-                        }
-                        $record->save();
-                        
-                        Notification::make()
-                            ->title('Status berhasil diperbarui ke Dalam Perjalanan')
-                            ->success()
-                            ->send();
-                    }),
-                Tables\Actions\Action::make('setDelivered')
-                    ->label('Terkirim')
-                    ->icon('heroicon-o-check-circle')
-                    ->color('info')
-                    ->visible(fn (Delivery $record) => $record->status === 'dalam_perjalanan')
-                    ->action(function (Delivery $record) {
-                        $record->status = 'terkirim';
-                        $record->received_at = now();
-                        $record->save();
-                        
-                        Notification::make()
-                            ->title('Status berhasil diperbarui ke Terkirim')
-                            ->success()
-                            ->send();
-                    }),
                 Tables\Actions\Action::make('inputReceivedQty')
                     ->label('Input Jumlah Diterima')
                     ->icon('heroicon-o-clipboard-document-check')
                     ->color('success')
-                    ->visible(fn (Delivery $record) => $record->status === 'terkirim' && is_null($record->received_qty))
+                    ->visible(fn(Delivery $record) => $record->status === 'terkirim' && is_null($record->received_qty))
                     ->form([
                         TextInput::make('received_qty')
                             ->label('Jumlah Diterima')
@@ -215,43 +169,88 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                     ->action(function (Delivery $record, array $data) {
                         $record->received_qty = $data['received_qty'];
                         $record->save();
-                        
+
                         Notification::make()
                             ->title('Jumlah diterima berhasil disimpan')
                             ->success()
                             ->send();
                     }),
-                // Tables\Actions\Action::make('setCompleted')
-                //     ->label('Selesai')
-                //     ->icon('heroicon-o-check-badge')
-                //     ->color('success')
-                //     ->visible(fn (Delivery $record) => $record->status === 'terkirim' && !is_null($record->received_qty))
-                //     ->action(function (Delivery $record) {
-                //         $record->status = 'selesai';
-                //         $record->save();
-                        
-                //         Notification::make()
-                //             ->title('Status berhasil diperbarui ke Selesai')
-                //             ->success()
-                //             ->send();
-                //     }),
-                Tables\Actions\Action::make('setReturned')
-                    ->label('Kembali')
-                    ->icon('heroicon-o-arrow-uturn-left')
+                Tables\Actions\Action::make('setPrepared')
+                    ->label('Disiapkan')
+                    ->requiresConfirmation()
+                    ->icon('heroicon-o-check')
                     ->color('danger')
-                    ->visible(fn (Delivery $record) => in_array($record->status, ['dalam_perjalanan', 'terkirim']) && is_null($record->returned_at))
+                    ->visible(fn(Delivery $record) => $record->status === 'dikemas')
                     ->action(function (Delivery $record) {
-                        $record->status = 'kembali';
-                        $record->returned_at = now();
+                        $record->status = 'disiapkan';
+                        $record->prepared_at = now();
                         $record->save();
-                        
+
                         Notification::make()
-                            ->title('Status berhasil diperbarui ke Kembali')
+                            ->title('Pengiriman berhasil ditandai sebagai Disiapkan')
                             ->success()
                             ->send();
                     }),
+                Tables\Actions\Action::make('setShipped')
+                    ->label('Dalam Perjalanan')
+                    ->requiresConfirmation()
+                    ->icon('heroicon-o-truck')
+                    ->color('warning')
+                    ->visible(fn(Delivery $record) => $record->status === 'disiapkan')
+                    ->action(function (Delivery $record) {
+                        $record->status = 'dalam_perjalanan';
+                        $record->shipped_at = now();
+                        $record->save();
+
+                        Notification::make()
+                            ->title('Status berhasil diperbarui ke Dalam Perjalanan')
+                            ->success()
+                            ->send();
+                    }),
+
+                Tables\Actions\Action::make('setDelivered')
+                    ->label('Terkirim')
+                    ->icon('heroicon-o-check-circle')
+                    ->requiresConfirmation()
+                    ->color('info')
+                    ->visible(fn(Delivery $record) => $record->status === 'dalam_perjalanan')
+                    ->action(function (Delivery $record) {
+                        $record->status = 'terkirim';
+                        $record->received_at = now();
+                        $record->save();
+
+                        Notification::make()
+                            ->title('Status berhasil diperbarui ke Terkirim')
+                            ->success()
+                            ->send();
+                    }),
+
+
+                Tables\Actions\Action::make('setCompleted')
+                    ->label('Selesai')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->visible(fn(Delivery $record) => $record->status === 'terkirim' && !is_null($record->received_qty))
+                    ->action(function (Delivery $record) {
+                        $record->status = 'selesai';
+                        $record->returned_at = now();
+                        $record->save();
+
+                        Notification::make()
+                            ->title('Status berhasil diperbarui ke Selesai')
+                            ->success()
+                            ->send();
+                    }),
+
+                Tables\Actions\EditAction::make()
+                    ->label('')
+                    ->tooltip('Edit'),
+                Tables\Actions\DeleteAction::make()
+                    ->label('')
+                    ->tooltip('Hapus'),
                 Tables\Actions\Action::make('kirimWhatsApp')
-                    ->label('Kirim WhatsApp')
+                    ->label('')
+                    ->tooltip('Kirim pesan WhatsApp ke penerima pengiriman')
                     ->icon('heroicon-o-chat-bubble-left-ellipsis')
                     ->color('success')
                     ->action(function (Delivery $record) {
@@ -259,7 +258,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                         $formattedDate = Carbon::parse($record->delivery_date)->format('d/m/Y');
 
                         // Format status dalam bahasa Indonesia
-                        $statusIndonesia = match($record->status) {
+                        $statusIndonesia = match ($record->status) {
                             'dikemas' => 'Dikemas',
                             'dalam_perjalanan' => 'Dalam Perjalanan',
                             'terkirim' => 'Terkirim',
@@ -273,12 +272,12 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                             . "Tanggal: {$formattedDate}\n"
                             . "No. Order: {$record->delivery_number}\n"
                             . "Jumlah: {$record->qty}\n";
-                        
+
                         // Tambahkan jumlah diterima jika ada
                         if (!is_null($record->received_qty)) {
                             $message .= "Jumlah Diterima: {$record->received_qty}\n";
                         }
-                        
+
                         $message .= "Nama Sekolah: {$record->recipient->name}\n"
                             . "Status: {$statusIndonesia}";
 
@@ -293,8 +292,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                         if (strlen($phoneNumber) > 0) {
                             if (substr($phoneNumber, 0, 1) === '0') {
                                 $phoneNumber = '62' . substr($phoneNumber, 1);
-                            }
-                            // Jika nomor tidak dimulai dengan '+' atau '62', tambahkan '62'
+                            } // Jika nomor tidak dimulai dengan '+' atau '62', tambahkan '62'
                             elseif (substr($phoneNumber, 0, 1) !== '+' && substr($phoneNumber, 0, 2) !== '62') {
                                 $phoneNumber = '62' . $phoneNumber;
                             }

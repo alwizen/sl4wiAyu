@@ -24,9 +24,15 @@ class Delivery extends Model
         return $this->belongsTo(Recipient::class);
     }
 
+    // dikemas → disiapkan → dalam perjalanan → terkirim → selesai
     public function isPacking(): bool
     {
         return $this->status === 'dikemas';
+    }
+    public function isReady(): bool
+    {
+        return $this->status === 'disiapkan';
+
     }
     public function isDelivered(): bool
     {
@@ -38,7 +44,7 @@ class Delivery extends Model
     }
     public function isReturn(): bool
     {
-        return $this->status === 'kembali';
+        return $this->status === 'selesai';
     }
     public function markAsDelivered(): void
     {
