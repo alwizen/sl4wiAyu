@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DailyMenuItem extends Model
 {
-    protected $fillable = ['daily_menu_id', 'menu_id', 'target_group_id','target_quantity'];
+    protected $fillable = ['daily_menu_id', 'menu_id', 'target_group_id', 'target_quantity'];
 
     public function menu(): BelongsTo
     {
@@ -18,7 +18,7 @@ class DailyMenuItem extends Model
         return $this->belongsTo(TargetGroup::class);
     }
 
-    public function dailyMenu():BelongsTo
+    public function dailyMenu(): BelongsTo
     {
         return $this->belongsTo(DailyMenu::class);
     }

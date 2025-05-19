@@ -112,7 +112,7 @@ class Dashboard extends BaseDashboard
         $user = Auth::user();
         $name = $user ? $user->name : '';
 
-        return $greeting . ($name ? ', ' . $name : '');
+        return $greeting . ($name ? ', ' . $name . ' 👋' : '');
     }
 
     public function getRandomQuote(): array
@@ -121,20 +121,20 @@ class Dashboard extends BaseDashboard
     }
 
     // Menghapus DeliveryStatusTable dari header widgets
-//    protected function getHeaderWidgets(): array
-//    {
-//        return [
-//            // DeliveryStatusTable sudah dihapus dari sini
-//        ];
-//    }
+    //    protected function getHeaderWidgets(): array
+    //    {
+    //        return [
+    //            // DeliveryStatusTable sudah dihapus dari sini
+    //        ];
+    //    }
 
     // Tambahkan sebagai content widget untuk digunakan dalam template
-//    protected function getFooterWidgets(): array
-//    {
-//        return [
-//            DeliveryStatusTable::class
-//        ];
-//    }
+    protected function getFooterWidgets(): array
+    {
+        return [
+            DeliveryStatusTable::class
+        ];
+    }
 
     protected function getViewData(): array
     {

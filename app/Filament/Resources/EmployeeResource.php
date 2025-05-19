@@ -17,9 +17,11 @@ class EmployeeResource extends Resource
 {
     protected static ?string $model = Employee::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-briefcase';
+    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $navigationGroup = 'Relawan';
+
+    protected static ?string $navigationLabel = 'Karyawan';
 
     public static function form(Form $form): Form
     {
@@ -31,9 +33,11 @@ class EmployeeResource extends Resource
                 Forms\Components\TextInput::make('nik')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('department_id')
-                    ->required()
-                    ->numeric(),
+                Forms\Components\Select::make('department_id')
+                    ->relationship('department', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->required(),
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
@@ -41,9 +45,13 @@ class EmployeeResource extends Resource
                     ->tel()
                     ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('address')
+                Forms\Components\DatePicker::make('start_join')
+                    ->required(),
+                Forms\Components\Textarea::make('address')
                     ->maxLength(255)
-                    ->default(null),
+                    ->default(null)
+                    ->columnSpan('full'),
+
             ]);
     }
 
@@ -55,7 +63,7 @@ class EmployeeResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('nik')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('department_id')
+                Tables\Columns\TextColumn::make('department.name')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('name')
@@ -64,13 +72,17 @@ class EmployeeResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('address')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('start_join')
+                    ->date()
+                    ->sortable(),
             ])
             ->filters([
                 //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-   Tables\Actions\DeleteAction::make(),
+                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\DeleteAction::make(),
 
             ])
             ->bulkActions([
@@ -80,19 +92,10 @@ class EmployeeResource extends Resource
             ]);
     }
 
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
-
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListEmployees::route('/'),
-            'create' => Pages\CreateEmployee::route('/create'),
-            'edit' => Pages\EditEmployee::route('/{record}/edit'),
+            'index' => Pages\ManageEmployees::route('/'),
         ];
     }
 }

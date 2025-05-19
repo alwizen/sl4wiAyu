@@ -3,15 +3,26 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Employee extends Model
 {
-    //
+    protected $fillable = [
+        'nip',
+        'nik',
+        'department_id',
+        'name',
+        'phone',
+        'address',
+        'start_join',
+    ];
 
-    // add fillable
-    protected $fillable = [];
-    // add guaded
-    protected $guarded = ['id'];
-    // add hidden
-    protected $hidden = ['created_at', 'updated_at'];
+    protected $casts = [
+        'start_join' => 'date',
+    ];
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
 }

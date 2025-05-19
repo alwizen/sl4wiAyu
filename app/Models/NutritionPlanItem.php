@@ -27,4 +27,8 @@ class NutritionPlanItem extends Model
     {
         return $this->belongsTo(TargetGroup::class);
     }
+    public function nutritionPlan()
+    {
+        return $this->belongsTo(NutritionPlan::class);
+    }
 }

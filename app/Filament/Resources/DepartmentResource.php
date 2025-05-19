@@ -17,6 +17,10 @@ class DepartmentResource extends Resource
 {
     protected static ?string $model = Department::class;
 
+    protected static ?string $label = 'Departemen';
+
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationGroup = 'Relawan';
 
     protected static ?string $navigationIcon = 'heroicon-o-bookmark';
@@ -72,7 +76,7 @@ class DepartmentResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
-   Tables\Actions\DeleteAction::make(),
+                Tables\Actions\DeleteAction::make(),
 
             ])
             ->bulkActions([

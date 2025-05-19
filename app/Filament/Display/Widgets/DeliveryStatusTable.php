@@ -5,6 +5,7 @@ namespace App\Filament\Display\Widgets;
 use App\Models\DailyMenu;
 use App\Models\Delivery;
 use App\Models\ProductionReportItem;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Blueprint\Models\Column;
 use Filament\Tables;
 use Filament\Tables\Columns\ColumnGroup;
@@ -17,6 +18,8 @@ use Illuminate\Support\Facades\Log;
 
 class DeliveryStatusTable extends TableWidget
 {
+    use HasWidgetShield;
+
     protected static ?string $heading = 'Informasi Pengiriman Hari Ini';
 
     protected static ?int $sort = 3;

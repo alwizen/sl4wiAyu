@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use Filament\Pages\Page;
 use App\Models\Delivery;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -21,6 +22,8 @@ use Illuminate\Support\Str;
 class DeliveryToday extends Page implements HasTable
 {
     use InteractsWithTable;
+
+    use HasPageShield;
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
 
@@ -47,10 +50,10 @@ class DeliveryToday extends Page implements HasTable
                 TextColumn::make('delivery_number')
                     ->searchable()
                     ->label('No. Pengiriman'),
-//                TextColumn::make('delivery_date')
-//                    ->date()
-//                    ->sortable()
-//                    ->label('Tanggal Pengiriman'),
+                //                TextColumn::make('delivery_date')
+                //                    ->date()
+                //                    ->sortable()
+                //                    ->label('Tanggal Pengiriman'),
                 TextColumn::make('recipient.name')
                     ->sortable()
                     ->label('Penerima'),
@@ -177,7 +180,7 @@ class DeliveryToday extends Page implements HasTable
                             ->send();
                     }),
 
-               Action::make('setDelivered')
+                Action::make('setDelivered')
                     ->label('Terkirim')
                     ->icon('heroicon-o-check-circle')
                     ->requiresConfirmation()
@@ -211,7 +214,7 @@ class DeliveryToday extends Page implements HasTable
                             ->send();
                     }),
 
-               Action::make('kirimWhatsApp')
+                Action::make('kirimWhatsApp')
                     ->label('')
                     ->tooltip('Kirim pesan WhatsApp ke penerima pengiriman')
                     ->icon('heroicon-o-chat-bubble-left-ellipsis')
