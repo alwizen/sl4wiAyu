@@ -29,9 +29,9 @@ class DisplayPanelProvider extends PanelProvider
         return $panel
             ->id('display')
             ->path('display')
-            ->brandLogo(asset('images/ms_light.svg'))
+            ->brandLogo(asset('images/bgn.png'))
             ->brandLogoHeight('3.5rem')
-            ->darkModeBrandLogo(asset('images/ms_dark.svg'))
+            ->darkModeBrandLogo(asset('images/bgn.png'))
             ->favicon(asset('images/logo.svg'))
             ->colors([
                 'primary' => Color::Blue,

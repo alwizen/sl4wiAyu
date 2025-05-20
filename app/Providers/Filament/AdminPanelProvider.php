@@ -57,9 +57,9 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->brandLogo(asset('images/ms_light.svg'))
+            ->brandLogo(asset('images/slawi_light.svg'))
             ->brandLogoHeight('3.5rem')
-            ->darkModeBrandLogo(asset('images/ms_dark.svg'))
+            ->darkModeBrandLogo(asset('images/slawi_dark.svg'))
             ->favicon(asset('images/logo.svg'))
             ->path('')
             ->when($this->settings->login_enabled ?? true, fn($panel) => $panel->login(Login::class))
