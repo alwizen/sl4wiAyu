@@ -38,7 +38,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                     ->default(function () {
                         $date = Carbon::now();
                         $randomStr = Str::random(3);
-                        return 'SPPG-SLW/' . $date->format('dmy') . '/' . strtoupper($randomStr);
+                        return 'SPPG-MGS/' . $date->format('dmy') . '/' . strtoupper($randomStr);
                     })
                     ->disabled()
                     ->dehydrated()
