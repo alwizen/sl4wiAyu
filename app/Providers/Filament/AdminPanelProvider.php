@@ -29,7 +29,6 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Rupadana\ApiService\ApiServicePlugin;
-use Swis\Filament\Backgrounds\FilamentBackgroundsPlugin;
 
 use Laravel\Socialite\Contracts\User as SocialiteUserContract;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -57,10 +56,10 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->brandLogo(asset('images/ms_light.svg'))
+            ->brandLogo(fn () => setting('logo_light_url') ?? asset('images/ms_light.svg'))
             ->brandLogoHeight('3.5rem')
-            ->darkModeBrandLogo(asset('images/ms_dark.svg'))
-            ->favicon(asset('images/logo.svg'))
+            ->darkModeBrandLogo(fn () => setting('logo_dark_url') ?? asset('images/ms_dark.svg'))
+            ->favicon(fn () => setting('favicon_url') ?? asset('images/logo.svg'))
             ->path('')
             ->when($this->settings->login_enabled ?? true, fn($panel) => $panel->login(Login::class))
             // ->when($this->settings->registration_enabled ?? true, fn($panel) => $panel->registration())
@@ -115,8 +114,6 @@ class AdminPanelProvider extends PanelProvider
     private function getPlugins(): array
     {
         $plugins = [
-            FilamentBackgroundsPlugin::make()
-                ->showAttribution(false),
             ThemesPlugin::make(),
             FilamentShieldPlugin::make(),
             ApiServicePlugin::make(),

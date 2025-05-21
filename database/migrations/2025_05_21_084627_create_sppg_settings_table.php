@@ -11,12 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('schools', function (Blueprint $table) {
+        Schema::create('sppg_settings', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique();
-            $table->string('address')->nullable();
-            $table->string('phone');
-            $table->string('student_count');
+            $table->string('sppg_name')->nullable();
+            $table->text('address')->nullable();
+            $table->string('logo_light')->nullable();
+            $table->string('logo_dark')->nullable();
+            $table->string('favicon')->nullable();
             $table->timestamps();
         });
     }
@@ -26,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('schools');
+        Schema::dropIfExists('sppg_settings');
     }
 };
