@@ -10,6 +10,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -27,27 +29,36 @@ class InventoryResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('code')
-                    ->required()
-                    ->maxLength(255),
+                    ->label('Kode Barang')
+                    ->default(fn () => 'INV-' . str_pad(random_int(0, 99999), 5, '0', STR_PAD_LEFT))
+                    ->disabled()
+                    ->dehydrated()
+                    ->required(),
                 Forms\Components\DatePicker::make('purchase_date')
+                    ->label('Tanggal Pembelian')
                     ->required(),
                 Forms\Components\TextInput::make('name')
+                    ->label('Nama Barang')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('stock_init')
+                    ->label('Jumlah Awal')
                     ->required()
                     ->numeric()
                     ->label('Initial Stock'),
                 Forms\Components\TextInput::make('addition')
+                    ->label('Tambahan')
                     ->numeric()
                     ->disabled()
                     ->default(0)
                     ->label('Addition'),
                 Forms\Components\TextInput::make('damaged')
+                    ->label('Rusak')
                     ->numeric()
                     ->default(0)
                     ->label('Damaged'),
                 Forms\Components\TextInput::make('missing')
+                    ->label('Hilang')
                     ->numeric()
                     ->default(0)
                     ->label('Missing'),
@@ -60,24 +71,30 @@ class InventoryResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('code')
+                    ->label('Kode Barang')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('purchase_date')
+                    ->label('Tanggal Pembelian')
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('name')
+                    ->label('Nama Barang')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('stock_init')
+                    ->label('Jumlah Awal')
                     ->numeric()
                     ->label('Initial Stock')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('addition')
+                    ->label('Tambahan')
                     ->numeric()
-                    ->label('Addition')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('damaged')
+                    ->label('Rusak')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('missing')
+                    ->label('Hilang')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('stock_end')

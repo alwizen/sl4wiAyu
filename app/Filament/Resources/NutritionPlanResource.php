@@ -16,6 +16,8 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Hidden;
+use Filament\Tables\Actions\ExportBulkAction;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Filament\Forms\Get;
@@ -26,11 +28,11 @@ class NutritionPlanResource extends Resource
     protected static ?string $model = NutritionPlan::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-heart';
-    
+
     protected static ?string $navigationLabel = 'Rencana Nutrisi';
-    
+
     protected static ?string $modelLabel = 'Rencana Nutrisi';
-    
+
     protected static ?string $pluralModelLabel = 'Perencanaan Nutrisi';
 
     protected static ?string $navigationGroup = 'Ahli Gizi';
@@ -49,10 +51,10 @@ class NutritionPlanResource extends Resource
                             ->afterStateUpdated(function (Set $set, Get $get, $state) {
                                 // Cari DailyMenu berdasarkan tanggal yang dipilih
                                 $dailyMenu = DailyMenu::where('menu_date', $state)->first();
-                                
+
                                 if ($dailyMenu) {
                                     $set('daily_menu_id', $dailyMenu->id);
-                                    
+
                                     // Siapkan data untuk nutrition plan items dari daily menu items
                                     $nutritionPlanItems = $dailyMenu->dailyMenuItems->map(function ($item) {
                                         return [
@@ -62,11 +64,11 @@ class NutritionPlanResource extends Resource
                                             'protein' => 0,
                                             'fat' => 0,
                                             'carb' => 0,
-                                            'vitamin' => 0,
+                                            'serat' => 0,
                                             'mineral' => 0,
                                         ];
                                     })->toArray();
-                                    
+
                                     $set('nutrition_plan_items', $nutritionPlanItems);
                                 } else {
                                     $set('daily_menu_id', null);
@@ -80,24 +82,24 @@ class NutritionPlanResource extends Resource
                             ->label('Informasi Menu Harian')
                             ->content(function (Get $get) {
                                 $dailyMenuId = $get('daily_menu_id');
-                                
+
                                 if (!$dailyMenuId) {
                                     return 'Tidak ada menu harian untuk tanggal yang dipilih.';
                                 }
-                                
+
                                 $dailyMenu = DailyMenu::find($dailyMenuId);
-                                
+
                                 if (!$dailyMenu) {
                                     return 'Menu harian tidak ditemukan.';
                                 }
-                                
+
                                 $menuName = $dailyMenu->menu ? $dailyMenu->menu->menu_name : 'Tidak ada nama menu';
-                                
+
                                 return "Menu Harian: {$menuName}";
                             }),
                     ]),
 
-            
+
 
                 Section::make('Rencana Nutrisi')
                     ->schema([
@@ -111,9 +113,9 @@ class NutritionPlanResource extends Resource
                                     ->required()
                                     ->disabled()
                                     ->dehydrated(),
-                                
+
                                 Select::make('target_group_id')
-                                    ->label('Penerima Manfaat')
+                                    ->label('Penerima')
                                     ->options(TargetGroup::pluck('name', 'id'))
                                     ->required()
                                     ->disabled()
@@ -124,47 +126,56 @@ class NutritionPlanResource extends Resource
                                     ->numeric()
                                     ->suffix('gr')
                                     ->required(),
-                                
+
                                 TextInput::make('energy')
                                     ->label('Energi')
                                     ->numeric()
                                     ->suffix('kkal')
                                     ->required(),
-                                
+
                                 TextInput::make('protein')
                                     ->label('Protein')
                                     ->numeric()
                                     ->suffix('gr')
                                     ->required(),
-                                
+
                                 TextInput::make('fat')
                                     ->label('Lemak')
                                     ->numeric()
                                     ->suffix('gr')
                                     ->required(),
-                                
+
                                 TextInput::make('carb')
                                     ->label('Karbohidrat')
                                     ->numeric()
                                     ->required()
                                     ->suffix('gr'),
-                                
-                                // TextInput::make('vitamin')
-                                //     ->label('Vitamin')
-                                //     ->numeric()
-                                //     ->required(),
-                                
+
+                                 TextInput::make('serat')
+                                     ->label('Serat.pgn')
+                                     ->numeric()
+                                     ->suffix('gr')
+                                     ->required(),
+
                             ])
-                            ->columns(7),
+                            ->columns(8),
                     ]),
             ]);
     }
     public static function table(\Filament\Tables\Table $table): \Filament\Tables\Table
     {
         return $table
+            // Opsi 1: Grouping dengan tetap menampilkan detail
+            ->groups([
+                \Filament\Tables\Grouping\Group::make('nutrition_plan_date')
+                    ->label('Tanggal')
+                    ->date('d F Y')
+                    ->collapsible()
+                    ->orderQueryUsing(fn (\Illuminate\Database\Eloquent\Builder $query, string $direction) => $query->orderBy('nutrition_plan_date', $direction)),
+            ])
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('nutrition_plan_date')
-                    ->label('Tanggal Rencana Nutrisi')
+                    ->label('Tanggal')
                     ->date('d F Y')
                     ->sortable()
                     ->searchable(),
@@ -175,49 +186,78 @@ class NutritionPlanResource extends Resource
                 //     ->label('Jumlah Item')
                 //     ->counts('nutritionPlanItems')
                 //     ->sortable(),
-                    
+
                 // Kolom baru untuk menampilkan semua item menu
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.menu.menu_name')
-                    ->label('Daftar Menu')
+                    ->label('Menu')
                     ->listWithLineBreaks()
                     ->searchable(),
-                
+
                 // Kolom baru untuk menampilkan semua target grup
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.targetGroup.name')
-                    ->label('Daftar Penerima Manfaat')
+                    ->label('Penerima')
                     ->listWithLineBreaks()
                     ->searchable(),
-                
+
                 // Kolom untuk menampilkan nilai energi
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.energy')
                     ->label('Energi (kkal)')
                     ->listWithLineBreaks()
-                    ->formatStateUsing(fn (string $state): string => "{$state} kkal"),
-                
+                    ->summarize([
+                        \Filament\Tables\Columns\Summarizers\Sum::make()
+                            ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " kkal")
+                    ])
+                    ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " kkal"),
+
                 // Kolom untuk menampilkan nilai protein
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.protein')
                     ->label('Protein (gr)')
                     ->listWithLineBreaks()
-                    ->formatStateUsing(fn (string $state): string => "{$state} gr"),
-                
+                    ->summarize([
+                        \Filament\Tables\Columns\Summarizers\Sum::make()
+                            ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
+                    ])
+                    ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
+
                 // Kolom untuk menampilkan nilai lemak
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.fat')
                     ->label('Lemak (gr)')
                     ->listWithLineBreaks()
-                    ->formatStateUsing(fn (string $state): string => "{$state} gr"),
-                
+                    ->summarize([
+                        \Filament\Tables\Columns\Summarizers\Sum::make()
+                            ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
+                    ])
+                    ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
+
                 // Kolom untuk menampilkan nilai karbohidrat
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.carb')
-                    ->label('Karbohidrat (gr)')
+                    ->label('Karbo (gr)')
                     ->listWithLineBreaks()
-                    ->formatStateUsing(fn (string $state): string => "{$state} gr"),
-                
+                    ->summarize([
+                        \Filament\Tables\Columns\Summarizers\Sum::make()
+                            ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
+                    ])
+                    ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
+
+                \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.serat')
+                    ->label('Serat (gr)')
+                    ->listWithLineBreaks()
+                    ->summarize([
+                        \Filament\Tables\Columns\Summarizers\Sum::make()
+                            ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
+                    ])
+                    ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
+
                 // Kolom untuk menampilkan nilai netto
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.netto')
                     ->label('Netto (gr)')
                     ->listWithLineBreaks()
-                    ->formatStateUsing(fn (string $state): string => "{$state} gr"),
-                
+                    ->summarize([
+                        \Filament\Tables\Columns\Summarizers\Sum::make()
+                            ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
+                    ])
+                    ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
+
                 \Filament\Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat Pada')
                     ->dateTime('d F Y H:i')
@@ -250,15 +290,17 @@ class NutritionPlanResource extends Resource
                     }),
             ])
             ->actions([
-                \Filament\Tables\Actions\EditAction::make(),
-                \Filament\Tables\Actions\DeleteAction::make(),
+                \Filament\Tables\Actions\EditAction::make()->label(''),
+                \Filament\Tables\Actions\DeleteAction::make()->label(''),
             ])
             ->bulkActions([
                 \Filament\Tables\Actions\BulkActionGroup::make([
                     \Filament\Tables\Actions\DeleteBulkAction::make(),
+                    \pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction::make(),
                 ]),
             ])
             ->defaultSort('nutrition_plan_date', 'desc');
+        // Hapus ->groupsOnly() agar individual rows tetap tampil
     }
 
     public static function getPages(): array

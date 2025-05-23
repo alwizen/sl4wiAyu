@@ -20,7 +20,7 @@ class MenuResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-bars-4';
 
     protected static ?string $navigationGroup = 'Ahli Gizi';
-    
+
     protected static ?string $navigationLabel = 'Daftar Menu';
 
     public static function form(Form $form): Form
@@ -42,9 +42,9 @@ class MenuResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('menu_name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('targetGroup.name')
-                    ->numeric()
-                    ->sortable(),
+//                Tables\Columns\TextColumn::make('targetGroup.name')
+//                    ->numeric()
+//                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -60,7 +60,6 @@ class MenuResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
-   Tables\Actions\DeleteAction::make(),
 
             ])
             ->bulkActions([

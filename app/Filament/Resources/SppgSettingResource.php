@@ -17,7 +17,9 @@ class SppgSettingResource extends Resource
 {
     protected static ?string $model = SppgSetting::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-cog';
+
+    protected static ?string $navigationGroup = 'Settings';
 
     public static function form(Form $form): Form
     {
@@ -48,11 +50,11 @@ class SppgSettingResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('sppg_name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('logo_light')
+                Tables\Columns\ImageColumn::make('logo_light')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('logo_dark')
+                Tables\Columns\ImageColumn::make('logo_dark')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('favicon')
+                Tables\Columns\ImageColumn::make('favicon')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()

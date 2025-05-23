@@ -46,23 +46,23 @@ class DailyMenuResource extends Resource
                                 ->preload()
                                 ->searchable()
                                 ->getOptionLabelUsing(fn ($value): ?string => Menu::find($value)?->menu_name)
-                                ->options(function (Forms\Get $get, ?Model $record, $context): array {
-                                    // Mendapatkan semua menu
-                                    $allMenus = Menu::pluck('menu_name', 'id')->toArray();
-
-                                    // Mendapatkan ID repeater saat ini
-                                    $currentRepeaterItemId = $context;
-
-                                    // Mendapatkan semua nilai menu_id yang sudah dipilih di repeater items
-                                    $selectedMenuIds = collect($get('../*.menu_id') ?? [])
-                                        ->filter(fn ($menuId, $repeaterItemId) => $repeaterItemId != $currentRepeaterItemId && $menuId)
-                                        ->toArray();
-
-                                    // Filter menu yang sudah dipilih
-                                    return collect($allMenus)
-                                        ->reject(fn ($label, $id) => in_array($id, $selectedMenuIds))
-                                        ->toArray();
-                                })
+//                                ->options(function (Forms\Get $get, ?Model $record, $context): array {
+//                                    // Mendapatkan semua menu
+//                                    $allMenus = Menu::pluck('menu_name', 'id')->toArray();
+//
+//                                    // Mendapatkan ID repeater saat ini
+//                                    $currentRepeaterItemId = $context;
+//
+//                                    // Mendapatkan semua nilai menu_id yang sudah dipilih di repeater items
+//                                    $selectedMenuIds = collect($get('../*.menu_id') ?? [])
+//                                        ->filter(fn ($menuId, $repeaterItemId) => $repeaterItemId != $currentRepeaterItemId && $menuId)
+//                                        ->toArray();
+//
+//                                    // Filter menu yang sudah dipilih
+//                                    return collect($allMenus)
+//                                        ->reject(fn ($label, $id) => in_array($id, $selectedMenuIds))
+//                                        ->toArray();
+//                                })
                                 ->createOptionForm([
                                     Forms\Components\TextInput::make('menu_name')->label('Nama Menu')->required(),
                                 ]),

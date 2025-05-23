@@ -15,7 +15,7 @@ class NutritionPlanItem extends Model
         'protein',
         'fat',
         'carb',
-        'vitamin',
+        'serat',
         'netto'
         ];
 

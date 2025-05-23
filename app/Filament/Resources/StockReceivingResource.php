@@ -40,7 +40,11 @@ class StockReceivingResource extends Resource
                     // Tambahkan field untuk purchase_order_id
                     Select::make('purchase_order_id')
                         ->label('Purchase Order')
-                        ->relationship('purchaseOrder', 'order_number') // Sesuaikan dengan kolom yang menampilkan nomor PO
+                        ->relationship(
+                            name: 'purchaseOrder',
+                            titleAttribute: 'order_number',
+                            modifyQueryUsing: fn (Builder $query) => $query->where('order_date', '>=', now()->subDays(10))
+                        )
                         ->required(),
 
                     Repeater::make('stockReceivingItems')
@@ -49,6 +53,8 @@ class StockReceivingResource extends Resource
                         ->schema([
                             Select::make('warehouse_item_id')
                                 ->label('Item Gudang')
+                                ->searchable()
+                                ->preload()
                                 ->options(WarehouseItem::all()->pluck('name', 'id'))
                                 ->required(),
                             TextInput::make('received_quantity')
