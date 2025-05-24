@@ -11,6 +11,7 @@ class CashTransaction extends Model
         'transaction_code',
         'transaction_date',
         'category_id',
+        'purchase_order_id',
         'amount',
         'description',
         'methode',
@@ -19,5 +20,9 @@ class CashTransaction extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(CashCategory::class);
+    }
+    public function purchaseOrder(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrder::class);
     }
 }

@@ -28,7 +28,8 @@ class DatabaseSeeder extends Seeder
                 TargetGroupSeeder::class,
                 WarehouseItemSeeder::class,
                 DepartmentSeeder::class,
-                RecipientSeeder::class
+                RecipientSeeder::class,
+                CashCategorySeeder::class
             ]
         );
     }

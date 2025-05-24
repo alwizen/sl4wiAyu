@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('transaction_code')->unique();
             $table->date('transaction_date');
             $table->foreignId('category_id')->constrained('cash_categories')->onDelete('cascade');
+            $table->foreignId('purchase_order_id')->nullable()->constrained()->nullOnDelete();
             $table->decimal('amount', 15, 2);
             $table->string('description')->nullable();
             $table->string('methode');

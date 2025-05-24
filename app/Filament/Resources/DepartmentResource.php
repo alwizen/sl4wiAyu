@@ -19,7 +19,7 @@ class DepartmentResource extends Resource
 
     protected static ?string $label = 'Departemen';
 
-    protected static bool $shouldRegisterNavigation = false;
+protected static bool $shouldRegisterNavigation = true;
 
     protected static ?string $navigationGroup = 'Relawan';
 
@@ -35,6 +35,7 @@ class DepartmentResource extends Resource
                 Forms\Components\TextInput::make('salary')
                     ->required()
                     ->numeric()
+                    ->suffix(' /Hari')
                     ->default(0),
                 Forms\Components\TextInput::make('allowance')
                     ->required()
@@ -54,6 +55,8 @@ class DepartmentResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('salary')
                     ->numeric()
+                    ->suffix(' /Hari')
+                    ->prefix('Rp. ')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('allowance')
                     ->numeric()

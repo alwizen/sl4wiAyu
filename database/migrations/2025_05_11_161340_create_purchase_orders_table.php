@@ -17,7 +17,10 @@ return new class extends Migration
             $table->date('order_date');
             $table->foreignId('supplier_id')->constrained();
             $table->decimal('total_amount', 10, 2);
-            $table->enum('status', ['Pending', 'Ordered', 'Approved', 'Rejected', 'Paid']); 
+            $table->enum('status', ['Pending', 'Ordered', 'Approved', 'Rejected',]); 
+            $table->text('note')->nullable();
+            $table->enum('payment_status', ['Paid', 'Unpaid', 'Partially Paid'])->default('Unpaid');
+            $table->date('payment_date')->nullable();
             $table->timestamps();
         });
     }

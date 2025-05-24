@@ -12,12 +12,15 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Str;
 
 class CashCategoryResource extends Resource
 {
     protected static ?string $model = CashCategory::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+//    protected static ?string $navigationIcon = 'heroicon-o-database';
+
+    protected static ?string $navigationGroup = 'Keuangan';
 
     public static function form(Form $form): Form
     {
@@ -25,7 +28,17 @@ class CashCategoryResource extends Resource
             ->schema([
                 Forms\Components\TextInput::make('name')
                     ->label('Nama Kategori')
-                    ->maxLength(255),
+                    ->required()
+                    ->reactive()
+                    ->afterStateUpdated(function (callable $set, $state) {
+                        $set('slug', Str::slug($state));
+                    }),
+
+                Forms\Components\TextInput::make('slug')
+                    ->required()
+                    ->unique(ignoreRecord: true)
+                    ->disabled(),
+
                 Forms\Components\Select::make('type')
                     ->required()
                     ->label('Tipe Kategori')
@@ -42,7 +55,14 @@ class CashCategoryResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('type'),
+                Tables\Columns\TextColumn::make('slug'),
+
+                Tables\Columns\TextColumn::make('type')
+                    ->badge()
+                    ->colors([
+                        'success' => 'income',
+                        'danger' => 'expense',
+                    ]),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -57,7 +77,6 @@ class CashCategoryResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
                 Tables\Actions\DeleteAction::make(),
 
             ])

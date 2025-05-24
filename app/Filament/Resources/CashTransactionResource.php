@@ -4,7 +4,9 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CashTransactionResource\Pages;
 use App\Filament\Resources\CashTransactionResource\RelationManagers;
+use App\Models\CashCategory;
 use App\Models\CashTransaction;
+use App\Models\PurchaseOrder;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -21,7 +23,10 @@ class CashTransactionResource extends Resource
 {
     protected static ?string $model = CashTransaction::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+//    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    protected static ?string $navigationGroup = 'Keuangan';
+
 
     public static function form(Form $form): Form
     {
@@ -42,7 +47,7 @@ class CashTransactionResource extends Resource
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Kategori & Jumlah')
+                    Forms\Components\Section::make('Kategori & Jumlah')
                     ->schema([
                         Forms\Components\Select::make('category_type')
                             ->label('Tipe Kategori')
@@ -57,29 +62,47 @@ class CashTransactionResource extends Resource
                             ->label('Kategori')
                             ->options(function (callable $get) {
                                 $type = $get('category_type');
+                                if (!$type) return [];
 
-                                if (!$type) {
-                                    return [];
-                                }
-
-                                return \App\Models\CashCategory::where('type', $type)
+                                return CashCategory::where('type', $type)
                                     ->pluck('name', 'id');
                             })
                             ->searchable()
                             ->preload()
-                            ->required()
-                            ->createOptionForm([
-                                Forms\Components\TextInput::make('name')
-                                    ->label('Nama Kategori')
-                                    ->maxLength(255),
-                                Forms\Components\Select::make('type')
-                                    ->required()
-                                    ->label('Tipe Kategori')
-                                    ->options([
-                                        'income' => 'Pemasukan',
-                                        'expense' => 'Pengeluaran',
-                                    ]),
-                            ]),
+                            ->reactive()
+                            ->required(),
+
+                        Forms\Components\Select::make('purchase_order_id')
+                            ->label('Nomor Purchase Order')
+                            ->options(function () {
+                                return PurchaseOrder::where('payment_status', 'paid')
+                                    ->orderBy('order_date', 'desc')
+                                    ->get()
+                                    ->mapWithKeys(fn($po) => [
+                                        $po->id => "{$po->order_number} - {$po->order_date->format('d M Y')}"
+                                    ]);
+                            })
+                            ->searchable()
+                            ->preload()
+                            ->reactive()
+                            ->hidden(function (callable $get) {
+                                $type = $get('category_type');
+                                $categoryId = $get('category_id');
+
+                                if ($type !== 'expense' || !$categoryId) {
+                                    return true;
+                                }
+
+                                $category = CashCategory::find($categoryId);
+                                return $category?->slug !== 'pembayaran-po';
+                            })
+                            ->afterStateUpdated(function (callable $set, $state) {
+                                $po = PurchaseOrder::find($state);
+                                if ($po) {
+                                    $set('amount', $po->total_amount);
+                                }
+                            }),
+
                         Forms\Components\TextInput::make('amount')
                             ->required()
                             ->prefix('Rp')
@@ -129,11 +152,14 @@ class CashTransactionResource extends Resource
                 Tables\Columns\TextColumn::make('amount')
                     ->label('Jumlah')
                     ->numeric()
-                    ->summarize(Sum::make())
                     ->prefix('Rp')
-                    ->visible(fn(Builder $query): bool => $query->exists())
+                    ->summarize([
+                        Sum::make()
+                            ->label('Total')
+                            ->numeric()
+                            ->prefix('Rp')
+                    ])
                     ->sortable(),
-
                 Tables\Columns\TextColumn::make('methode')
                     ->label('Pembayaran')
                     ->searchable(),
@@ -146,12 +172,64 @@ class CashTransactionResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-
-
+            ->groups([
+                Tables\Grouping\Group::make('category.type')
+                    ->label('Tipe Kategori')
+                    ->collapsible()
+                    ->titlePrefixedWithLabel(false)
+                    ->getTitleFromRecordUsing(fn($record) => match($record->category->type) {
+                        'income' => '💰 Pemasukan',
+                        'expense' => '💸 Pengeluaran',
+                        default => $record->category->type
+                    }),
+            ])
+            ->defaultGroup('category.type')
+            ->groupedBulkActions([
+                Tables\Actions\DeleteBulkAction::make(),
+                ExportBulkAction::make(),
+            ])
             ->filters([
-                SelectFilter::make('category')
-                    ->relationship('category', 'type'),
+                SelectFilter::make('category_type')
+                    ->label('Tipe Kategori')
+                    ->options([
+                        'income' => 'Pemasukan',
+                        'expense' => 'Pengeluaran',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['value'],
+                            fn (Builder $query, $value): Builder => $query->whereHas('category', fn (Builder $query) => $query->where('type', $value))
+                        );
+                    }),
 
+                Tables\Filters\Filter::make('transaction_date')
+                    ->form([
+                        Forms\Components\DatePicker::make('date_from')
+                            ->label('Dari Tanggal'),
+                        Forms\Components\DatePicker::make('date_until')
+                            ->label('Sampai Tanggal'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['date_from'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('transaction_date', '>=', $date),
+                            )
+                            ->when(
+                                $data['date_until'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('transaction_date', '<=', $date),
+                            );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if ($data['date_from'] ?? null) {
+                            $indicators[] = 'Dari: ' . \Carbon\Carbon::parse($data['date_from'])->format('d M Y');
+                        }
+                        if ($data['date_until'] ?? null) {
+                            $indicators[] = 'Sampai: ' . \Carbon\Carbon::parse($data['date_until'])->format('d M Y');
+                        }
+                        return $indicators;
+                    }),
             ])
             ->actions([
                 ActionGroup::make([
@@ -163,7 +241,6 @@ class CashTransactionResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     ExportBulkAction::make()
-
                 ]),
             ]);
     }

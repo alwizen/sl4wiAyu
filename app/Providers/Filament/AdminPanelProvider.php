@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Display\Widgets\DeliveryStatusTable;
 use App\Filament\Pages\Login;
+use App\Filament\Widgets\CashTransactionStats;
 use App\Models\User;
 use App\Settings\KaidoSetting;
 use Filament\Http\Middleware\Authenticate;
@@ -84,7 +85,8 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                DeliveryStatusTable::class
+                DeliveryStatusTable::class,
+                CashTransactionStats::class
                 // Widgets\AccountWidget::class,
                 // Widgets\FilamentInfoWidget::class,
             ])

@@ -9,5 +9,6 @@ class CashCategory extends Model
     protected $fillable = [
         'name',
         'type',
+        'slug'
     ];
 }
