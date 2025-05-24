@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Filament\Tables\Actions\ActionGroup;
 
 class NutritionPlanResource extends Resource
 {
@@ -121,7 +122,7 @@ class NutritionPlanResource extends Resource
                                     ->disabled()
                                     ->dehydrated(),
 
-                                    TextInput::make('netto')
+                                TextInput::make('netto')
                                     ->label('Netto')
                                     ->numeric()
                                     ->suffix('gr')
@@ -151,11 +152,11 @@ class NutritionPlanResource extends Resource
                                     ->required()
                                     ->suffix('gr'),
 
-                                 TextInput::make('serat')
-                                     ->label('Serat.pgn')
-                                     ->numeric()
-                                     ->suffix('gr')
-                                     ->required(),
+                                TextInput::make('serat')
+                                    ->label('Serat.pgn')
+                                    ->numeric()
+                                    ->suffix('gr')
+                                    ->required(),
 
                             ])
                             ->columns(8),
@@ -171,7 +172,7 @@ class NutritionPlanResource extends Resource
                     ->label('Tanggal')
                     ->date('d F Y')
                     ->collapsible()
-                    ->orderQueryUsing(fn (\Illuminate\Database\Eloquent\Builder $query, string $direction) => $query->orderBy('nutrition_plan_date', $direction)),
+                    ->orderQueryUsing(fn(\Illuminate\Database\Eloquent\Builder $query, string $direction) => $query->orderBy('nutrition_plan_date', $direction)),
             ])
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('nutrition_plan_date')
@@ -205,9 +206,9 @@ class NutritionPlanResource extends Resource
                     ->listWithLineBreaks()
                     ->summarize([
                         \Filament\Tables\Columns\Summarizers\Sum::make()
-                            ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " kkal")
+                            ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " kkal")
                     ])
-                    ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " kkal"),
+                    ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " kkal"),
 
                 // Kolom untuk menampilkan nilai protein
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.protein')
@@ -215,9 +216,9 @@ class NutritionPlanResource extends Resource
                     ->listWithLineBreaks()
                     ->summarize([
                         \Filament\Tables\Columns\Summarizers\Sum::make()
-                            ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
+                            ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
                     ])
-                    ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
+                    ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
 
                 // Kolom untuk menampilkan nilai lemak
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.fat')
@@ -225,9 +226,9 @@ class NutritionPlanResource extends Resource
                     ->listWithLineBreaks()
                     ->summarize([
                         \Filament\Tables\Columns\Summarizers\Sum::make()
-                            ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
+                            ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
                     ])
-                    ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
+                    ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
 
                 // Kolom untuk menampilkan nilai karbohidrat
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.carb')
@@ -235,18 +236,18 @@ class NutritionPlanResource extends Resource
                     ->listWithLineBreaks()
                     ->summarize([
                         \Filament\Tables\Columns\Summarizers\Sum::make()
-                            ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
+                            ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
                     ])
-                    ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
+                    ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
 
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.serat')
                     ->label('Serat (gr)')
                     ->listWithLineBreaks()
                     ->summarize([
                         \Filament\Tables\Columns\Summarizers\Sum::make()
-                            ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
+                            ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
                     ])
-                    ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
+                    ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
 
                 // Kolom untuk menampilkan nilai netto
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.netto')
@@ -254,9 +255,9 @@ class NutritionPlanResource extends Resource
                     ->listWithLineBreaks()
                     ->summarize([
                         \Filament\Tables\Columns\Summarizers\Sum::make()
-                            ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
+                            ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
                     ])
-                    ->formatStateUsing(fn (string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
+                    ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
 
                 \Filament\Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat Pada')
@@ -281,17 +282,19 @@ class NutritionPlanResource extends Resource
                         return $query
                             ->when(
                                 $data['dari_tanggal'],
-                                fn (\Illuminate\Database\Eloquent\Builder $query, $date): \Illuminate\Database\Eloquent\Builder => $query->whereDate('nutrition_plan_date', '>=', $date),
+                                fn(\Illuminate\Database\Eloquent\Builder $query, $date): \Illuminate\Database\Eloquent\Builder => $query->whereDate('nutrition_plan_date', '>=', $date),
                             )
                             ->when(
                                 $data['sampai_tanggal'],
-                                fn (\Illuminate\Database\Eloquent\Builder $query, $date): \Illuminate\Database\Eloquent\Builder => $query->whereDate('nutrition_plan_date', '<=', $date),
+                                fn(\Illuminate\Database\Eloquent\Builder $query, $date): \Illuminate\Database\Eloquent\Builder => $query->whereDate('nutrition_plan_date', '<=', $date),
                             );
                     }),
             ])
             ->actions([
-                \Filament\Tables\Actions\EditAction::make()->label(''),
-                \Filament\Tables\Actions\DeleteAction::make()->label(''),
+                ActionGroup::make([
+                    \Filament\Tables\Actions\EditAction::make(),
+                    \Filament\Tables\Actions\DeleteAction::make(),
+                ]),
             ])
             ->bulkActions([
                 \Filament\Tables\Actions\BulkActionGroup::make([

@@ -8,9 +8,11 @@ use App\Models\PurchaseOrder;
 use App\Models\StockReceiving;
 use App\Models\WarehouseItem;
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -37,13 +39,17 @@ class StockReceivingResource extends Resource
         return $form->schema([
             Section::make('Daftar Penerimaan Barang')
                 ->schema([
+                    DatePicker::make('received_date')
+                        ->label('Tanggal Penerimaan')
+                        ->default(now())
+                        ->required(),
                     // Tambahkan field untuk purchase_order_id
                     Select::make('purchase_order_id')
                         ->label('Purchase Order')
                         ->relationship(
                             name: 'purchaseOrder',
                             titleAttribute: 'order_number',
-                            modifyQueryUsing: fn (Builder $query) => $query->where('order_date', '>=', now()->subDays(10))
+                            modifyQueryUsing: fn(Builder $query) => $query->where('order_date', '>=', now()->subDays(10))
                         )
                         ->required(),
 
@@ -63,6 +69,10 @@ class StockReceivingResource extends Resource
                                 ->required(),
                         ])
                         ->columns(2),
+                    Textarea::make('note')
+                        ->label('Catatan')
+                        ->rows(3)
+                        ->placeholder('Masukkan catatan jika ada'),
                 ]),
         ]);
     }

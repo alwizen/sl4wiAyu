@@ -18,6 +18,7 @@ use Illuminate\Support\Str;
 use Filament\Notifications\Notification;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Tables\Actions\ActionGroup;
 
 class DeliveryResource extends Resource implements HasShieldPermissions
 {
@@ -242,68 +243,69 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                             ->send();
                     }),
 
-                Tables\Actions\EditAction::make()
-                    ->label('')
-                    ->tooltip('Edit'),
-                Tables\Actions\DeleteAction::make()
-                    ->label('')
-                    ->tooltip('Hapus'),
-                Tables\Actions\Action::make('kirimWhatsApp')
-                    ->label('')
-                    ->tooltip('Kirim pesan WhatsApp ke penerima pengiriman')
-                    ->icon('heroicon-o-chat-bubble-left-ellipsis')
-                    ->color('success')
-                    ->action(function (Delivery $record) {
-                        // Format tanggal untuk pesan
-                        $formattedDate = Carbon::parse($record->delivery_date)->format('d/m/Y');
+                ActionGroup::make([
+                    Tables\Actions\EditAction::make()
 
-                        // Format status dalam bahasa Indonesia
-                        $statusIndonesia = match ($record->status) {
-                            'dikemas' => 'Dikemas',
-                            'dalam_perjalanan' => 'Dalam Perjalanan',
-                            'terkirim' => 'Terkirim',
-                            'selesai' => 'Selesai',
-                            'kembali' => 'Kembali',
-                            default => $record->status,
-                        };
+                        ->tooltip('Edit'),
+                    Tables\Actions\DeleteAction::make()
+                        ->tooltip('Hapus'),
+                    Tables\Actions\Action::make('kirimWhatsApp')
+                        ->label('Kirim WhatsApp')
+                        ->tooltip('Kirim pesan WhatsApp ke penerima pengiriman')
+                        ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                        ->color('success')
+                        ->action(function (Delivery $record) {
+                            // Format tanggal untuk pesan
+                            $formattedDate = Carbon::parse($record->delivery_date)->format('d/m/Y');
 
-                        // Format pesan WhatsApp
-                        $message = "Informasi Pengiriman:\n"
-                            . "Tanggal: {$formattedDate}\n"
-                            . "No. Order: {$record->delivery_number}\n"
-                            . "Jumlah: {$record->qty}\n";
+                            // Format status dalam bahasa Indonesia
+                            $statusIndonesia = match ($record->status) {
+                                'dikemas' => 'Dikemas',
+                                'dalam_perjalanan' => 'Dalam Perjalanan',
+                                'terkirim' => 'Terkirim',
+                                'selesai' => 'Selesai',
+                                'kembali' => 'Kembali',
+                                default => $record->status,
+                            };
 
-                        // Tambahkan jumlah diterima jika ada
-                        if (!is_null($record->received_qty)) {
-                            $message .= "Jumlah Diterima: {$record->received_qty}\n";
-                        }
+                            // Format pesan WhatsApp
+                            $message = "Informasi Pengiriman:\n"
+                                . "Tanggal: {$formattedDate}\n"
+                                . "No. Order: {$record->delivery_number}\n"
+                                . "Jumlah: {$record->qty}\n";
 
-                        $message .= "Nama Sekolah: {$record->recipient->name}\n"
-                            . "Status: {$statusIndonesia}";
-
-                        // Encode pesan untuk URL WhatsApp
-                        $encodedMessage = urlencode($message);
-
-                        // Ambil nomor WhatsApp penerima
-                        $phoneNumber = $record->recipient->phone ?? '';
-
-                        // Format nomor telepon ke format internasional
-                        // Jika nomor dimulai dengan '0', ganti dengan kode negara Indonesia (62)
-                        if (strlen($phoneNumber) > 0) {
-                            if (substr($phoneNumber, 0, 1) === '0') {
-                                $phoneNumber = '62' . substr($phoneNumber, 1);
-                            } // Jika nomor tidak dimulai dengan '+' atau '62', tambahkan '62'
-                            elseif (substr($phoneNumber, 0, 1) !== '+' && substr($phoneNumber, 0, 2) !== '62') {
-                                $phoneNumber = '62' . $phoneNumber;
+                            // Tambahkan jumlah diterima jika ada
+                            if (!is_null($record->received_qty)) {
+                                $message .= "Jumlah Diterima: {$record->received_qty}\n";
                             }
 
-                            // Hapus karakter '+' jika ada
-                            $phoneNumber = str_replace('+', '', $phoneNumber);
-                        }
+                            $message .= "Nama Sekolah: {$record->recipient->name}\n"
+                                . "Status: {$statusIndonesia}";
 
-                        // Redirect ke WhatsApp dengan pesan yang sudah disiapkan
-                        return redirect()->away("https://wa.me/{$phoneNumber}?text={$encodedMessage}");
-                    })
+                            // Encode pesan untuk URL WhatsApp
+                            $encodedMessage = urlencode($message);
+
+                            // Ambil nomor WhatsApp penerima
+                            $phoneNumber = $record->recipient->phone ?? '';
+
+                            // Format nomor telepon ke format internasional
+                            // Jika nomor dimulai dengan '0', ganti dengan kode negara Indonesia (62)
+                            if (strlen($phoneNumber) > 0) {
+                                if (substr($phoneNumber, 0, 1) === '0') {
+                                    $phoneNumber = '62' . substr($phoneNumber, 1);
+                                } // Jika nomor tidak dimulai dengan '+' atau '62', tambahkan '62'
+                                elseif (substr($phoneNumber, 0, 1) !== '+' && substr($phoneNumber, 0, 2) !== '62') {
+                                    $phoneNumber = '62' . $phoneNumber;
+                                }
+
+                                // Hapus karakter '+' jika ada
+                                $phoneNumber = str_replace('+', '', $phoneNumber);
+                            }
+
+                            // Redirect ke WhatsApp dengan pesan yang sudah disiapkan
+                            return redirect()->away("https://wa.me/{$phoneNumber}?text={$encodedMessage}");
+                        })
+                ])
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

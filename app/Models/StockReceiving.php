@@ -8,9 +8,10 @@ class StockReceiving extends Model
 {
     protected $fillable = [
         'purchase_order_id',
+        'received_date',
+        'note'
     ];
 
-    protected $hidden = ['created_at', 'updated_at'];
 
     public function purchaseOrder()
     {

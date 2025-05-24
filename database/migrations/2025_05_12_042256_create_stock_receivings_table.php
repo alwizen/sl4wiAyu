@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('stock_receivings', function (Blueprint $table) {
             $table->id();
+            $table->date('received_date')->nullable();
+            $table->string('note')->nullable();
             $table->foreignId('purchase_order_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
