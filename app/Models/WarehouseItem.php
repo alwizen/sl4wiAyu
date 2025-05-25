@@ -33,4 +33,8 @@ class WarehouseItem extends Model
     //     $item->quantity += $receivedQuantity;
     //     $item->save();
     // }
+    public function purchaseOrderItems()
+{
+    return $this->hasMany(PurchaseOrderItem::class, 'item_id');
+}
 }

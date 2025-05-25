@@ -16,6 +16,11 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Notifications\Notification;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
+use Filament\Tables\Actions\DeleteAction;
+
 
 class WarehouseItemResource extends Resource
 {
@@ -108,15 +113,85 @@ class WarehouseItemResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-
-            ])
-            ->bulkActions([
-//                Tables\Actions\BulkActionGroup::make([
-//                    Tables\Actions\DeleteBulkAction::make(),
-//                ]),
-            ]);
-    }
+                DeleteAction::make()
+                ->before(function (DeleteAction $action, WarehouseItem $record) {
+                    // Cek apakah item masih digunakan
+                    $relatedCount = DB::table('purchase_order_items')
+                        ->where('item_id', $record->id)
+                        ->count();
+                    
+                    if ($relatedCount > 0) {
+                        // Batalkan action dan tampilkan notifikasi
+                        Notification::make()
+                            ->title('Tidak dapat menghapus item')
+                            ->body("Item '{$record->name}' masih terkait dengan {$relatedCount} purchase order. Hapus purchase order terkait terlebih dahulu.")
+                            ->danger()
+                            ->duration(8000)
+                            ->send();
+                        
+                        // Batalkan action
+                        $action->cancel();
+                    }
+                })
+                ->action(function (WarehouseItem $record) {
+                    try {
+                        $record->delete();
+                        
+                        Notification::make()
+                            ->title('Item berhasil dihapus')
+                            ->success()
+                            ->send();
+                            
+                    } catch (QueryException $e) {
+                        if ($e->getCode() == 23000) {
+                            Notification::make()
+                                ->title('Tidak dapat menghapus item')
+                                ->body('Item masih terkait dengan data lain dan tidak dapat dihapus.')
+                                ->danger()
+                                ->duration(8000)
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Terjadi kesalahan')
+                                ->body('Gagal menghapus item. Silakan coba lagi.')
+                                ->danger()
+                                ->send();
+                        }
+                    }
+                }),
+        ])
+        ->bulkActions([
+            Tables\Actions\BulkActionGroup::make([
+                // Custom Bulk Delete dengan pengecekan
+                Tables\Actions\DeleteBulkAction::make()
+                    ->before(function (Tables\Actions\DeleteBulkAction $action, $records) {
+                        $itemsWithRelations = [];
+                        
+                        foreach ($records as $record) {
+                            $relatedCount = DB::table('purchase_order_items')
+                                ->where('item_id', $record->id)
+                                ->count();
+                            
+                            if ($relatedCount > 0) {
+                                $itemsWithRelations[] = $record->name;
+                            }
+                        }
+                        
+                        if (!empty($itemsWithRelations)) {
+                            Notification::make()
+                                ->title('Tidak dapat menghapus beberapa item')
+                                ->body('Item berikut masih terkait dengan purchase order: ' . implode(', ', $itemsWithRelations))
+                                ->danger()
+                                ->duration(10000)
+                                ->send();
+                            
+                            $action->cancel();
+                        }
+                    }),
+            ]),
+        ]);
+}
+    
 
     public static function getRelations(): array
     {
