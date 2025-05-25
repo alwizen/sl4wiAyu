@@ -26,14 +26,15 @@ class CashflowReport extends Page implements Tables\Contracts\HasTable
     {
         return $table
             ->query($this->getFilteredQuery())
+            ->paginated([50, 100, 'all'])
             ->columns([
                 TextColumn::make('transaction_date')->label('Tanggal')->date()->sortable(),
-                TextColumn::make('transaction_code')->label('Kode Transaksi'),
+                TextColumn::make('transaction_code')->label('Kode Transaksi')->searchable(),
                 TextColumn::make('category.name')->label('Kategori'),
                 TextColumn::make('category.type')
                     ->label('Tipe Kategori')
                     ->badge()
-                    ->color(fn ($state) => $state === 'income' ? 'success' : 'danger'),
+                    ->color(fn($state) => $state === 'income' ? 'success' : 'danger'),
                 TextColumn::make('amount')->label('Jumlah')->money('IDR'),
                 TextColumn::make('methode')->label('Metode'),
             ])
@@ -45,8 +46,8 @@ class CashflowReport extends Page implements Tables\Contracts\HasTable
                     ])
                     ->query(function (Builder $query, array $data) {
                         return $query
-                            ->when($data['from'], fn ($q) => $q->whereDate('transaction_date', '>=', $data['from']))
-                            ->when($data['until'], fn ($q) => $q->whereDate('transaction_date', '<=', $data['until']));
+                            ->when($data['from'], fn($q) => $q->whereDate('transaction_date', '>=', $data['from']))
+                            ->when($data['until'], fn($q) => $q->whereDate('transaction_date', '<=', $data['until']));
                     }),
             ])
             ->headerActions([

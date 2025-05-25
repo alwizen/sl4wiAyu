@@ -33,11 +33,15 @@ class StockReceiving extends Model
         });
     }
 
+    protected $casts = [
+        'received_date' => 'datetime',
+    ];
+
     public function purchaseOrder()
     {
         return $this->belongsTo(PurchaseOrder::class);
     }
-    
+
 
     // Relasi ke item penerimaan
     public function stockReceivingItems()

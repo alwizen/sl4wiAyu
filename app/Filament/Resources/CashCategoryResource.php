@@ -18,9 +18,9 @@ class CashCategoryResource extends Resource
 {
     protected static ?string $model = CashCategory::class;
 
-//    protected static ?string $navigationIcon = 'heroicon-o-database';
+    //    protected static ?string $navigationIcon = 'heroicon-o-database';
 
-    protected static ?string $navigationGroup = 'Keuangan';
+    protected static ?string $navigationGroup = 'Master Data';
 
     public static function form(Form $form): Form
     {

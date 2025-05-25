@@ -23,7 +23,9 @@ class CashTransactionResource extends Resource
 {
     protected static ?string $model = CashTransaction::class;
 
-//    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-document-currency-dollar';
+
+    protected static ?string $navigationLabel = 'CashFlow Transaksi';
 
     protected static ?string $navigationGroup = 'Keuangan';
 
@@ -47,7 +49,7 @@ class CashTransactionResource extends Resource
                     ])
                     ->columns(2),
 
-                    Forms\Components\Section::make('Kategori & Jumlah')
+                Forms\Components\Section::make('Kategori & Jumlah')
                     ->schema([
                         Forms\Components\Select::make('category_type')
                             ->label('Tipe Kategori')
@@ -177,7 +179,7 @@ class CashTransactionResource extends Resource
                     ->label('Tipe Kategori')
                     ->collapsible()
                     ->titlePrefixedWithLabel(false)
-                    ->getTitleFromRecordUsing(fn($record) => match($record->category->type) {
+                    ->getTitleFromRecordUsing(fn($record) => match ($record->category->type) {
                         'income' => '💰 Pemasukan',
                         'expense' => '💸 Pengeluaran',
                         default => $record->category->type
@@ -198,7 +200,7 @@ class CashTransactionResource extends Resource
                     ->query(function (Builder $query, array $data): Builder {
                         return $query->when(
                             $data['value'],
-                            fn (Builder $query, $value): Builder => $query->whereHas('category', fn (Builder $query) => $query->where('type', $value))
+                            fn(Builder $query, $value): Builder => $query->whereHas('category', fn(Builder $query) => $query->where('type', $value))
                         );
                     }),
 
@@ -213,11 +215,11 @@ class CashTransactionResource extends Resource
                         return $query
                             ->when(
                                 $data['date_from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('transaction_date', '>=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('transaction_date', '>=', $date),
                             )
                             ->when(
                                 $data['date_until'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('transaction_date', '<=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('transaction_date', '<=', $date),
                             );
                     })
                     ->indicateUsing(function (array $data): array {

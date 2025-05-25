@@ -52,6 +52,8 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                     ->required(),
                 Forms\Components\Select::make('recipient_id')
                     ->relationship('recipient', 'name')
+                    ->searchable()
+                    ->preload()
                     ->required(),
                 Forms\Components\TextInput::make('qty')
                     ->suffix('Box')
@@ -183,16 +185,11 @@ class DeliveryResource extends Resource implements HasShieldPermissions
             ])
             ->actions([
                 ActionGroup::make([
-                    Tables\Actions\EditAction::make()
-
-                        ->tooltip('Edit'),
-                    Tables\Actions\DeleteAction::make()
-                        ->tooltip('Hapus'),
                     Tables\Actions\Action::make('kirimWhatsApp')
                         ->label('Kirim WhatsApp')
                         ->tooltip('Kirim pesan WhatsApp ke penerima pengiriman')
                         ->icon('heroicon-o-chat-bubble-left-ellipsis')
-                        ->color('success')
+                        ->color('default')
                         ->action(function (Delivery $record) {
                             // Format tanggal untuk pesan
                             $formattedDate = Carbon::parse($record->delivery_date)->format('d/m/Y');
@@ -244,6 +241,9 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                             // Redirect ke WhatsApp dengan pesan yang sudah disiapkan
                             return redirect()->away("https://wa.me/{$phoneNumber}?text={$encodedMessage}");
                         }),
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+
                     Tables\Actions\Action::make('inputReceivedQty')
                         ->label('Input Jumlah Diterima')
                         ->icon('heroicon-o-clipboard-document-check')
@@ -269,8 +269,8 @@ class DeliveryResource extends Resource implements HasShieldPermissions
 
                     Tables\Actions\Action::make('uploadProofDelivery')
                         ->label('Upload Bukti Pengiriman')
-                        ->icon('heroicon-o-clipboard-document-check')
-                        ->color('success')
+                        ->icon('heroicon-o-camera')
+                        ->color('warning')
                         ->visible(fn(Delivery $record) => $record->status === 'terkirim' && is_null($record->proof_delivery))
                         ->form([
                             FileUpload::make('proof_delivery')
@@ -354,6 +354,16 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                                 ->send();
                         }),
 
+                    Tables\Actions\Action::make('viewProofDelivery')
+                        ->label('Lihat Bukti')
+                        ->icon('heroicon-o-eye')
+                        ->color('info')
+                        ->visible(fn(Delivery $record) => !is_null($record->proof_delivery))
+                        ->modalHeading('Bukti Pengiriman')
+                        ->modalContent(fn(Delivery $record) => view('filament.modals.view-proof-delivery', [
+                            'imageUrl' => $record->proof_delivery,
+                        ])),
+
                 ]),
 
             ], position: ActionsPosition::BeforeColumns)
@@ -379,10 +389,13 @@ class DeliveryResource extends Resource implements HasShieldPermissions
             'inputReceivedQty',
             'setCompleted',
             'setReturned',
+            'viewProofDelivery',
             'uploadProofDelivery',
             'kirimWhatsApp',
         ];
     }
+
+
 
     public static function getPages(): array
     {

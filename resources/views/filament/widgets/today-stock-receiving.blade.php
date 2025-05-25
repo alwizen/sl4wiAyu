@@ -10,7 +10,7 @@
                 <div>
                     <strong>PO:</strong> {{ $receiving->purchaseOrder->order_number ?? '-' }}
                 </div>
-                <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                <ul class="list-disc list-inside text-xl text-gray-500 space-y-1">
                     @foreach ($receiving->stockReceivingItems as $item)
                         <li>
                             {{ $item->warehouseItem->name ?? 'Item tidak ditemukan' }} -
