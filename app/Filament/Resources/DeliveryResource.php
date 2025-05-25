@@ -119,7 +119,8 @@ class DeliveryResource extends Resource implements HasShieldPermissions
             ->columns([
                 Tables\Columns\TextColumn::make('delivery_number')
                     ->searchable()
-                    ->label('No. Pengiriman'),
+                    ->label('No. Pengiriman')
+                ->copyable(),
                 Tables\Columns\TextColumn::make('delivery_date')
                     ->date()
                     ->sortable()
@@ -140,7 +141,12 @@ class DeliveryResource extends Resource implements HasShieldPermissions
 
                 Tables\Columns\TextColumn::make('received_qty')
                     ->label('Jml. Diterima')
-                    ->suffix(' Box'),
+                    ->suffix(' Box')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('returned_qty')
+                    ->label('Jml. Dikembalikan')
+                    ->suffix(' Box')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 //  ->visible(fn ($record) => $record->received_qty !== null),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
@@ -245,7 +251,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                     Tables\Actions\DeleteAction::make(),
 
                     Tables\Actions\Action::make('inputReceivedQty')
-                        ->label('Input Jumlah Diterima')
+                        ->label('Jumlah Diterima')
                         ->icon('heroicon-o-clipboard-document-check')
                         ->color('success')
                         ->visible(fn(Delivery $record) => $record->status === 'terkirim' && is_null($record->received_qty))
@@ -283,6 +289,28 @@ class DeliveryResource extends Resource implements HasShieldPermissions
 
                             Notification::make()
                                 ->title('Bukti pengiriman berhasil disimpan')
+                                ->success()
+                                ->send();
+                        }),
+                    Tables\Actions\Action::make('inputReturedQty')
+                        ->label('Jumlah Dikembalikan')
+                        ->icon('heroicon-o-exclamation-triangle')
+                        ->color('danger')
+                        ->visible(fn(Delivery $record) => $record->status === 'terkirim' && is_null($record->returned_qty))
+                        ->form([
+                            TextInput::make('returned_qty')
+                                ->label('Jumlah Dikembalikan')
+                                ->numeric()
+                                ->required()
+                                ->suffix('Box')
+                                ->helperText('Masukkan jumlah barang yang dikembalikan')
+                        ])
+                        ->action(function (Delivery $record, array $data) {
+                            $record->returned_qty = $data['returned_qty'];
+                            $record->save();
+
+                            Notification::make()
+                                ->title('Jumlah dikembalikan berhasil disimpan')
                                 ->success()
                                 ->send();
                         }),
@@ -391,6 +419,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
             'setReturned',
             'viewProofDelivery',
             'uploadProofDelivery',
+            'inputReturedQty',
             'kirimWhatsApp',
         ];
     }
