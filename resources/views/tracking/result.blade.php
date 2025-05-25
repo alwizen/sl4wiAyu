@@ -308,63 +308,97 @@
                     @endif
                 </div>
 
-                <div class="timeline-container">
-                    <h3 class="timeline-title">🗺️ Riwayat Pengiriman</h3>
-                    <div class="timeline">
-                        @php
-                            // Define status mapping with priorities
-                            $statusMapping = [
-                                'pending' => ['title' => 'Paket Diterima', 'desc' => 'Paket telah diterima di gudang dan siap untuk diproses', 'priority' => 1],
-                                'processing' => ['title' => 'Diproses di Gudang', 'desc' => 'Paket sedang diproses dan dikemas untuk pengiriman', 'priority' => 2],
-                                'shipped' => ['title' => 'Keluar dari Gudang', 'desc' => 'Paket telah keluar dari gudang menuju sorting center', 'priority' => 3],
-                                'in_transit' => ['title' => 'Dalam Perjalanan', 'desc' => 'Paket sedang dalam perjalanan menuju kota tujuan', 'priority' => 4],
-                                'out_for_delivery' => ['title' => 'Siap Dikirim', 'desc' => 'Paket akan dikirim ke alamat tujuan oleh kurir', 'priority' => 5],
-                                'delivered' => ['title' => 'Terkirim', 'desc' => 'Paket telah berhasil diterima oleh penerima', 'priority' => 6]
-                            ];
 
-                            $currentStatus = $delivery->status;
-                            $currentPriority = $statusMapping[$currentStatus]['priority'] ?? 1;
-                        @endphp
+<div class="timeline-container">
+    <h3 class="timeline-title">🗺️ Riwayat Pengiriman</h3>
+    <div class="timeline">
+        @php
+            // Define status mapping with priorities (customized)
+            $statusMapping = [
+                'dikemas' => [
+                    'title' => 'Dikemas',
+                    'desc' => 'Pengiriman sedang dikemas di gudang.',
+                    'priority' => 1
+                ],
+                'disiapkan' => [
+                    'title' => 'Disiapkan',
+                    'desc' => 'Pengiriman telah disiapkan dan menunggu pengiriman.',
+                    'priority' => 2
+                ],
+                'dalam_perjalanan' => [
+                    'title' => 'Dalam Perjalanan',
+                    'desc' => 'Pengiriman sedang menuju lokasi tujuan.',
+                    'priority' => 3
+                ],
+                'terkirim' => [
+                    'title' => 'Terkirim',
+                    'desc' => 'Pengiriman telah sampai di lokasi.',
+                    'priority' => 4
+                ],
+                'selesai' => [
+                    'title' => 'Selesai',
+                    'desc' => 'Pengiriman dinyatakan selesai.',
+                    'priority' => 5
+                ],
+            ];
 
-                        @foreach($statusMapping as $statusKey => $statusData)
-                            @php
-                                $itemPriority = $statusData['priority'];
-                                $statusClass = '';
+            $currentStatus = $delivery->status;
+            $currentPriority = $statusMapping[$currentStatus]['priority'] ?? 1;
+        @endphp
 
-                                if ($itemPriority < $currentPriority) {
-                                    $statusClass = 'completed';
-                                    $badgeClass = 'badge-completed';
-                                    $badgeText = 'Selesai';
-                                } elseif ($itemPriority == $currentPriority) {
-                                    $statusClass = 'current';
-                                    $badgeClass = 'badge-current';
-                                    $badgeText = 'Sedang Berlangsung';
-                                } else {
-                                    $statusClass = 'pending';
-                                    $badgeClass = 'badge-pending';
-                                    $badgeText = 'Menunggu';
-                                }
+        @foreach($statusMapping as $statusKey => $statusData)
+            @php
+                $itemPriority = $statusData['priority'];
+                $statusClass = '';
 
-                                // Format date based on status
-                                if ($itemPriority <= $currentPriority) {
-                                    $displayDate = \Carbon\Carbon::parse($delivery->delivery_date)->format('d M Y, H:i') . ' WIB';
-                                } else {
-                                    $displayDate = '(Estimasi)';
-                                }
-                            @endphp
+                if ($itemPriority < $currentPriority) {
+                    $statusClass = 'completed';
+                    $badgeClass = 'badge-completed';
+                    $badgeText = 'Selesai';
+                } elseif ($itemPriority == $currentPriority) {
+                    $statusClass = 'completed';
+                    $badgeClass = 'badge-current';
+                    $badgeText = 'Done';
+                } else {
+                    $statusClass = 'pending';
+                    $badgeClass = 'badge-pending';
+                    $badgeText = 'Menunggu';
+                }
 
-                            <div class="timeline-item {{ $statusClass }}">
-                                <div class="timeline-marker"></div>
-                                <div class="timeline-content">
-                                    <div class="status-title">{{ $statusData['title'] }}</div>
-                                    <div class="status-date">{{ $displayDate }}</div>
-                                    <div class="status-description">{{ $statusData['desc'] }}</div>
-                                    <span class="status-badge {{ $badgeClass }}">{{ $badgeText }}</span>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
+                // Format date only if already reached this status
+                switch ($statusKey) {
+                    case 'dikemas':
+                        $displayDate = $delivery->created_at ? \Carbon\Carbon::parse($delivery->created_at)->format('d M Y, H:i') . ' WIB' : '(Estimasi)';
+                        break;
+                    case 'disiapkan':
+                        $displayDate = $delivery->prepared_at ? \Carbon\Carbon::parse($delivery->prepared_at)->format('d M Y, H:i') . ' WIB' : '(Estimasi)';
+                        break;
+                    case 'dalam_perjalanan':
+                        $displayDate = $delivery->shipped_at ? \Carbon\Carbon::parse($delivery->shipped_at)->format('d M Y, H:i') . ' WIB' : '(Estimasi)';
+                        break;
+                    case 'terkirim':
+                        $displayDate = $delivery->received_at ? \Carbon\Carbon::parse($delivery->received_at)->format('d M Y, H:i') . ' WIB' : '(Estimasi)';
+                        break;
+                    case 'selesai':
+                        $displayDate = $delivery->returned_at ? \Carbon\Carbon::parse($delivery->returned_at)->format('d M Y, H:i') . ' WIB' : '(Estimasi)';
+                        break;
+                    default:
+                        $displayDate = '(Estimasi)';
+                }
+            @endphp
+
+            <div class="timeline-item {{ $statusClass }}">
+                <div class="timeline-marker"></div>
+                <div class="timeline-content">
+                    <div class="status-title">{{ $statusData['title'] }}</div>
+                    <div class="status-date">{{ $displayDate }}</div>
+                    <div class="status-description">{{ $statusData['desc'] }}</div>
+                    <span class="status-badge {{ $badgeClass }}">{{ $badgeText }}</span>
                 </div>
+            </div>
+        @endforeach
+    </div>
+</div>
 
                 @if(isset($delivery->notes) && !empty($delivery->notes))
                     <div class="mt-4">
@@ -380,6 +414,15 @@
                         <div class="info-card">
                             <div class="info-label">Kontak Penerima</div>
                             <div class="info-value">{{ $delivery->recipient->phone }}</div>
+                        </div>
+                    </div>
+                @endif
+ @if(isset($delivery->qty))
+                    <div class="mt-3">
+                        <div class="info-card">
+                            <div class="info-label">Jumlah Porsi</div>
+                            <div class="info-value">{{ $delivery->qty }} Porsi</div>
+
                         </div>
                     </div>
                 @endif

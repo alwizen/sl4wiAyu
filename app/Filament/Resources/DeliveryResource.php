@@ -120,7 +120,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                 Tables\Columns\TextColumn::make('delivery_number')
                     ->searchable()
                     ->label('No. Pengiriman')
-                ->copyable(),
+                    ->copyable(),
                 Tables\Columns\TextColumn::make('delivery_date')
                     ->date()
                     ->sortable()
@@ -370,6 +370,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                         ->label('Selesai')
                         ->icon('heroicon-o-check-badge')
                         ->color('success')
+                        ->requiresConfirmation()
                         ->visible(fn(Delivery $record) => $record->status === 'terkirim' && !is_null($record->received_qty))
                         ->action(function (Delivery $record) {
                             $record->status = 'selesai';
