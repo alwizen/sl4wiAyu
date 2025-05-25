@@ -9,6 +9,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Table;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use Illuminate\Database\Eloquent\Builder;
@@ -34,9 +35,9 @@ class RecipientResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
-//                Forms\Components\Select::make('target_group_id')
-//                    ->relationship('targetGroup', 'name')
-//                    ->required(),
+                //                Forms\Components\Select::make('target_group_id')
+                //                    ->relationship('targetGroup', 'name')
+                //                    ->required(),
                 Forms\Components\TextInput::make('phone')
                     ->tel()
                     ->required()
@@ -55,10 +56,10 @@ class RecipientResource extends Resource
     {
         return $table
             ->defaultPaginationPageOption(50)
-//            ->paginated(false)
+            //            ->paginated(false)
             ->columns([
-//                Tables\Columns\TextColumn::make('#')
-//                    ->rowIndex(),
+                //                Tables\Columns\TextColumn::make('#')
+                //                    ->rowIndex(),
                 Tables\Columns\TextColumn::make('code')
                     ->label('NPSN')
                     ->searchable(),
@@ -71,9 +72,9 @@ class RecipientResource extends Resource
                 Tables\Columns\TextColumn::make('phone')
                     ->label('No. Telp')
                     ->searchable(),
-//                Tables\Columns\TextColumn::make('targetGroup.name')
-//                    ->numeric()
-//                    ->sortable(),
+                //                Tables\Columns\TextColumn::make('targetGroup.name')
+                //                    ->numeric()
+                //                    ->sortable(),
                 Tables\Columns\TextColumn::make('total_recipients')
                     ->label('Total Penerima')
                     ->summarize(Tables\Columns\Summarizers\Sum::make())
@@ -97,10 +98,10 @@ class RecipientResource extends Resource
 
             ])
             ->bulkActions([
-                ExportBulkAction::make()
-//                Tables\Actions\BulkActionGroup::make([
-//                    Tables\Actions\DeleteBulkAction::make(),
-//                ]),
+                Tables\Actions\BulkActionGroup::make([
+                    ExportBulkAction::make(),
+                    DeleteBulkAction::make()
+                ]),
             ]);
     }
 

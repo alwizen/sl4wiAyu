@@ -154,7 +154,8 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
         $items = $get('items') ?? [];
 
         $total = collect($items)->reduce(function ($carry, $item) {
-            return $carry + (($item['quantity'] ?? 0) * ($item['unit_price'] ?? 0));
+            // return $carry + (($item['quantity'] ?? 0) * ($item['unit_price'] ?? 0));
+            return $carry + ((float)($item['quantity'] ?? 0) * (float)($item['unit_price'] ?? 0));
         }, 0);
 
         $set('total_amount', $total);

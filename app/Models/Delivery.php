@@ -16,8 +16,21 @@ class Delivery extends Model
         'prepared_at',
         'shipped_at',
         'returned_at',
-        'received_qty'
+        'received_qty',
+        'user_id',
+        'proof_delivery',
+        'returned_qty',
+        'car_id',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+    public function car(): BelongsTo
+    {
+        return $this->belongsTo(Car::class);
+    }
 
     public function recipient(): BelongsTo
     {

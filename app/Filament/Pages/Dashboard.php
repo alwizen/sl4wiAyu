@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Display\Widgets\DeliveryStatusTable;
+use App\Filament\Widgets\CashTransactionChart;
 use App\Filament\Widgets\CashTransactionStats;
 use App\Filament\Widgets\GreetingWidget;
 use App\Filament\Widgets\TodayStockIssue;
@@ -24,6 +25,7 @@ class Dashboard extends BaseDashboard
         return [
 //            GreetingWidget::class,
             CashTransactionStats::class,
+            CashTransactionChart::class,
             DeliveryStatusTable::class,
             TodayStockReceiving::class,
             TodayStockIssue::class

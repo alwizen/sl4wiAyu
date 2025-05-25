@@ -18,6 +18,8 @@ return new class extends Migration
             $table->foreignId('recipient_id')->constrained()->onDelete('cascade');
             $table->integer('qty');
             $table->enum('status', ['dikemas', 'disiapkan', 'dalam_perjalanan', 'terkirim', 'selesai'])->default('dikemas');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('proof_delivery')->nullable();
             $table->timestamp('prepared_at')->nullable();
             $table->timestamp('shipped_at')->nullable();
             $table->timestamp('received_at')->nullable();
