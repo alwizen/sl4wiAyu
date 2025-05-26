@@ -36,7 +36,7 @@ class StockIssueResource extends Resource implements HasShieldPermissions
 
     protected static ?string $navigationGroup = 'Pengadaan & Permintaan';
 
-    protected static ?string $navigationLabel = 'Permintaan Bahan Baku';
+    protected static ?string $navigationLabel = 'Permintaan Bahan Masak';
 
     public static function form(Form $form): Form
     {

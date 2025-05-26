@@ -13,7 +13,9 @@ class CashTransactionStats extends BaseWidget
 {
     use HasWidgetShield;
 
-    protected static ?string $title = 'Statistik Transaksi Kas';
+    protected ?string $heading = 'Statistik Transaksi Kas';
+
+    protected static bool $isLazy = false;
 
     protected function getCards(): array
     {
@@ -57,8 +59,8 @@ class CashTransactionStats extends BaseWidget
 
             BaseWidget\Card::make('Saldo Hari Ini', 'Rp ' . number_format($balance, 0, ',', '.'))
                 ->description('Total saldo hingga hari ini')
-                ->descriptionIcon('heroicon-o-currency-dollar')
-                ->color($balance >= 0 ? 'success' : 'danger'),
+                ->descriptionIcon('heroicon-o-banknotes')
+                ->color($balance >= 0 ? 'primary' : 'danger'),
         ];
     }
 }

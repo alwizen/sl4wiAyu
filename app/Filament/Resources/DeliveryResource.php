@@ -21,6 +21,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Enums\ActionsPosition;
 
 
@@ -142,6 +143,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                     ->label('Penerima'),
                 Tables\Columns\TextColumn::make('qty')
                     ->label('Jml')
+                    ->summarize(Sum::make())
                     ->suffix(' Box'),
 
                 Tables\Columns\TextColumn::make('received_qty')
@@ -192,8 +194,33 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\Filter::make('Tanggal Pengiriman')
+                    ->form([
+                        Forms\Components\DatePicker::make('from')
+                            ->label('Dari Tanggal'),
+                        Forms\Components\DatePicker::make('until')
+                            ->label('Sampai Tanggal'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when($data['from'], fn ($q) => $q->whereDate('delivery_date', '>=', $data['from']))
+                            ->when($data['until'], fn ($q) => $q->whereDate('delivery_date', '<=', $data['until']));
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+            
+                        if ($data['from']) {
+                            $indicators[] = 'Dari: ' . Carbon::parse($data['from'])->translatedFormat('d M Y');
+                        }
+            
+                        if ($data['until']) {
+                            $indicators[] = 'Sampai: ' . Carbon::parse($data['until'])->translatedFormat('d M Y');
+                        }
+            
+                        return $indicators;
+                    }),
             ])
+            
             ->actions([
                 ActionGroup::make([
                     Tables\Actions\Action::make('kirimWhatsApp')

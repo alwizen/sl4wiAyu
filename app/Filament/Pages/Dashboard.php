@@ -3,8 +3,10 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Display\Widgets\DeliveryStatusTable;
+use App\Filament\Resources\DeliveryResource\Widgets\DeliveryStats;
 use App\Filament\Widgets\CashTransactionChart;
 use App\Filament\Widgets\CashTransactionStats;
+use App\Filament\Widgets\DeliveryStats as WidgetsDeliveryStats;
 use App\Filament\Widgets\GreetingWidget;
 use App\Filament\Widgets\TodayStockIssue;
 use App\Filament\Widgets\TodayStockReceiving;
@@ -51,8 +53,10 @@ class Dashboard extends BaseDashboard
     {
         return [
             // GreetingWidget::class,
+            // DeliveryStats::class,
             CashTransactionStats::class,
             CashTransactionChart::class,
+            WidgetsDeliveryStats::class,
             DeliveryStatusTable::class,
             TodayStockReceiving::class,
             TodayStockIssue::class
