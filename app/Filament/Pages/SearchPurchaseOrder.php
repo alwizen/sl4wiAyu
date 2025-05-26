@@ -15,6 +15,9 @@ class SearchPurchaseOrder extends Page implements HasForms
 
     public ?string $searchOrderNumber = null;
 
+    protected static bool $shouldRegisterNavigation = false;
+
+
     public $purchaseOrders;
 
     protected static string $view = 'filament.pages.search-purchase-order';

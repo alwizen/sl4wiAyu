@@ -24,6 +24,11 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Tables\Actions\ActionGroup;
 
+// Import untuk Excel Export
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction as FilamentExcelExportBulkAction;
+use pxlrbt\FilamentExcel\Columns\Column;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+
 class NutritionPlanResource extends Resource
 {
     protected static ?string $model = NutritionPlan::class;
@@ -38,7 +43,7 @@ class NutritionPlanResource extends Resource
 
     protected static ?string $navigationGroup = 'Ahli Gizi';
 
-
+    // Form tetap sama...
     public static function form(Form $form): Form
     {
         return $form
@@ -99,8 +104,6 @@ class NutritionPlanResource extends Resource
                                 return "Menu Harian: {$menuName}";
                             }),
                     ]),
-
-
 
                 Section::make('Rencana Nutrisi')
                     ->schema([
@@ -163,10 +166,10 @@ class NutritionPlanResource extends Resource
                     ]),
             ]);
     }
+
     public static function table(\Filament\Tables\Table $table): \Filament\Tables\Table
     {
         return $table
-            // Opsi 1: Grouping dengan tetap menampilkan detail
             ->groups([
                 \Filament\Tables\Grouping\Group::make('nutrition_plan_date')
                     ->label('Tanggal')
@@ -180,27 +183,17 @@ class NutritionPlanResource extends Resource
                     ->date('d F Y')
                     ->sortable()
                     ->searchable(),
-                // \Filament\Tables\Columns\TextColumn::make('dailyMenu.menu.menu_name')
-                //     ->label('Menu Harian')
-                //     ->searchable(),
-                // \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.count')
-                //     ->label('Jumlah Item')
-                //     ->counts('nutritionPlanItems')
-                //     ->sortable(),
 
-                // Kolom baru untuk menampilkan semua item menu
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.menu.menu_name')
                     ->label('Menu')
                     ->listWithLineBreaks()
                     ->searchable(),
 
-                // Kolom baru untuk menampilkan semua target grup
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.targetGroup.name')
                     ->label('Penerima')
                     ->listWithLineBreaks()
                     ->searchable(),
 
-                // Kolom untuk menampilkan nilai energi
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.energy')
                     ->label('Energi (kkal)')
                     ->listWithLineBreaks()
@@ -210,7 +203,6 @@ class NutritionPlanResource extends Resource
                     ])
                     ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " kkal"),
 
-                // Kolom untuk menampilkan nilai protein
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.protein')
                     ->label('Protein (gr)')
                     ->listWithLineBreaks()
@@ -220,7 +212,6 @@ class NutritionPlanResource extends Resource
                     ])
                     ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
 
-                // Kolom untuk menampilkan nilai lemak
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.fat')
                     ->label('Lemak (gr)')
                     ->listWithLineBreaks()
@@ -230,7 +221,6 @@ class NutritionPlanResource extends Resource
                     ])
                     ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
 
-                // Kolom untuk menampilkan nilai karbohidrat
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.carb')
                     ->label('Karbo (gr)')
                     ->listWithLineBreaks()
@@ -249,7 +239,6 @@ class NutritionPlanResource extends Resource
                     ])
                     ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
 
-                // Kolom untuk menampilkan nilai netto
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.netto')
                     ->label('Netto (gr)')
                     ->listWithLineBreaks()
@@ -299,11 +288,86 @@ class NutritionPlanResource extends Resource
             ->bulkActions([
                 \Filament\Tables\Actions\BulkActionGroup::make([
                     \Filament\Tables\Actions\DeleteBulkAction::make(),
-                    \pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction::make(),
+                    
+                    // Custom Excel Export dengan format yang sesuai
+                    FilamentExcelExportBulkAction::make()
+                        ->exports([
+                            ExcelExport::make()
+                                ->fromTable()
+                                ->withFilename(fn ($resource) => 'rencana-nutrisi-' . date('Y-m-d-H-i-s'))
+                                ->withColumns([
+                                    Column::make('nutrition_plan_date')
+                                        ->heading('Tanggal')
+                                        ->formatStateUsing(fn ($state) => \Carbon\Carbon::parse($state)->format('d F Y')),
+                                    
+                                    Column::make('menu_names')
+                                        ->heading('Menu')
+                                        ->formatStateUsing(function ($state, $record) {
+                                            return $record->nutritionPlanItems
+                                                ->pluck('menu.menu_name')
+                                                ->join("\n");
+                                        }),
+                                    
+                                    Column::make('target_groups')
+                                        ->heading('Penerima')
+                                        ->formatStateUsing(function ($state, $record) {
+                                            return $record->nutritionPlanItems
+                                                ->pluck('targetGroup.name')
+                                                ->join("\n");
+                                        }),
+                                    
+                                    Column::make('energy_values')
+                                        ->heading('Energi (kkal)')
+                                        ->formatStateUsing(function ($state, $record) {
+                                            return $record->nutritionPlanItems
+                                                ->map(fn($item) => number_format((float)$item->energy, 2, ',', '.') . ' kkal')
+                                                ->join("\n");
+                                        }),
+                                    
+                                    Column::make('protein_values')
+                                        ->heading('Protein (gr)')
+                                        ->formatStateUsing(function ($state, $record) {
+                                            return $record->nutritionPlanItems
+                                                ->map(fn($item) => number_format((float)$item->protein, 2, ',', '.') . ' gr')
+                                                ->join("\n");
+                                        }),
+                                    
+                                    Column::make('fat_values')
+                                        ->heading('Lemak (gr)')
+                                        ->formatStateUsing(function ($state, $record) {
+                                            return $record->nutritionPlanItems
+                                                ->map(fn($item) => number_format((float)$item->fat, 2, ',', '.') . ' gr')
+                                                ->join("\n");
+                                        }),
+                                    
+                                    Column::make('carb_values')
+                                        ->heading('Karbohidrat (gr)')
+                                        ->formatStateUsing(function ($state, $record) {
+                                            return $record->nutritionPlanItems
+                                                ->map(fn($item) => number_format((float)$item->carb, 2, ',', '.') . ' gr')
+                                                ->join("\n");
+                                        }),
+                                    
+                                    Column::make('serat_values')
+                                        ->heading('Serat (gr)')
+                                        ->formatStateUsing(function ($state, $record) {
+                                            return $record->nutritionPlanItems
+                                                ->map(fn($item) => number_format((float)$item->serat, 2, ',', '.') . ' gr')
+                                                ->join("\n");
+                                        }),
+                                    
+                                    Column::make('netto_values')
+                                        ->heading('Netto (gr)')
+                                        ->formatStateUsing(function ($state, $record) {
+                                            return $record->nutritionPlanItems
+                                                ->map(fn($item) => number_format((float)$item->netto, 2, ',', '.') . ' gr')
+                                                ->join("\n");
+                                        }),
+                                ])
+                        ])
                 ]),
             ])
             ->defaultSort('nutrition_plan_date', 'desc');
-        // Hapus ->groupsOnly() agar individual rows tetap tampil
     }
 
     public static function getPages(): array

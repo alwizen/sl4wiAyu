@@ -14,6 +14,9 @@ class PurchaseOrderReceivingHistory extends Page implements Tables\Contracts\Has
     use Tables\Concerns\InteractsWithTable;
 
     protected static string $view = 'filament.pages.purchase-order-receiving-history';
+
+    protected static ?string $navigationIcon = 'heroicon-o-clock';
+
     protected static ?string $title = 'Histori Penerimaan PO';
 
     protected function getTableQuery(): Builder
