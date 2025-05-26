@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\PurchaseOrder;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -12,6 +13,8 @@ use Illuminate\Support\Carbon;
 class PurchaseOrderReceivingHistory extends Page implements Tables\Contracts\HasTable
 {
     use Tables\Concerns\InteractsWithTable;
+
+    use HasPageShield;
 
     protected static string $view = 'filament.pages.purchase-order-receiving-history';
 
