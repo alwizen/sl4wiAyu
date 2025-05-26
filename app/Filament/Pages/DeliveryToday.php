@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use Filament\Actions\ActionGroup;
+use Filament\Forms\Components\FileUpload;
 use Filament\Pages\Page;
 use App\Models\Delivery;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
@@ -43,6 +45,7 @@ class DeliveryToday extends Page implements HasTable
             ->query(
                 Delivery::query()
                     ->where('delivery_date', '=', now()->toDateString())
+                    ->where('user_id', auth()->id()) // Filter user yang login, tanpa tergantung role
             )
             ->heading('Daftar Pengiriman Hari Ini')
             ->description(fn() => 'Tanggal: ' . now()->format('d F Y'))
@@ -125,28 +128,6 @@ class DeliveryToday extends Page implements HasTable
             ])
             ->filtersFormColumns(2)
             ->actions([
-                Action::make('inputReceivedQty')
-                    ->label('Input Jumlah Diterima')
-                    ->icon('heroicon-o-clipboard-document-check')
-                    ->color('success')
-                    ->visible(fn(Delivery $record) => $record->status === 'terkirim' && is_null($record->received_qty))
-                    ->form([
-                        TextInput::make('received_qty')
-                            ->label('Jumlah Diterima')
-                            ->numeric()
-                            ->required()
-                            ->suffix('Box')
-                            ->helperText('Masukkan jumlah barang yang diterima')
-                    ])
-                    ->action(function (Delivery $record, array $data) {
-                        $record->received_qty = $data['received_qty'];
-                        $record->save();
-
-                        Notification::make()
-                            ->title('Jumlah diterima berhasil disimpan')
-                            ->success()
-                            ->send();
-                    }),
                 Action::make('setPrepared')
                     ->label('Disiapkan')
                     ->requiresConfirmation()
@@ -202,6 +183,7 @@ class DeliveryToday extends Page implements HasTable
                     ->label('Selesai')
                     ->icon('heroicon-o-check-badge')
                     ->color('success')
+                    ->requiresConfirmation()
                     ->visible(fn(Delivery $record) => $record->status === 'terkirim' && !is_null($record->received_qty))
                     ->action(function (Delivery $record) {
                         $record->status = 'selesai';
@@ -214,63 +196,83 @@ class DeliveryToday extends Page implements HasTable
                             ->send();
                     }),
 
-                Action::make('kirimWhatsApp')
-                    ->label('')
-                    ->tooltip('Kirim pesan WhatsApp ke penerima pengiriman')
-                    ->icon('heroicon-o-chat-bubble-left-ellipsis')
-                    ->color('success')
-                    ->action(function (Delivery $record) {
-                        // Format tanggal untuk pesan
-                        $formattedDate = Carbon::parse($record->delivery_date)->format('d/m/Y');
+                Action::make('viewProofDelivery')
+                    ->label('Lihat Bukti')
+                    ->icon('heroicon-o-eye')
+                    ->color('info')
+                    ->visible(fn(Delivery $record) => !is_null($record->proof_delivery))
+                    ->modalHeading('Bukti Pengiriman')
+                    ->modalContent(fn(Delivery $record) => view('filament.modals.view-proof-delivery', [
+                        'imageUrl' => $record->proof_delivery,
+                    ])),
+                \Filament\Tables\Actions\ActionGroup::make([
+                    Action::make('inputReceivedQty')
+                        ->label('Jumlah Diterima')
+                        ->icon('heroicon-o-clipboard-document-check')
+                        ->color('success')
+                        ->visible(fn(Delivery $record) => $record->status === 'terkirim' && is_null($record->received_qty))
+                        ->form([
+                            TextInput::make('received_qty')
+                                ->label('Jumlah Diterima')
+                                ->numeric()
+                                ->required()
+                                ->suffix('Box')
+                                ->helperText('Masukkan jumlah barang yang diterima')
+                        ])
+                        ->action(function (Delivery $record, array $data) {
+                            $record->received_qty = $data['received_qty'];
+                            $record->save();
 
-                        // Format status dalam bahasa Indonesia
-                        $statusIndonesia = match ($record->status) {
-                            'dikemas' => 'Dikemas',
-                            'dalam_perjalanan' => 'Dalam Perjalanan',
-                            'terkirim' => 'Terkirim',
-                            'selesai' => 'Selesai',
-                            'kembali' => 'Kembali',
-                            default => $record->status,
-                        };
+                            Notification::make()
+                                ->title('Jumlah diterima berhasil disimpan')
+                                ->success()
+                                ->send();
+                        }),
 
-                        // Format pesan WhatsApp
-                        $message = "Informasi Pengiriman:\n"
-                            . "Tanggal: {$formattedDate}\n"
-                            . "No. Order: {$record->delivery_number}\n"
-                            . "Jumlah: {$record->qty}\n";
+                    Action::make('uploadProofDelivery')
+                        ->label('Upload Bukti Pengiriman')
+                        ->icon('heroicon-o-camera')
+                        ->color('warning')
+                        ->visible(fn(Delivery $record) => $record->status === 'terkirim' && is_null($record->proof_delivery))
+                        ->form([
+                            FileUpload::make('proof_delivery')
+                                ->label('Bukti Pengiriman')
 
-                        // Tambahkan jumlah diterima jika ada
-                        if (!is_null($record->received_qty)) {
-                            $message .= "Jumlah Diterima: {$record->received_qty}\n";
-                        }
+                        ])
+                        ->action(function (Delivery $record, array $data) {
+                            $record->proof_delivery = $data['proof_delivery'];
+                            $record->save();
 
-                        $message .= "Nama Sekolah: {$record->recipient->name}\n"
-                            . "Status: {$statusIndonesia}";
+                            Notification::make()
+                                ->title('Bukti pengiriman berhasil disimpan')
+                                ->success()
+                                ->send();
+                        }),
+                    Action::make('inputReturedQty')
+                        ->label('Jumlah Dikembalikan')
+                        ->icon('heroicon-o-exclamation-triangle')
+                        ->color('danger')
+                        ->visible(fn(Delivery $record) => $record->status === 'terkirim' && is_null($record->returned_qty))
+                        ->form([
+                            TextInput::make('returned_qty')
+                                ->label('Jumlah Dikembalikan')
+                                ->numeric()
+                                ->required()
+                                ->suffix('Box')
+                                ->helperText('Masukkan jumlah barang yang dikembalikan')
+                        ])
+                        ->action(function (Delivery $record, array $data) {
+                            $record->returned_qty = $data['returned_qty'];
+                            $record->save();
 
-                        // Encode pesan untuk URL WhatsApp
-                        $encodedMessage = urlencode($message);
-
-                        // Ambil nomor WhatsApp penerima
-                        $phoneNumber = $record->recipient->phone ?? '';
-
-                        // Format nomor telepon ke format internasional
-                        // Jika nomor dimulai dengan '0', ganti dengan kode negara Indonesia (62)
-                        if (strlen($phoneNumber) > 0) {
-                            if (substr($phoneNumber, 0, 1) === '0') {
-                                $phoneNumber = '62' . substr($phoneNumber, 1);
-                            } // Jika nomor tidak dimulai dengan '+' atau '62', tambahkan '62'
-                            elseif (substr($phoneNumber, 0, 1) !== '+' && substr($phoneNumber, 0, 2) !== '62') {
-                                $phoneNumber = '62' . $phoneNumber;
-                            }
-
-                            // Hapus karakter '+' jika ada
-                            $phoneNumber = str_replace('+', '', $phoneNumber);
-                        }
-
-                        // Redirect ke WhatsApp dengan pesan yang sudah disiapkan
-                        return redirect()->away("https://wa.me/{$phoneNumber}?text={$encodedMessage}");
-                    })
+                            Notification::make()
+                                ->title('Jumlah dikembalikan berhasil disimpan')
+                                ->success()
+                                ->send();
+                        }),
+                ]),
             ])
+
             ->bulkActions([
                 \Filament\Tables\Actions\BulkAction::make('bulkSetReturned')
                     ->label('Selesai')
@@ -307,4 +309,9 @@ class DeliveryToday extends Page implements HasTable
             ->emptyStateDescription('Pengiriman hari ini akan muncul di sini ketika dibuat.')
             ->emptyStateIcon('heroicon-o-truck');
     }
+
+//    public static function canAccess(): bool
+//    {
+//        return auth()->user()?->hasRole('driver');
+//    }
 }

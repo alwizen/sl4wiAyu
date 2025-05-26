@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Models\CashTransaction;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\ChartWidget;
 use Filament\Forms;
 use Carbon\Carbon;
@@ -10,14 +11,15 @@ use Illuminate\Support\Facades\DB;
 
 class CashTransactionChart extends ChartWidget
 {
+    use HasWidgetShield;
     protected static ?string $heading = 'Grafik Transaksi Kas';
-    
+
     protected static ?int $sort = 2;
-    
+
     protected int | string | array $columnSpan = 'full';
-    
+
     public ?string $filter = 'last_30_days';
-    
+
     protected function getFilters(): ?array
     {
         return [
@@ -32,7 +34,7 @@ class CashTransactionChart extends ChartWidget
             'custom' => 'Custom Range',
         ];
     }
-    
+
     public function getFilterForm(): ?array
     {
         return [
@@ -41,7 +43,7 @@ class CashTransactionChart extends ChartWidget
                 ->displayFormat('d/m/Y')
                 ->default(now()->subDays(30))
                 ->visible(fn() => $this->filter === 'custom'),
-                
+
             Forms\Components\DatePicker::make('date_to')
                 ->label('Tanggal Akhir')
                 ->displayFormat('d/m/Y')
@@ -49,11 +51,11 @@ class CashTransactionChart extends ChartWidget
                 ->visible(fn() => $this->filter === 'custom'),
         ];
     }
-    
+
     protected function getData(): array
     {
         $dateRange = $this->getDateRange();
-        
+
         // Ambil data transaksi berdasarkan rentang tanggal
         $transactions = CashTransaction::with('category')
             ->whereBetween('transaction_date', [$dateRange['start'], $dateRange['end']])
@@ -65,28 +67,28 @@ class CashTransactionChart extends ChartWidget
             ->groupBy('date')
             ->orderBy('date')
             ->get();
-        
+
         // Buat array label dan data
         $labels = [];
         $incomeData = [];
         $expenseData = [];
-        
+
         // Generate semua tanggal dalam rentang
         $period = new \DatePeriod(
             $dateRange['start'],
             new \DateInterval('P1D'),
             $dateRange['end']->addDay()
         );
-        
+
         foreach ($period as $date) {
             $dateString = $date->format('Y-m-d');
             $labels[] = $date->format('d/m');
-            
+
             $transaction = $transactions->firstWhere('date', $dateString);
             $incomeData[] = $transaction ? (float) $transaction->income : 0;
             $expenseData[] = $transaction ? (float) $transaction->expense : 0;
         }
-        
+
         return [
             'datasets' => [
                 [
@@ -111,12 +113,12 @@ class CashTransactionChart extends ChartWidget
             'labels' => $labels,
         ];
     }
-    
+
     protected function getType(): string
     {
         return 'line';
     }
-    
+
     protected function getOptions(): array
     {
         return [
@@ -147,11 +149,11 @@ class CashTransactionChart extends ChartWidget
             ],
         ];
     }
-    
+
     private function getDateRange(): array
     {
         $now = Carbon::now();
-        
+
         return match($this->filter) {
             'today' => [
                 'start' => $now->copy()->startOfDay(),
@@ -195,16 +197,16 @@ class CashTransactionChart extends ChartWidget
             ],
         };
     }
-    
+
     public function getHeading(): string
     {
         $dateRange = $this->getDateRange();
         $filterName = $this->getFilters()[$this->filter] ?? 'Custom';
-        
+
         if ($this->filter === 'custom') {
             $filterName = $dateRange['start']->format('d/m/Y') . ' - ' . $dateRange['end']->format('d/m/Y');
         }
-        
+
         return 'Grafik Transaksi Kas (' . $filterName . ')';
     }
 }

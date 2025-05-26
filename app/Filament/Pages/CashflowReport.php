@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\CashTransaction;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -15,6 +16,7 @@ use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
 
 class CashflowReport extends Page implements Tables\Contracts\HasTable
 {
+    use HasPageShield;
     use Tables\Concerns\InteractsWithTable;
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';

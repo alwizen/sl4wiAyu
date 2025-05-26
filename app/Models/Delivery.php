@@ -21,6 +21,7 @@ class Delivery extends Model
         'proof_delivery',
         'returned_qty',
         'car_id',
+        'short_code'
     ];
 
     public function user(): BelongsTo
@@ -66,4 +67,33 @@ class Delivery extends Model
     }
 
     protected $hidden = ['created_at', 'updated_at'];
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            // Generate unique short code
+            do {
+                $model->short_code = self::generateShortCode();
+            } while (static::where('short_code', $model->short_code)->exists());
+        });
+    }
+
+    /**
+     * Generate random short code
+     */
+    private static function generateShortCode(): string
+    {
+        // Kombinasi huruf dan angka, hindari karakter yang mirip (0, O, I, l)
+        $characters = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz';
+        return substr(str_shuffle($characters), 0, 6);
+    }
+
+    /**
+     * Get short URL
+     */
+    public function getShortUrlAttribute(): string
+    {
+        return config('app.url') . '/s/' . $this->short_code;
+    }
 }

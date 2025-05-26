@@ -35,6 +35,8 @@ class PurchaseOrderTracking extends Page implements HasTable, HasForms, HasInfol
     protected static ?string $navigationIcon = 'heroicon-o-truck';
     protected static string $view = 'filament.pages.purchase-order-tracking';
     protected static ?string $title = 'Purchase Order Tracking';
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationLabel = 'PO Tracking';
     protected static ?string $navigationGroup = 'Purchase Management';
     protected static ?int $navigationSort = 2;
@@ -45,7 +47,7 @@ class PurchaseOrderTracking extends Page implements HasTable, HasForms, HasInfol
     public function mount(): void
     {
         $this->form->fill();
-        
+
         // Auto-select first PO if only one exists (optional)
         if (!$this->selectedPurchaseOrderId) {
             $firstPO = PurchaseOrder::first();
@@ -85,7 +87,7 @@ class PurchaseOrderTracking extends Page implements HasTable, HasForms, HasInfol
                     })
                     ->placeholder('Choose a Purchase Order to track...')
                     ->columnSpanFull(),
-                
+
                 Actions::make([
                     Action::make('loadPO')
                         ->label('Load Purchase Order')
@@ -94,10 +96,10 @@ class PurchaseOrderTracking extends Page implements HasTable, HasForms, HasInfol
                         ->action(function () {
                             $formData = $this->form->getState();
                             $selectedId = $formData['selectedPurchaseOrderId'] ?? $this->selectedPurchaseOrderId;
-                            
+
                             if ($selectedId) {
                                 $this->loadPurchaseOrder($selectedId);
-                                
+
                                 Notification::make()
                                     ->title('Purchase Order Loaded Successfully')
                                     ->body('PO #' . $this->selectedPurchaseOrder?->order_number . ' has been loaded.')
@@ -122,7 +124,7 @@ class PurchaseOrderTracking extends Page implements HasTable, HasForms, HasInfol
     protected function loadPurchaseOrder(?int $poId): void
     {
         $this->selectedPurchaseOrderId = $poId;
-        
+
         if ($poId) {
             $this->selectedPurchaseOrder = PurchaseOrder::with([
                 'supplier',
@@ -132,11 +134,11 @@ class PurchaseOrderTracking extends Page implements HasTable, HasForms, HasInfol
         } else {
             $this->selectedPurchaseOrder = null;
         }
-        
+
         // Force refresh semua komponen
         $this->resetTable();
         $this->dispatch('$refresh');
-        
+
         // Update form state
         $this->form->fill(['selectedPurchaseOrderId' => $poId]);
     }
@@ -152,14 +154,14 @@ class PurchaseOrderTracking extends Page implements HasTable, HasForms, HasInfol
                             ->label('PO Number')
                             ->badge()
                             ->color(Color::Blue),
-                        
+
                         TextEntry::make('supplier.name')
                             ->label('Supplier'),
-                        
+
                         TextEntry::make('order_date')
                             ->label('Order Date')
                             ->date('d/m/Y'),
-                        
+
                         TextEntry::make('status')
                             ->label('Status')
                             ->badge()
@@ -169,23 +171,23 @@ class PurchaseOrderTracking extends Page implements HasTable, HasForms, HasInfol
                                 'cancelled' => 'danger',
                                 default => 'gray',
                             }),
-                        
+
                         TextEntry::make('total_amount')
                             ->label('Total Amount')
                             ->money('IDR'),
-                        
+
                         TextEntry::make('delivery_status')
                             ->label('Delivery Status')
                             ->state(function ($record) {
                                 if (!$record) return '-';
-                                
+
                                 $deliveryStatus = $this->calculateDeliveryStatus();
                                 return $deliveryStatus['status'];
                             })
                             ->badge()
                             ->color(function ($record) {
                                 if (!$record) return 'gray';
-                                
+
                                 $deliveryStatus = $this->calculateDeliveryStatus();
                                 return match ($deliveryStatus['status']) {
                                     'Complete' => 'success',
@@ -207,7 +209,7 @@ class PurchaseOrderTracking extends Page implements HasTable, HasForms, HasInfol
                 if (!$this->selectedPurchaseOrderId) {
                     return StockReceiving::query()->whereRaw('1 = 0'); // Return empty query
                 }
-                
+
                 return StockReceiving::query()
                     ->where('purchase_order_id', $this->selectedPurchaseOrderId)
                     ->with(['stockReceivingItems.warehouseItem'])
@@ -218,7 +220,7 @@ class PurchaseOrderTracking extends Page implements HasTable, HasForms, HasInfol
                     ->label('Delivery Date')
                     ->date('d/m/Y')
                     ->sortable(),
-                
+
                 TextColumn::make('items_summary')
                     ->label('Items Received')
                     ->state(function (StockReceiving $record) {
@@ -229,13 +231,13 @@ class PurchaseOrderTracking extends Page implements HasTable, HasForms, HasInfol
                             ->join(', ');
                     })
                     ->wrap(),
-                
+
                 TextColumn::make('total_items')
                     ->label('Total Items')
                     ->state(function (StockReceiving $record) {
                         return $record->stockReceivingItems->count() . ' items';
                     }),
-                
+
                 TextColumn::make('note')
                     ->label('Notes')
                     ->limit(50)
@@ -370,7 +372,7 @@ class PurchaseOrderTracking extends Page implements HasTable, HasForms, HasInfol
     {
         if ($this->selectedPurchaseOrderId) {
             $this->loadPurchaseOrder($this->selectedPurchaseOrderId);
-            
+
             Notification::make()
                 ->title('Data refreshed successfully')
                 ->success()
@@ -388,7 +390,7 @@ class PurchaseOrderTracking extends Page implements HasTable, HasForms, HasInfol
             'has_po_object' => $this->selectedPurchaseOrder ? 'Yes' : 'No',
             'po_number' => $this->selectedPurchaseOrder?->order_number
         ]);
-        
+
         Notification::make()
             ->title('Debug Info Logged')
             ->body('Check your logs for form state information')
