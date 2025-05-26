@@ -38,11 +38,9 @@ class Dashboard extends BaseDashboard
     {
         $hour = Carbon::now()->hour;
         
-        if ($hour >= 5 && $hour < 12) {
+        if ($hour >= 0 && $hour < 12) {
             return 'Selamat Pagi';
-        } elseif ($hour >= 12 && $hour < 17) {
-            return 'Selamat Siang';
-        } elseif ($hour >= 17 && $hour < 21) {
+        } elseif ($hour >= 12 && $hour < 18) {
             return 'Selamat Sore';
         } else {
             return 'Selamat Malam';
