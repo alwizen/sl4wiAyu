@@ -23,7 +23,7 @@ class Dashboard extends BaseDashboard
     protected function getFooterWidgets(): array
     {
         return [
-//            GreetingWidget::class,
+           GreetingWidget::class,
             CashTransactionStats::class,
             CashTransactionChart::class,
             DeliveryStatusTable::class,
