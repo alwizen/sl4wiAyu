@@ -75,12 +75,16 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                     ->preload()
                     ->required(),
 
-                Forms\Components\Select::make('user_id')
-                    ->label('Supir')
-                    ->relationship('user', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->required(),
+                    Forms\Components\Select::make('user_id')
+    ->label('Supir')
+    ->options(function () {
+        return \App\Models\User::whereHas('roles', function ($query) {
+            $query->where('name', 'driver');
+        })->pluck('name', 'id');
+    })
+    ->searchable()
+    ->preload()
+    ->required(),
 
                 Forms\Components\Select::make('status')
                     ->label('Status Pengiriman')
