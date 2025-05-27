@@ -13,7 +13,16 @@ class ListNutritionPlans extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->label('Tambah Rencana Nutrisi')
+                ->icon('heroicon-o-plus')
+                ->color('primary'),
+            Actions\Action::make('Lihat Menu Harian')
+                ->label('Lihat Menu Harian')
+                ->icon('heroicon-o-calendar')
+                ->url(route('filament.admin.resources.daily-menus.index')) // Sesuaikan dengan nama resource tujuan
+                ->color('success')
+                ->openUrlInNewTab(),
         ];
     }
 }

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\CashTransactionResource\Pages;
 
 use App\Filament\Resources\CashTransactionResource;
 use Filament\Actions;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\ManageRecords;
 
 class ManageCashTransactions extends ManageRecords
@@ -13,7 +14,15 @@ class ManageCashTransactions extends ManageRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
-        ];
+            Actions\CreateAction::make()
+            ->label('Tambah Transaksi Kas')
+                ->icon('heroicon-o-plus')
+                ->color('primary'),
+                Action::make('Kategoty Transaksi')
+                ->label('Kategori Transaksi')
+                ->icon('heroicon-o-clipboard-document-list')
+                ->color('warning')
+                ->url(route('filament.admin.resources.cash-categories.index')) // Sesuaikan dengan nama resource tujuan
+            ];
     }
 }

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\DeliveryResource\Pages;
 
 use App\Filament\Resources\DeliveryResource;
 use Filament\Actions;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\ManageRecords;
 
 class ManageDeliveries extends ManageRecords
@@ -13,7 +14,16 @@ class ManageDeliveries extends ManageRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->label('Tambah Pengiriman')
+                ->icon('heroicon-o-plus')
+                ->color('primary'),
+            Action::make('Lihat Penerima')
+                ->label('Lihat Penerima')
+                ->icon('heroicon-o-user-group')
+                ->url(route('filament.admin.resources.recipients.index')) // Sesuaikan dengan nama resource tujuan
+                ->color('success')
+                ->openUrlInNewTab(),
         ];
     }
 }
