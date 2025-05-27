@@ -147,8 +147,6 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
             ]);
     }
 
-
-
     protected static function updateTotal(callable $get, callable $set): void
     {
         $items = $get('items') ?? [];
@@ -160,7 +158,6 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
 
         $set('total_amount', $total);
     }
-
 
     public static function table(Table $table): Table
     {
@@ -206,8 +203,17 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                 // filters can be added here
             ])
             ->actions([
+                Tables\Actions\Action::make('print_pdf')
+                    ->label('Cetak PDF')
+                    ->color('warning')
+                    ->icon('heroicon-o-printer')
+                    ->url(fn(PurchaseOrder $record) => route('purchase-orders.print', $record))
+                    ->openUrlInNewTab()
+                    ->visible(fn(PurchaseOrder $record) => $record->payment_status === 'Paid'),
+
                 Tables\Actions\Action::make('view')
                     ->label('Detail')
+                    ->color('secondary')
                     ->tooltip('Lihat Detail')
                     ->icon('heroicon-o-eye')
                     ->infolist([
@@ -217,7 +223,7 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                                 // TextEntry::make('supplier.name')->label('Nama Supplier'),
                                 // TextEntry::make('status')->label('Status'),
                                 TextEntry::make('order_number')
-                                ->label('Nomor Order'),
+                                    ->label('Nomor Order'),
                                 TextEntry::make('total_amount')
                                     ->label('Total')
                                     ->money('IDR', true),
@@ -243,122 +249,122 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                     ->slideOver(),
                 ActionGroup::make([
                     Tables\Actions\Action::make('mark_paid')
-                    ->label('Tandai Lunas')
-                    ->icon('heroicon-o-currency-dollar')
-                    ->color('success')
-                    ->visible(fn($record) => $record->payment_status !== 'Paid')
-                    ->requiresConfirmation()
-                    ->action(function ($record) {
-                        $record->update([
-                            'payment_status' => 'Paid',
-                            'payment_date' => now(),
-                        ]);
-                    }),
+                        ->label('Tandai Lunas')
+                        ->icon('heroicon-o-currency-dollar')
+                        ->color('success')
+                        ->visible(fn($record) => $record->payment_status !== 'Paid')
+                        ->requiresConfirmation()
+                        ->action(function ($record) {
+                            $record->update([
+                                'payment_status' => 'Paid',
+                                'payment_date' => now(),
+                            ]);
+                        }),
 
-                Tables\Actions\Action::make('mark_partially_paid')
-                    ->label('Tandai Sebagian Lunas')
-                    ->icon('heroicon-o-adjustments-horizontal')
-                    ->color('warning')
-                    ->visible(fn($record) => $record->payment_status !== 'Partially Paid')
-                    ->requiresConfirmation()
-                    ->action(function ($record) {
-                        $record->update([
-                            'payment_status' => 'Partially Paid',
-                            'payment_date' => now(),
-                        ]);
-                    }),
+                    Tables\Actions\Action::make('mark_partially_paid')
+                        ->label('Tandai Sebagian Lunas')
+                        ->icon('heroicon-o-adjustments-horizontal')
+                        ->color('warning')
+                        ->visible(fn($record) => $record->payment_status !== 'Partially Paid')
+                        ->requiresConfirmation()
+                        ->action(function ($record) {
+                            $record->update([
+                                'payment_status' => 'Partially Paid',
+                                'payment_date' => now(),
+                            ]);
+                        }),
 
-                Tables\Actions\Action::make('mark_unpaid')
-                    ->label('Tandai Belum Lunas')
-                    ->icon('heroicon-o-x-circle')
-                    ->color('danger')
-                    ->visible(fn($record) => $record->payment_status !== 'Unpaid')
-                    ->requiresConfirmation()
-                    ->action(function ($record) {
-                        $record->update([
-                            'payment_status' => 'Unpaid',
-                            'payment_date' => null,
-                        ]);
-                    }),
-                Tables\Actions\Action::make('approve')
-                    ->label('Approve')
-                    ->icon('heroicon-o-check-circle')
-                    ->color('success')
-                    ->visible(
-                        fn($record) =>
-                        $record->status === 'Pending' &&
-                            auth()->user()?->can('approve_purchase::order')
-                    )
-                    ->requiresConfirmation()
-                    ->action(function ($record) {
-                        $record->update(['status' => 'Approved']);
-                    }),
+                    Tables\Actions\Action::make('mark_unpaid')
+                        ->label('Tandai Belum Lunas')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->visible(fn($record) => $record->payment_status !== 'Unpaid')
+                        ->requiresConfirmation()
+                        ->action(function ($record) {
+                            $record->update([
+                                'payment_status' => 'Unpaid',
+                                'payment_date' => null,
+                            ]);
+                        }),
+                    Tables\Actions\Action::make('approve')
+                        ->label('Approve')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->visible(
+                            fn($record) =>
+                            $record->status === 'Pending' &&
+                                auth()->user()?->can('approve_purchase::order')
+                        )
+                        ->requiresConfirmation()
+                        ->action(function ($record) {
+                            $record->update(['status' => 'Approved']);
+                        }),
 
-                Tables\Actions\EditAction::make(),
+                    Tables\Actions\EditAction::make(),
 
-                Tables\Actions\Action::make('Send to WhatsApp')
-                    ->label('Kirim ke WA')
-                    ->tooltip('Kirim Data Pesanan ke Supplier')
-                    ->icon('heroicon-o-paper-airplane')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->action(function (PurchaseOrder $record) {
-                        $record->update(['status' => 'Ordered']);
-                    })
-                    ->url(function (PurchaseOrder $record) {
-                        // Ambil nomor telepon supplier
-                        $phoneNumber = preg_replace('/[^0-9]/', '', $record->supplier->phone);
+                    Tables\Actions\Action::make('Send to WhatsApp')
+                        ->label('Kirim ke WA')
+                        ->tooltip('Kirim Data Pesanan ke Supplier')
+                        ->icon('heroicon-o-paper-airplane')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->action(function (PurchaseOrder $record) {
+                            $record->update(['status' => 'Ordered']);
+                        })
+                        ->url(function (PurchaseOrder $record) {
+                            // Ambil nomor telepon supplier
+                            $phoneNumber = preg_replace('/[^0-9]/', '', $record->supplier->phone);
 
-                        // Format nomor telepon ke format internasional Indonesia
-                        if (strlen($phoneNumber) > 0) {
-                            if (substr($phoneNumber, 0, 1) === '0') {
-                                // Jika dimulai dengan 0, ganti dengan 62
-                                $phoneNumber = '62' . substr($phoneNumber, 1);
+                            // Format nomor telepon ke format internasional Indonesia
+                            if (strlen($phoneNumber) > 0) {
+                                if (substr($phoneNumber, 0, 1) === '0') {
+                                    // Jika dimulai dengan 0, ganti dengan 62
+                                    $phoneNumber = '62' . substr($phoneNumber, 1);
+                                }
+                                // Jika nomor tidak dimulai dengan '62', tambahkan '62'
+                                elseif (substr($phoneNumber, 0, 2) !== '62') {
+                                    $phoneNumber = '62' . $phoneNumber;
+                                }
                             }
-                            // Jika nomor tidak dimulai dengan '62', tambahkan '62'
-                            elseif (substr($phoneNumber, 0, 2) !== '62') {
-                                $phoneNumber = '62' . $phoneNumber;
-                            }
-                        }
 
-                        // Format pesan WhatsApp
-                        $message = "**Purchase Order **" . "\n" . $record->order_number . "\n" .
-                            "Tanggal: " . \Carbon\Carbon::parse($record->order_date)->format('d-m-Y') . "\n" .
-                            "Supplier: " . $record->supplier->name . "\n\n" .
-                            "📦 Daftar Barang:\n" .
-                            $record->items->map(
-                                fn($item) =>
-                                "- " . $item->item->name . ": " . $item->quantity . " " . $item->item->unit . " x Rp " . number_format($item->unit_price, 0, ',', '.')
-                            )->implode("\n") .
-                            "\n\nTotal: Rp " . number_format($record->total_amount, 0, ',', '.');
+                            // Format pesan WhatsApp
+                            $message = "**Purchase Order **" . "\n" . $record->order_number . "\n" .
+                                "Tanggal: " . \Carbon\Carbon::parse($record->order_date)->format('d-m-Y') . "\n" .
+                                "Supplier: " . $record->supplier->name . "\n\n" .
+                                "📦 Daftar Barang:\n" .
+                                $record->items->map(
+                                    fn($item) =>
+                                    "- " . $item->item->name . ": " . $item->quantity . " " . $item->item->unit . " x Rp " . number_format($item->unit_price, 0, ',', '.')
+                                )->implode("\n") .
+                                "\n\nTotal: Rp " . number_format($record->total_amount, 0, ',', '.');
 
-                        // Encode pesan untuk URL WhatsApp
-                        $encodedMessage = urlencode($message);
+                            // Encode pesan untuk URL WhatsApp
+                            $encodedMessage = urlencode($message);
 
-                        return "https://wa.me/{$phoneNumber}?text={$encodedMessage}";
-                    })
-                    ->openUrlInNewTab()
-                    ->visible(
-                        fn($record) =>
-                        $record->status === 'Approved' &&
-                            auth()->user()?->can('send_whatsapp_purchase::order')
-                    ),
-                // ->visible(fn(PurchaseOrder $record) => $record->status === 'Approved'),
+                            return "https://wa.me/{$phoneNumber}?text={$encodedMessage}";
+                        })
+                        ->openUrlInNewTab()
+                        ->visible(
+                            fn($record) =>
+                            $record->status === 'Approved' &&
+                                auth()->user()?->can('send_whatsapp_purchase::order')
+                        ),
+                    // ->visible(fn(PurchaseOrder $record) => $record->status === 'Approved'),
 
-                Tables\Actions\Action::make('mark_ordered')
-                    ->label('Tandai Sudah kirim Wa')
-                    ->tooltip('Tandai Sudah Dikirim')
-                    ->icon('heroicon-o-truck')
-                    ->color('warning')
-                    ->requiresConfirmation()
-                    ->action(fn(PurchaseOrder $record) => $record->update(['status' => 'Ordered']))
-                    // ->visible(fn($record) => $record->status === 'Approved'),
-                    ->visible(
-                        fn($record) =>
-                        $record->status === 'Approved' &&
-                            auth()->user()?->can('mark_ordered_purchase::order')
-                    ),
-                Tables\Actions\DeleteAction::make()
+                    Tables\Actions\Action::make('mark_ordered')
+                        ->label('Tandai Sudah kirim Wa')
+                        ->tooltip('Tandai Sudah Dikirim')
+                        ->icon('heroicon-o-truck')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->action(fn(PurchaseOrder $record) => $record->update(['status' => 'Ordered']))
+                        // ->visible(fn($record) => $record->status === 'Approved'),
+                        ->visible(
+                            fn($record) =>
+                            $record->status === 'Approved' &&
+                                auth()->user()?->can('mark_ordered_purchase::order')
+                        ),
+                    Tables\Actions\DeleteAction::make()
                 ])
             ])
 

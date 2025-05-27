@@ -2,6 +2,9 @@
 
 use App\Filament\Resources\StockIssueResource\Pages\ProcessStockIssue;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\PurchaseOrderPdfController;
+use App\Models\PurchaseOrder;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/tracking', [\App\Http\Controllers\TrackingController::class, 'showForm'])->name('tracking.form');
@@ -18,6 +21,17 @@ Route::get('/s/{code}', function($code) {
     // Redirect ke halaman tracking
     return redirect("/tracking/check?delivery_number=" . urlencode($delivery->delivery_number));
 })->name('tracking.short');
+
+
+
+    Route::get('/purchase-orders/{purchaseOrder}/print', function (PurchaseOrder $purchaseOrder) {
+        $pdf = Pdf::loadView('pdf.purchase-order', [
+            'purchaseOrder' => $purchaseOrder,
+        ]);
+    
+        return $pdf->stream('Nota_Pesanan_' . $purchaseOrder->id . '.pdf');
+    })->name('purchase-orders.print');
+    
 ///Route::get('/tracking/{delivery_number}', [TrackingController::class, 'show']);
 
 // Route::get('/', function () {
