@@ -281,6 +281,11 @@ class NutritionPlanResource extends Resource
             ])
             ->actions([
                 ActionGroup::make([
+                    \Filament\Tables\Actions\Action::make('print')
+                        ->label('Cetak PDF')
+                        ->icon('heroicon-o-printer')
+                        ->url(fn(NutritionPlan $record) => route('nutrition-plans.print', $record))
+                        ->openUrlInNewTab(),
                     \Filament\Tables\Actions\EditAction::make(),
                     \Filament\Tables\Actions\DeleteAction::make(),
                 ]),
@@ -288,18 +293,18 @@ class NutritionPlanResource extends Resource
             ->bulkActions([
                 \Filament\Tables\Actions\BulkActionGroup::make([
                     \Filament\Tables\Actions\DeleteBulkAction::make(),
-                    
+
                     // Custom Excel Export dengan format yang sesuai
                     FilamentExcelExportBulkAction::make()
                         ->exports([
                             ExcelExport::make()
                                 ->fromTable()
-                                ->withFilename(fn ($resource) => 'rencana-nutrisi-' . date('Y-m-d-H-i-s'))
+                                ->withFilename(fn($resource) => 'rencana-nutrisi-' . date('Y-m-d-H-i-s'))
                                 ->withColumns([
                                     Column::make('nutrition_plan_date')
                                         ->heading('Tanggal')
-                                        ->formatStateUsing(fn ($state) => \Carbon\Carbon::parse($state)->format('d F Y')),
-                                    
+                                        ->formatStateUsing(fn($state) => \Carbon\Carbon::parse($state)->format('d F Y')),
+
                                     Column::make('menu_names')
                                         ->heading('Menu')
                                         ->formatStateUsing(function ($state, $record) {
@@ -307,7 +312,7 @@ class NutritionPlanResource extends Resource
                                                 ->pluck('menu.menu_name')
                                                 ->join("\n");
                                         }),
-                                    
+
                                     Column::make('target_groups')
                                         ->heading('Penerima')
                                         ->formatStateUsing(function ($state, $record) {
@@ -315,7 +320,7 @@ class NutritionPlanResource extends Resource
                                                 ->pluck('targetGroup.name')
                                                 ->join("\n");
                                         }),
-                                    
+
                                     Column::make('energy_values')
                                         ->heading('Energi (kkal)')
                                         ->formatStateUsing(function ($state, $record) {
@@ -323,7 +328,7 @@ class NutritionPlanResource extends Resource
                                                 ->map(fn($item) => number_format((float)$item->energy, 2, ',', '.') . ' kkal')
                                                 ->join("\n");
                                         }),
-                                    
+
                                     Column::make('protein_values')
                                         ->heading('Protein (gr)')
                                         ->formatStateUsing(function ($state, $record) {
@@ -331,7 +336,7 @@ class NutritionPlanResource extends Resource
                                                 ->map(fn($item) => number_format((float)$item->protein, 2, ',', '.') . ' gr')
                                                 ->join("\n");
                                         }),
-                                    
+
                                     Column::make('fat_values')
                                         ->heading('Lemak (gr)')
                                         ->formatStateUsing(function ($state, $record) {
@@ -339,7 +344,7 @@ class NutritionPlanResource extends Resource
                                                 ->map(fn($item) => number_format((float)$item->fat, 2, ',', '.') . ' gr')
                                                 ->join("\n");
                                         }),
-                                    
+
                                     Column::make('carb_values')
                                         ->heading('Karbohidrat (gr)')
                                         ->formatStateUsing(function ($state, $record) {
@@ -347,7 +352,7 @@ class NutritionPlanResource extends Resource
                                                 ->map(fn($item) => number_format((float)$item->carb, 2, ',', '.') . ' gr')
                                                 ->join("\n");
                                         }),
-                                    
+
                                     Column::make('serat_values')
                                         ->heading('Serat (gr)')
                                         ->formatStateUsing(function ($state, $record) {
@@ -355,7 +360,7 @@ class NutritionPlanResource extends Resource
                                                 ->map(fn($item) => number_format((float)$item->serat, 2, ',', '.') . ' gr')
                                                 ->join("\n");
                                         }),
-                                    
+
                                     Column::make('netto_values')
                                         ->heading('Netto (gr)')
                                         ->formatStateUsing(function ($state, $record) {

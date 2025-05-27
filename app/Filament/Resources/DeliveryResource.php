@@ -266,9 +266,10 @@ class DeliveryResource extends Resource implements HasShieldPermissions
 
                             // Gunakan short URL custom
                             $shortUrl = config('app.url') . '/s/' . $record->short_code;
+                            $deliveryNumber = $record->delivery_number;
 
                             // Siapkan pesan WhatsApp
-                            $message = "Tracking pengiriman Anda: {$shortUrl}";
+                            $message = "📦 *No. Pengiriman: {$deliveryNumber}*\nMakan Bergisi Gratis sedang dalam perjalanan! 🚚\nCek status pengiriman Anda melalui link berikut:\n{$shortUrl}";
                             $encodedMessage = urlencode($message);
 
                             // Tampilkan notifikasi sukses
@@ -282,6 +283,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                             return redirect()->away($whatsappUrl);
                         })
                         ->requiresConfirmation()
+                        ->openUrlInNewTab()
                         ->modalHeading('Kirim Link Tracking')
                         ->modalDescription('Apakah Anda yakin ingin mengirim link tracking via WhatsApp?')
                         ->modalSubmitActionLabel('Ya, Kirim'),

@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/tracking', [\App\Http\Controllers\TrackingController::class, 'showForm'])->name('tracking.form');
 Route::get('/tracking/check', [\App\Http\Controllers\TrackingController::class, 'check'])->name('tracking.check');
 
-Route::get('/s/{code}', function($code) {
+Route::get('/s/{code}', function ($code) {
     $delivery = \App\Models\Delivery::where('short_code', $code)->first();
 
     if (!$delivery) {
@@ -22,16 +22,24 @@ Route::get('/s/{code}', function($code) {
     return redirect("/tracking/check?delivery_number=" . urlencode($delivery->delivery_number));
 })->name('tracking.short');
 
+//print pdf Nutrition Plan
+Route::get('/nutrition-plans/{record}/print', [\App\Http\Controllers\NutritionPlanPrintController::class, 'print'])
+    ->name('nutrition-plans.print');
+
+//print pdf PO
+Route::get('/purchase-orders/{purchaseOrder}/print', function (PurchaseOrder $purchaseOrder) {
+    $pdf = Pdf::loadView('pdf.purchase-order', [
+        'purchaseOrder' => $purchaseOrder,
+    ]);
+
+    return $pdf->stream('Nota_Pesanan_' . $purchaseOrder->id . '.pdf');
+})->name('purchase-orders.print');
+    
 
 
-    Route::get('/purchase-orders/{purchaseOrder}/print', function (PurchaseOrder $purchaseOrder) {
-        $pdf = Pdf::loadView('pdf.purchase-order', [
-            'purchaseOrder' => $purchaseOrder,
-        ]);
-    
-        return $pdf->stream('Nota_Pesanan_' . $purchaseOrder->id . '.pdf');
-    })->name('purchase-orders.print');
-    
+
+
+
 ///Route::get('/tracking/{delivery_number}', [TrackingController::class, 'show']);
 
 // Route::get('/', function () {
