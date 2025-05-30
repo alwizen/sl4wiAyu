@@ -19,9 +19,12 @@ class CashflowReport extends Page implements Tables\Contracts\HasTable
     use HasPageShield;
     use Tables\Concerns\InteractsWithTable;
 
-    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
+    protected static ?string $navigationIcon = 'heroicon-o-document-currency-dollar';
+
     protected static ?string $navigationGroup = 'Keuangan';
+
     protected static string $view = 'filament.pages.cashflow-report';
+    
     protected static ?string $title = 'Laporan Arus Kas';
 
     public function table(Table $table): Table

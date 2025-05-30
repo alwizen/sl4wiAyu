@@ -8,66 +8,133 @@ use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Carbon;
 
 class PurchaseOrderReceivingHistory extends Page implements Tables\Contracts\HasTable
 {
     use Tables\Concerns\InteractsWithTable;
-
     use HasPageShield;
 
     protected static string $view = 'filament.pages.purchase-order-receiving-history';
-
     protected static ?string $navigationIcon = 'heroicon-o-clock';
-
     protected static ?string $title = 'Histori Penerimaan PO';
 
     protected function getTableQuery(): Builder
     {
-        return PurchaseOrder::with(['supplier', 'receivings.stockReceivingItems.warehouseItem']);
+        return PurchaseOrder::with([
+            'supplier',
+            'items.item',
+            'receivings.stockReceivingItems',
+        ]);
     }
 
     protected function getTableColumns(): array
     {
         return [
-            TextColumn::make('order_number')->label('No. PO'),
-            TextColumn::make('supplier.name')->label('Supplier'),
+            TextColumn::make('order_date')
+                ->label('Tanggal PO')
+                ->dateTime('d/m/Y')
+                ->sortable(),
 
+            TextColumn::make('order_number')
+                ->label('No. PO')
+                ->searchable(),
 
-            TextColumn::make('receivings')
-                ->label('Penerimaan & Sisa')
+            TextColumn::make('supplier.name')
+                ->label('Supplier'),
+
+                TextColumn::make('receivings')
+                ->label('Update Penerimaan')
                 ->formatStateUsing(function ($state, $record) {
-                    // Ambil semua item PO beserta qty yang dipesan
-                    $poItems = $record->items; // asumsi relasi PO ke items sudah ada
-
-                    // Ambil semua penerimaan dan hitung total qty diterima per item
-                    $receivedQuantities = [];
-
+                    $record->loadMissing('items.item', 'receivings.stockReceivingItems');
+            
+                    // Mapping PO total quantity
+                    $poItemQuantities = [];
+                    foreach ($record->items as $item) {
+                        $poItemQuantities[$item->item_id] = [
+                            'name' => $item->item->name ?? 'Unknown Item',
+                            'quantity' => $item->quantity,
+                        ];
+                    }
+            
+                    $receivedByDate = [];
+            
                     foreach ($record->receivings as $receiving) {
-                        foreach ($receiving->stockReceivingItems as $receivedItem) {
-                            $id = $receivedItem->warehouse_item_id;
-                            $receivedQuantities[$id] = ($receivedQuantities[$id] ?? 0) + $receivedItem->received_quantity;
+                        $date = optional($receiving->received_date)?->format('d/m/Y') ?? '-';
+            
+                        foreach ($receiving->stockReceivingItems as $item) {
+                            $id = $item->warehouse_item_id;
+                            $name = $item->warehouseItem->name ?? 'Unknown Item';
+                            $qty = $item->received_quantity;
+                            $totalPoQty = collect($record->items)->firstWhere('item_id', $id)?->quantity ?? 0;
+            
+                            $receivedByDate[$date][$name] = [
+                                'received' => ($receivedByDate[$date][$name]['received'] ?? 0) + $qty,
+                                'total' => $totalPoQty,
+                            ];
                         }
                     }
-
+            
                     $html = '<ul>';
-
-                    foreach ($poItems as $poItem) {
-                        $id = $poItem->item_id;  // sesuaikan dengan field id item di PO
-                        $name = $poItem->item->name ?? 'Unknown Item';
-                        $orderedQty = $poItem->quantity; // qty di PO
-                        $receivedQty = $receivedQuantities[$id] ?? 0;
-                        $remainingQty = $orderedQty - $receivedQty;
-
-                        $html .= "<li><strong>{$name}</strong>: Dipesan {$orderedQty}, Diterima {$receivedQty}, Sisa <span style='color:" . ($remainingQty > 0 ? 'red' : 'green') . "'>{$remainingQty}</span></li>";
+                    foreach ($receivedByDate as $date => $items) {
+                        $html .= "<li><strong>{$date}</strong><ul>";
+                        foreach ($items as $name => $data) {
+                            $html .= "<li>{$name}: {$data['received']} dari total PO {$data['total']}</li>";
+                        }
+                        $html .= '</ul></li>';
                     }
-
                     $html .= '</ul>';
-
+            
                     return $html;
                 })
                 ->html()
-                ->wrap()
+                ->wrap(),
+            
+                TextColumn::make('items')
+                ->label('Status Jumlah')
+                ->formatStateUsing(function ($state, $record) {
+                    $record->loadMissing('items.item', 'receivings.stockReceivingItems');
+            
+                    // Hitung total penerimaan per item berdasarkan ID
+                    $receivedQuantities = [];
+            
+                    foreach ($record->receivings as $receiving) {
+                        foreach ($receiving->stockReceivingItems as $item) {
+                            $id = $item->warehouse_item_id;
+                            $receivedQuantities[$id] = ($receivedQuantities[$id] ?? 0) + $item->received_quantity;
+                        }
+                    }
+            
+                    $html = '<ul>';
+            
+                    foreach ($record->items as $poItem) {
+                        $id = $poItem->item_id;
+                        $name = $poItem->item->name ?? 'Unknown Item';
+                        $ordered = $poItem->quantity;
+                        $received = $receivedQuantities[$id] ?? 0;
+                        $status = '';
+                        $color = '';
+            
+                        if ($received < $ordered) {
+                            $status = 'kurang ' . ($ordered - $received);
+                            $color = 'red';
+                        } elseif ($received > $ordered) {
+                            $status = 'lebih ' . ($received - $ordered);
+                            $color = 'green';
+                        } else {
+                            $status = 'sesuai/pas';
+                            $color = 'green';
+                        }
+            
+                        $html .= "<li><strong>{$name}</strong>: <span style='color:{$color}'>{$status}</span></li>";
+                    }
+            
+                    $html .= '</ul>';
+            
+                    return $html;
+                })
+                ->html()
+                ->wrap(),
+            
         ];
     }
 }

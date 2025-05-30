@@ -1,11 +1,14 @@
 <?php
 
+use App\Exports\NutritionPlanItemsExport;
 use App\Filament\Resources\StockIssueResource\Pages\ProcessStockIssue;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\PurchaseOrderPdfController;
 use App\Models\PurchaseOrder;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Route;
+use Maatwebsite\Excel\Facades\Excel;
+
 
 Route::get('/tracking', [\App\Http\Controllers\TrackingController::class, 'showForm'])->name('tracking.form');
 Route::get('/tracking/check', [\App\Http\Controllers\TrackingController::class, 'check'])->name('tracking.check');
@@ -32,9 +35,12 @@ Route::get('/purchase-orders/{purchaseOrder}/print', function (PurchaseOrder $pu
         'purchaseOrder' => $purchaseOrder,
     ]);
 
-    return $pdf->stream('Nota_Pesanan_' . $purchaseOrder->id . '.pdf');
+    return $pdf->stream('Nota_Pesanan_' . $purchaseOrder->order_number . '.pdf');
 })->name('purchase-orders.print');
-    
+
+// Route::get('/export-nutrition-plan-items', function () {
+//     return Excel::download(new NutritionPlanItemsExport, 'nutrition-plan-items.xlsx');
+// });
 
 
 

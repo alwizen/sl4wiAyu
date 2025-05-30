@@ -2,11 +2,15 @@
 
 namespace App\Filament\Resources;
 
+use App\Exports\NutritionPlanItemsExport;
+use App\Filament\Exports\NutritionPlanExporter;
+use App\Filament\Exports\NutritionPlanItemExporter;
 use App\Filament\Resources\NutritionPlanResource\Pages;
 use App\Models\NutritionPlan;
 use App\Models\DailyMenu;
 use App\Models\Menu;
 use App\Models\TargetGroup;
+use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -23,7 +27,10 @@ use Illuminate\Database\Eloquent\Collection;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Tables\Actions\ActionGroup;
-
+use Filament\Tables\Actions\ExportAction;
+use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\BulkAction;
+use Maatwebsite\Excel\Facades\Excel;
 // Import untuk Excel Export
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction as FilamentExcelExportBulkAction;
 use pxlrbt\FilamentExcel\Columns\Column;
@@ -170,6 +177,16 @@ class NutritionPlanResource extends Resource
     public static function table(\Filament\Tables\Table $table): \Filament\Tables\Table
     {
         return $table
+            // ->headerActions([
+            //     Action::::make('Ekspor Item')
+            //     ->icon('heroicon-o-document-arrow-down')
+            //     ->action(function (NutritionPlan $record) {
+            //         return Excel::download(
+            //             new \App\Exports\NutritionPlanItemsExport($record->id),
+            //             'nutrition-plan-' . $record->id . '-items.xlsx'
+            //         );
+            //     }),
+            // ])
             ->groups([
                 \Filament\Tables\Grouping\Group::make('nutrition_plan_date')
                     ->label('Tanggal')
@@ -290,86 +307,31 @@ class NutritionPlanResource extends Resource
                     \Filament\Tables\Actions\DeleteAction::make(),
                 ]),
             ])
+            // ->headerActions([
+            //     Action::make('Ekspor Semua Item Rencana Nutrisi')
+            //         ->icon('heroicon-o-arrow-down-tray')
+            //         ->color('success')
+            //         ->action(function () {
+            //             return Excel::download(new NutritionPlanItemsExport, 'nutrition-plan-items.xlsx');
+            //         }),
+            // ])
             ->bulkActions([
                 \Filament\Tables\Actions\BulkActionGroup::make([
                     \Filament\Tables\Actions\DeleteBulkAction::make(),
 
-                    // Custom Excel Export dengan format yang sesuai
-                    FilamentExcelExportBulkAction::make()
-                        ->exports([
-                            ExcelExport::make()
-                                ->fromTable()
-                                ->withFilename(fn($resource) => 'rencana-nutrisi-' . date('Y-m-d-H-i-s'))
-                                ->withColumns([
-                                    Column::make('nutrition_plan_date')
-                                        ->heading('Tanggal')
-                                        ->formatStateUsing(fn($state) => \Carbon\Carbon::parse($state)->format('d F Y')),
+                    BulkAction::make('export-selected')
+                        ->label('Ekspor Item Nutrisi')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->action(function (Collection $records) {
+                            $ids = $records->pluck('id');
 
-                                    Column::make('menu_names')
-                                        ->heading('Menu')
-                                        ->formatStateUsing(function ($state, $record) {
-                                            return $record->nutritionPlanItems
-                                                ->pluck('menu.menu_name')
-                                                ->join("\n");
-                                        }),
+                            $timestamp = Carbon::now()->format('Ymd_His'); // Format: 20250530_143210
 
-                                    Column::make('target_groups')
-                                        ->heading('Penerima')
-                                        ->formatStateUsing(function ($state, $record) {
-                                            return $record->nutritionPlanItems
-                                                ->pluck('targetGroup.name')
-                                                ->join("\n");
-                                        }),
-
-                                    Column::make('energy_values')
-                                        ->heading('Energi (kkal)')
-                                        ->formatStateUsing(function ($state, $record) {
-                                            return $record->nutritionPlanItems
-                                                ->map(fn($item) => number_format((float)$item->energy, 2, ',', '.') . ' kkal')
-                                                ->join("\n");
-                                        }),
-
-                                    Column::make('protein_values')
-                                        ->heading('Protein (gr)')
-                                        ->formatStateUsing(function ($state, $record) {
-                                            return $record->nutritionPlanItems
-                                                ->map(fn($item) => number_format((float)$item->protein, 2, ',', '.') . ' gr')
-                                                ->join("\n");
-                                        }),
-
-                                    Column::make('fat_values')
-                                        ->heading('Lemak (gr)')
-                                        ->formatStateUsing(function ($state, $record) {
-                                            return $record->nutritionPlanItems
-                                                ->map(fn($item) => number_format((float)$item->fat, 2, ',', '.') . ' gr')
-                                                ->join("\n");
-                                        }),
-
-                                    Column::make('carb_values')
-                                        ->heading('Karbohidrat (gr)')
-                                        ->formatStateUsing(function ($state, $record) {
-                                            return $record->nutritionPlanItems
-                                                ->map(fn($item) => number_format((float)$item->carb, 2, ',', '.') . ' gr')
-                                                ->join("\n");
-                                        }),
-
-                                    Column::make('serat_values')
-                                        ->heading('Serat (gr)')
-                                        ->formatStateUsing(function ($state, $record) {
-                                            return $record->nutritionPlanItems
-                                                ->map(fn($item) => number_format((float)$item->serat, 2, ',', '.') . ' gr')
-                                                ->join("\n");
-                                        }),
-
-                                    Column::make('netto_values')
-                                        ->heading('Netto (gr)')
-                                        ->formatStateUsing(function ($state, $record) {
-                                            return $record->nutritionPlanItems
-                                                ->map(fn($item) => number_format((float)$item->netto, 2, ',', '.') . ' gr')
-                                                ->join("\n");
-                                        }),
-                                ])
-                        ])
+                            return Excel::download(
+                                new NutritionPlanItemsExport($ids),
+                                "selected-nutrition-plan-items_{$timestamp}.xlsx"
+                            );
+                        }),
                 ]),
             ])
             ->defaultSort('nutrition_plan_date', 'desc');

@@ -24,8 +24,6 @@ class WarehouseItem extends Model
     {
         return $this->hasMany(StockReceivingItem::class);
     }
-    // add hidden
-    protected $hidden = ['created_at', 'updated_at'];
 
     // public function updateStock($warehouseItemId, $receivedQuantity)
     // {
@@ -34,7 +32,12 @@ class WarehouseItem extends Model
     //     $item->save();
     // }
     public function purchaseOrderItems()
-{
-    return $this->hasMany(PurchaseOrderItem::class, 'item_id');
-}
+    {
+        return $this->hasMany(PurchaseOrderItem::class, 'item_id');
+    }
+    
+    public function stockIssueItems(): HasMany
+    {
+        return $this->hasMany(StockIssueItem::class);
+    }
 }

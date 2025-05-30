@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources;
 
+use App\Exports\PurchaseOrderItemsExport;
 use App\Filament\Resources\PurchaseOrderResource\Pages;
 use App\Filament\Resources\PurchaseOrderResource\RelationManagers;
+use App\Filament\Resources\WarehouseItemResource\RelationManagers\StockReceivingItemsRelationManager;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
 use App\Models\WarehouseItem;
@@ -19,15 +21,19 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+use Carbon\Carbon;
 use Filament\Forms\Components\Card;
 use Filament\Forms\Components\Section as ComponentsSection;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Actions\BulkAction;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
 use Filament\Tables\Columns\BadgeColumn;
+use Illuminate\Database\Eloquent\Collection;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PurchaseOrderResource extends Resource implements HasShieldPermissions
 // implements HasShieldPermissions
@@ -130,11 +136,6 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                                 'Partially Paid' => 'Sebagian Lunas',
                             ])
                             ->default('Unpaid'),
-
-                        // Forms\Components\DatePicker::make('payment_date')
-                        //     ->label('Tanggal Pembayaran')
-                        //     ->visible(fn(callable $get) => $get('payment_status') !== 'Unpaid'),
-                        //     // ->afterStateHydrated(fn($set, $record) => $set('payment_date', $record->payment_date)),
 
                         TextInput::make('total_amount')
                             ->label('Total')
@@ -369,10 +370,21 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
             ])
 
             ->bulkActions([
-                ExportBulkAction::make()
-                //                Tables\Actions\BulkActionGroup::make([
-                //                    Tables\Actions\DeleteBulkAction::make(),
-                //                ]),
+                // ExportBulkAction::make()
+                // ->label('Ekspor Status PO'),
+                BulkAction::make('export-selected')
+                    ->label('Ekspor PO Item')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->action(function (Collection $records) {
+                        $ids = $records->pluck('id');
+                        $timestamp = Carbon::now()->format('Ymd_His');
+
+                        return Excel::download(
+                            new PurchaseOrderItemsExport($ids),
+                            "purchase-order-items_{$timestamp}.xlsx"
+                        );
+                    }),
+                
             ]);
     }
 
@@ -396,7 +408,7 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
     public static function getRelations(): array
     {
         return [
-            //
+            // StockReceivingItemsRelationManager::class
         ];
     }
 

@@ -2,10 +2,12 @@
 
 namespace App\Filament\Resources;
 
+use App\Exports\StockReceivingItemsExport;
 use App\Filament\Resources\StockReceivingResource\Pages;
 use App\Models\PurchaseOrder;
 use App\Models\StockReceiving;
 use App\Models\WarehouseItem;
+use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
@@ -16,9 +18,12 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Maatwebsite\Excel\Facades\Excel;
 
 class StockReceivingResource extends Resource
 {
@@ -125,6 +130,20 @@ class StockReceivingResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
+            ])
+            ->bulkActions([
+                BulkAction::make('export-selected')
+                    ->label('Ekspor Penerimaan Barang')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->action(function (Collection $records) {
+                        $ids = $records->pluck('id');
+                        $timestamp = Carbon::now()->format('Ymd_His');
+
+                        return Excel::download(
+                            new StockReceivingItemsExport($ids),
+                            "stock-receivings_{$timestamp}.xlsx"
+                        );
+                    }),
             ]);
     }
 

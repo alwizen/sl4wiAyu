@@ -23,9 +23,11 @@ class CashTransactionResource extends Resource
 {
     protected static ?string $model = CashTransaction::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-currency-dollar';
+    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
 
     protected static ?string $navigationLabel = 'CashFlow Transaksi';
+
+    protected static ?string $label = 'Transaksi Kas (Keluar/Masuk)';
 
     protected static ?string $navigationGroup = 'Keuangan';
 

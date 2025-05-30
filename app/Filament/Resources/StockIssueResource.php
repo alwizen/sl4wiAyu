@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources;
 
+use App\Exports\StockIssueItemsExport;
 use App\Filament\Resources\StockIssueResource\Pages;
 use App\Filament\Resources\StockIssueResource\RelationManagers;
 use App\Models\StockIssue;
 use App\Models\WarehouseItem;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+use Carbon\Carbon;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms;
@@ -26,7 +28,9 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Facades\Filament;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Maatwebsite\Excel\Facades\Excel;
 
 class StockIssueResource extends Resource implements HasShieldPermissions
 {
@@ -35,6 +39,8 @@ class StockIssueResource extends Resource implements HasShieldPermissions
     protected static ?string $navigationIcon = 'heroicon-o-arrow-up-on-square';
 
     protected static ?string $navigationGroup = 'Pengadaan & Permintaan';
+
+    protected static ?string $label = 'Permintaan Bahan Masak';
 
     protected static ?string $navigationLabel = 'Permintaan Bahan Masak';
 
@@ -79,8 +85,6 @@ class StockIssueResource extends Resource implements HasShieldPermissions
                     ]),
             ]);
     }
-
-
 
     public static function table(Table $table): Table
     {
@@ -141,9 +145,10 @@ class StockIssueResource extends Resource implements HasShieldPermissions
                     ->label('Tandai Disiapkan')
                     ->color('success')
                     ->icon('heroicon-o-check-circle')
-                    ->visible(fn($record) =>
+                    ->visible(
+                        fn($record) =>
                         $record->status === 'Draft' &&
-                        auth()->user()?->can('mark_prepared_stock::issue')
+                            auth()->user()?->can('mark_prepared_stock::issue')
                     )
                     ->requiresConfirmation()
                     ->action(function ($record) {
@@ -156,13 +161,25 @@ class StockIssueResource extends Resource implements HasShieldPermissions
                     }),
 
                 Tables\Actions\EditAction::make(),
-                    // ->visible(fn($record) => $record->status === 'Draft'),
+                // ->visible(fn($record) => $record->status === 'Draft'),
                 Tables\Actions\DeleteAction::make()
-                    // ->visible(fn($record) => $record->status === 'Draft'),
+                // ->visible(fn($record) => $record->status === 'Draft'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\BulkAction::make('export-selected')
+                        ->label('Ekspor Permintaan Barang')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->action(function (Collection $records) {
+                            $ids = $records->pluck('id');
+                            $timestamp = Carbon::now()->format('Ymd_His');
+
+                            return Excel::download(
+                                new StockIssueItemsExport($ids),
+                                "stock-issues_{$timestamp}.xlsx"
+                            );
+                        }),
                 ]),
             ]);
     }

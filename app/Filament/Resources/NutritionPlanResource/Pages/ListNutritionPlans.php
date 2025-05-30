@@ -5,6 +5,7 @@ namespace App\Filament\Resources\NutritionPlanResource\Pages;
 use App\Filament\Resources\NutritionPlanResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Tables\Actions\ExportAction;
 
 class ListNutritionPlans extends ListRecords
 {
