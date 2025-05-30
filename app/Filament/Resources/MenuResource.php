@@ -3,37 +3,33 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\MenuResource\Pages;
-use App\Filament\Resources\MenuResource\RelationManagers;
 use App\Models\Menu;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class MenuResource extends Resource
 {
     protected static ?string $model = Menu::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-bars-4';
+    protected static ?string $navigationIcon = '';
 
-    protected static ?string $navigationGroup = 'Ahli Gizi';
+    protected static ?int $navigationSort = 3;
+
+    protected static ?string $navigationGroup = 'Master Data';
 
     protected static ?string $navigationLabel = 'Daftar Menu';
 
     public static function form(Form $form): Form
     {
         return $form
-        ->columns(1)
+            ->columns(1)
             ->schema([
                 Forms\Components\TextInput::make('menu_name')
                     ->required()
                     ->maxLength(255),
-//                Forms\Components\Select::make('target_group_id')
-//                    ->relationship('targetGroup', 'name')
-//                    ->required(),
             ]);
     }
 
@@ -43,9 +39,6 @@ class MenuResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('menu_name')
                     ->searchable(),
-//                Tables\Columns\TextColumn::make('targetGroup.name')
-//                    ->numeric()
-//                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

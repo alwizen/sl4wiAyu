@@ -19,6 +19,7 @@ class CashCategoryResource extends Resource
     protected static ?string $model = CashCategory::class;
 
     //    protected static ?string $navigationIcon = 'heroicon-o-database';
+    protected static ?int $navigationSort = 2;
 
     protected static ?string $navigationGroup = 'Master Data';
 

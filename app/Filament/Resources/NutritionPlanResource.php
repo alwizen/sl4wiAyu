@@ -50,6 +50,8 @@ class NutritionPlanResource extends Resource
 
     protected static ?string $navigationGroup = 'Ahli Gizi';
 
+    protected static ?int $navigationSort = 2;
+
     // Form tetap sama...
     public static function form(Form $form): Form
     {

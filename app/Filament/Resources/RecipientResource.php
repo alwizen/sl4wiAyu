@@ -19,9 +19,11 @@ class RecipientResource extends Resource
 {
     protected static ?string $model = Recipient::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-star';
+    protected static ?string $navigationIcon = '';
 
-    protected static ?string $navigationGroup = 'Produksi & Pengiriman';
+    protected static ?string $navigationGroup = 'Master Data';
+
+    protected static ?int $navigationSort = 4;
 
     protected static ?string $navigationLabel = 'Daftar Penerima';
 
@@ -104,7 +106,7 @@ class RecipientResource extends Resource
             ]);
     }
 
-   
+
 
     public static function getPages(): array
     {

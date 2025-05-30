@@ -3,25 +3,24 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\TargetGroupResource\Pages;
-use App\Filament\Resources\TargetGroupResource\RelationManagers;
 use App\Models\TargetGroup;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class TargetGroupResource extends Resource
 {
     protected static ?string $model = TargetGroup::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-beaker';
+    protected static ?string $navigationIcon = '';
 
-    protected static ?string $navigationGroup = 'Ahli Gizi';
+    protected static ?string $navigationGroup = 'Master Data';
 
     protected static ?string $navigationLabel = 'Kelompok Sasaran';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
@@ -88,7 +87,7 @@ class TargetGroupResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('mineral')
                     ->searchable()
-                ->numeric(),
+                    ->numeric(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -103,7 +102,7 @@ class TargetGroupResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-   Tables\Actions\DeleteAction::make(),
+                Tables\Actions\DeleteAction::make(),
 
             ])
             ->bulkActions([

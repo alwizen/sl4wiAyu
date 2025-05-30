@@ -57,10 +57,10 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->brandLogo(fn () => setting('logo_light_url') ?? asset('images/ms_light.svg'))
+            ->brandLogo(fn() => setting('logo_light_url') ?? asset('images/ms_light.svg'))
             ->brandLogoHeight('3.5rem')
-            ->darkModeBrandLogo(fn () => setting('logo_dark_url') ?? asset('images/ms_dark.svg'))
-            ->favicon(fn () => setting('favicon_url') ?? asset('images/logo.svg'))
+            ->darkModeBrandLogo(fn() => setting('logo_dark_url') ?? asset('images/ms_dark.svg'))
+            ->favicon(fn() => setting('favicon_url') ?? asset('images/logo.svg'))
             ->path('')
             ->when($this->settings->login_enabled ?? true, fn($panel) => $panel->login(Login::class))
             // ->when($this->settings->registration_enabled ?? true, fn($panel) => $panel->registration())
@@ -73,14 +73,15 @@ class AdminPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-//                Pages\Dashboard::class,
+                //                Pages\Dashboard::class,
             ])
             ->navigationGroups([
                 'Ahli Gizi',
                 'Produksi & Pengiriman',
                 'Pengadaan & Permintaan',
-                'Akunting',
+                'Keuangan',
                 'Gudang',
+                'Master Data',
                 'Relawan'
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')

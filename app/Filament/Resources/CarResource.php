@@ -19,6 +19,8 @@ class CarResource extends Resource
 
     protected static ?string $navigationIcon = '';
 
+    protected static ?int $navigationSort = 5;
+
     protected static ?string $navigationLabel = 'Mobil Pengiriman';
 
     protected static ?string $navigationGroup = 'Master Data';
