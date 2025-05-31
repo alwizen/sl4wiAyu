@@ -30,7 +30,7 @@ class WarehouseItemResource extends Resource
 
     protected static ?string $navigationGroup = 'Gudang';
 
-    protected static ?string $navigationLabel = 'Daftar Barang';
+    protected static ?string $navigationLabel = 'Daftar Barang Gudang';
 
     public static function form(Form $form): Form
     {

@@ -21,7 +21,13 @@ class InventoryResource extends Resource
 {
     protected static ?string $model = Inventory::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-archive-box';
+
+    protected static ?string $navigationGroup = 'Gudang';
+
+    protected static ?string $navigationLabel = 'Inventaris';
+
+    protected static ?string $label = 'Inventaris';
 
     public static function form(Form $form): Form
     {
@@ -189,7 +195,7 @@ class InventoryResource extends Resource
 
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make()
-                    ->label('Edit / Riwayat'),
+                        ->label('Edit / Riwayat'),
                     Tables\Actions\DeleteAction::make(),
                 ]),
             ])

@@ -19,7 +19,7 @@ class Dashboard extends BaseDashboard
 {
     // use HasPageShield;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rocket-launch';
+    protected static ?string $navigationIcon = 'heroicon-o-squares-2x2';
 
     public function getTitle(): string
     {
