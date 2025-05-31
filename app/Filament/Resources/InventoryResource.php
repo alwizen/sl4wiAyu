@@ -4,25 +4,24 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\InventoryResource\Pages;
 use App\Filament\Resources\InventoryResource\RelationManagers;
+use App\Filament\Resources\InventoryResource\RelationManagers\AdditionsRelationManager;
+use App\Filament\Resources\InventoryResource\RelationManagers\MissingsRelationManager;
 use App\Models\Inventory;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Str;
-use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use Filament\Tables\Actions\ActionGroup;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
 class InventoryResource extends Resource
 {
     protected static ?string $model = Inventory::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-cube';
-
-    protected static ?string $navigationGroup = 'Gudang';
+    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function form(Form $form): Form
     {
@@ -30,7 +29,7 @@ class InventoryResource extends Resource
             ->schema([
                 Forms\Components\TextInput::make('code')
                     ->label('Kode Barang')
-                    ->default(fn () => 'INV-' . str_pad(random_int(0, 99999), 5, '0', STR_PAD_LEFT))
+                    ->default(fn() => 'INV-' . str_pad(random_int(0, 99999), 5, '0', STR_PAD_LEFT))
                     ->disabled()
                     ->dehydrated()
                     ->required(),
@@ -55,14 +54,15 @@ class InventoryResource extends Resource
                 Forms\Components\TextInput::make('damaged')
                     ->label('Rusak')
                     ->numeric()
+                    ->disabled()
                     ->default(0)
                     ->label('Damaged'),
                 Forms\Components\TextInput::make('missing')
                     ->label('Hilang')
                     ->numeric()
+                    ->disabled()
                     ->default(0)
                     ->label('Missing'),
-                // Stock end is calculated, so we don't need it in the form
             ]);
     }
 
@@ -82,24 +82,28 @@ class InventoryResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('stock_init')
                     ->label('Jumlah Awal')
-                    ->numeric()
-                    ->label('Initial Stock')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('addition')
                     ->label('Tambahan')
+                    ->badge()
+                    ->color('success')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('damaged')
                     ->label('Rusak')
+                    ->badge()
+                    ->color('warning')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('missing')
                     ->label('Hilang')
+                    ->badge()
+                    ->color('danger')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('stock_end')
                     ->numeric()
-                    ->label('End Stock')
+                    ->label('Jumlah Akhir')
                     ->sortable()
                     ->formatStateUsing(function (Inventory $record) {
                         // Calculate stock_end
@@ -118,46 +122,100 @@ class InventoryResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\Action::make('inputAddition')
-                    ->label('Input Tambahan')
-                    ->icon('heroicon-o-clipboard-document-check')
-                    ->color('success')
-                    ->form([
-                        Forms\Components\TextInput::make('addition_value')
-                            ->label('Jumlah Tambahan')
-                            ->numeric()
-                            ->required()
-                            ->helperText('Masukkan jumlah tambahan stok')
-                    ])
-                    ->action(function (Inventory $record, array $data) {
-                        // Menambahkan nilai addition yang baru ke nilai yang sudah ada
-                        $record->addition = $record->addition + $data['addition_value'];
+                ActionGroup::make([
+                    Tables\Actions\Action::make('inputAddition')
+                        ->label('Input Tambahan')
+                        ->icon('heroicon-o-clipboard-document-check')
+                        ->color('success')
+                        ->form([
+                            Forms\Components\TextInput::make('addition_value')
+                                ->label('Jumlah Tambahan')
+                                ->numeric()
+                                ->required()
+                                ->helperText('Masukkan jumlah tambahan stok'),
+                            Forms\Components\Textarea::make('note')
+                                ->label('Catatan')
+                                ->placeholder('Keterangan tambahan stok...')
+                        ])
+                        ->action(function (Inventory $record, array $data) {
+                            $record->addition += $data['addition_value'];
+                            $record->stock_end = $record->stock_init + $record->addition - $record->damaged - $record->missing;
+                            $record->save();
 
-                        // Menghitung ulang stock_end
-                        $record->stock_end = $record->stock_init + $record->addition - $record->damaged - $record->missing;
+                            \App\Models\InventoryAddition::create([
+                                'inventory_id' => $record->id,
+                                'quantity' => $data['addition_value'],
+                                'note' => null,
+                            ]);
 
-                        $record->save();
+                            \Filament\Notifications\Notification::make()
+                                ->title('Tambahan stok berhasil disimpan')
+                                ->success()
+                                ->send();
+                        }),
 
-                        \Filament\Notifications\Notification::make()
-                            ->title('Tambahan stok berhasil disimpan')
-                            ->success()
-                            ->send();
-                    }),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+
+                    Tables\Actions\Action::make('inputMissing')
+                        ->label('Input Kehilangan')
+                        ->icon('heroicon-o-exclamation-circle')
+                        ->color('danger')
+                        ->form([
+                            Forms\Components\TextInput::make('missing_value')
+                                ->label('Jumlah Hilang')
+                                ->numeric()
+                                ->required()
+                                ->helperText('Masukkan jumlah kehilangan barang'),
+                            Forms\Components\Textarea::make('note')
+                                ->label('Catatan')
+                                ->rows(2)
+                                ->placeholder('Keterangan kehilangan...')
+                        ])
+                        ->action(function (Inventory $record, array $data) {
+                            $record->missing += $data['missing_value'];
+                            $record->stock_end = $record->stock_init + $record->addition - $record->damaged - $record->missing;
+                            $record->save();
+
+                            \App\Models\InventoryMissing::create([
+                                'inventory_id' => $record->id,
+                                'quantity' => $data['missing_value'],
+                                'note' => $data['note'],
+                            ]);
+
+                            \Filament\Notifications\Notification::make()
+                                ->title('Data kehilangan berhasil dicatat')
+                                ->success()
+                                ->send();
+                        }),
+
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make()
+                    ->label('Edit / Riwayat'),
+                    Tables\Actions\DeleteAction::make(),
+                ]),
             ])
+
             ->bulkActions([
-                ExportBulkAction::make(),
+
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    ExportBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            AdditionsRelationManager::class,
+            MissingsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ManageInventories::route('/'),
+            'index' => Pages\ListInventories::route('/'),
+            'create' => Pages\CreateInventory::route('/create'),
+            'edit' => Pages\EditInventory::route('/{record}/edit'),
         ];
     }
 }

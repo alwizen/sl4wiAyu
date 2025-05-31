@@ -14,6 +14,8 @@ class ReceivingsRelationManager extends RelationManager
 {
     protected static string $relationship = 'receivings';
 
+    protected static ?string $title = 'Riwayat Penerimaan Barang';
+
     public function form(Form $form): Form
     {
         return $form
