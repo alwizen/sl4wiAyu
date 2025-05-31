@@ -4,11 +4,14 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\EmployeeResource\Pages;
 use App\Filament\Resources\EmployeeResource\RelationManagers;
+use App\Filament\Resources\EmployeeResource\RelationManagers\EmployeeRelationManager;
 use App\Models\Employee;
+use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\EditAction as ActionsEditAction;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -17,13 +20,10 @@ class EmployeeResource extends Resource
 {
     protected static ?string $model = Employee::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-user-group';
-
+    protected static ?string $navigationIcon = 'heroicon-o-users';
     protected static ?string $navigationGroup = 'Relawan';
-
-    protected static ?string $navigationLabel = 'Daftar Relawan';
-
-    protected static ?string $label = 'Daftar Relawan';
+    protected static ?string $navigationLabel = 'Relawan';
+    protected static ?string $label = 'Relawan';
 
     public static function form(Form $form): Form
     {
@@ -36,7 +36,7 @@ class EmployeeResource extends Resource
                     ->default(function () {
                         // Generate NIP format MGS-5 diikuti 5 angka acak
                         $randomDigits = str_pad(rand(1, 99999), 5, '0', STR_PAD_LEFT);
-                        return 'MGS-5' . $randomDigits;
+                        return 'SPPG-5' . $randomDigits;
                     })
                     ->disabled() // Nonaktifkan field agar tidak dapat diubah
                     ->dehydrated() // Pastikan nilai tetap dikirim ke database
@@ -116,7 +116,9 @@ class EmployeeResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                ->label('Edit / Riwayat Gaji'),
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
@@ -126,10 +128,19 @@ class EmployeeResource extends Resource
             ]);
     }
 
+    public static function getRelations(): array
+    {
+        return [
+            EmployeeRelationManager::class,
+        ];
+    }
+
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ManageEmployees::route('/'),
+            'index' => Pages\ListEmployees::route('/'),
+            'create' => Pages\CreateEmployee::route('/create'),
+            'edit' => Pages\EditEmployee::route('/{record}/edit'),
         ];
     }
 }

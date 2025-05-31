@@ -9,5 +9,5 @@ class Department extends Model
     //
 
     // add fillable
-    protected $fillable = ['name', 'allowance', 'salary', 'bonus'];
+    protected $fillable = ['name', 'allowance', 'salary', 'bonus', 'absence_deduction'];
 }

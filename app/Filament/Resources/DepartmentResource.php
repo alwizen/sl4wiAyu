@@ -19,7 +19,7 @@ class DepartmentResource extends Resource
 
     protected static ?string $label = 'Departemen';
 
-protected static bool $shouldRegisterNavigation = true;
+    protected static bool $shouldRegisterNavigation = true;
 
     protected static ?string $navigationGroup = 'Relawan';
 
@@ -41,6 +41,11 @@ protected static bool $shouldRegisterNavigation = true;
                     ->required()
                     ->numeric()
                     ->default(0),
+                Forms\Components\TextInput::make('absence_deduction')
+                    ->required()
+                    ->numeric()
+                    ->default(0)
+                    ->helperText('Denda untuk setiap ketidakhadiran'),
                 Forms\Components\TextInput::make('bonus')
                     ->numeric()
                     ->default(null),
@@ -61,6 +66,9 @@ protected static bool $shouldRegisterNavigation = true;
                 Tables\Columns\TextColumn::make('allowance')
                     ->numeric()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('absence_deduction')
+                    ->numeric()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('bonus')
                     ->numeric()
                     ->sortable(),
@@ -78,7 +86,6 @@ protected static bool $shouldRegisterNavigation = true;
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
                 Tables\Actions\DeleteAction::make(),
 
             ])

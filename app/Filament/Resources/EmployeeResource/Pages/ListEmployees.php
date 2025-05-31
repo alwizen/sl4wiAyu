@@ -4,9 +4,9 @@ namespace App\Filament\Resources\EmployeeResource\Pages;
 
 use App\Filament\Resources\EmployeeResource;
 use Filament\Actions;
-use Filament\Resources\Pages\ManageRecords;
+use Filament\Resources\Pages\ListRecords;
 
-class ManageEmployees extends ManageRecords
+class ListEmployees extends ListRecords
 {
     protected static string $resource = EmployeeResource::class;
 

@@ -3,6 +3,7 @@
 use App\Exports\NutritionPlanItemsExport;
 use App\Filament\Resources\StockIssueResource\Pages\ProcessStockIssue;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\PurchaseOrderPdfController;
 use App\Models\PurchaseOrder;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -37,6 +38,8 @@ Route::get('/purchase-orders/{purchaseOrder}/print', function (PurchaseOrder $pu
 
     return $pdf->stream('Nota_Pesanan_' . $purchaseOrder->order_number . '.pdf');
 })->name('purchase-orders.print');
+
+Route::get('/payroll/{payroll}/slip', [PayrollController::class, 'cetakSlip'])->name('payroll.slip');
 
 // Route::get('/export-nutrition-plan-items', function () {
 //     return Excel::download(new NutritionPlanItemsExport, 'nutrition-plan-items.xlsx');

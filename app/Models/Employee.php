@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Employee extends Model
 {
+    public $timestamps = false;
     protected $fillable = [
         'nip',
         'nik',
@@ -24,5 +25,9 @@ class Employee extends Model
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+    public function payrolls()
+    {
+        return $this->hasMany(Payroll::class);
     }
 }
