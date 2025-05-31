@@ -50,7 +50,8 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
     {
         return $form
             ->schema([
-                Card::make()
+                Card::make('Informasi Umum')
+                ->collapsible()
                     ->schema([
                         TextInput::make('order_number')
                             ->label('Nomor Order')
@@ -90,11 +91,11 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                     ])
                     ->columns(4),
 
-                Card::make()
+                Card::make('Daftar Item Pembelian')
+                    ->collapsible()
                     ->schema([
                         Repeater::make('items')
                             ->relationship()
-                            ->label('Item Pembelian')
                             ->schema([
                                 Select::make('item_id')
                                     ->label('Item')
@@ -126,7 +127,9 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                             }),
                     ]),
 
-                Card::make()
+                Card::make('Informasi Pembayaran')
+                    ->collapsible()
+                    ->columns(2)
                     ->schema([
                         Select::make('payment_status')
                             ->label('Status Pembayaran')
@@ -301,7 +304,8 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                             $record->update(['status' => 'Approved']);
                         }),
 
-                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\EditAction::make()
+                    ->label('Edit / Histori'),
 
                     Tables\Actions\Action::make('Send to WhatsApp')
                         ->label('Kirim ke WA')
@@ -409,6 +413,7 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
     {
         return [
             // StockReceivingItemsRelationManager::class
+            RelationManagers\ReceivingsRelationManager::class,
         ];
     }
 
