@@ -179,16 +179,6 @@ class NutritionPlanResource extends Resource
     public static function table(\Filament\Tables\Table $table): \Filament\Tables\Table
     {
         return $table
-            // ->headerActions([
-            //     Action::::make('Ekspor Item')
-            //     ->icon('heroicon-o-document-arrow-down')
-            //     ->action(function (NutritionPlan $record) {
-            //         return Excel::download(
-            //             new \App\Exports\NutritionPlanItemsExport($record->id),
-            //             'nutrition-plan-' . $record->id . '-items.xlsx'
-            //         );
-            //     }),
-            // ])
             ->groups([
                 \Filament\Tables\Grouping\Group::make('nutrition_plan_date')
                     ->label('Tanggal')

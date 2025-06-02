@@ -27,8 +27,6 @@ class PayrollResource extends Resource
 
     protected static ?string $label = 'Penggajian';
 
-
-
     public static function form(Form $form): Form
     {
         return $form
@@ -54,6 +52,7 @@ class PayrollResource extends Resource
                 Forms\Components\TextInput::make('work_days')
                     ->label('Jumlah Hari Masuk')
                     ->numeric()
+                    ->debounce(500)
                     ->required()
                     ->reactive()
                     ->afterStateUpdated(fn($state, callable $set, callable $get) => self::hitungTHP($get, $set)),
@@ -61,6 +60,7 @@ class PayrollResource extends Resource
                 Forms\Components\TextInput::make('absences')
                     ->label('Jumlah Absen')
                     ->numeric()
+                    ->debounce(500)
                     ->required()
                     ->reactive()
                     ->afterStateUpdated(fn($state, callable $set, callable $get) => self::hitungTHP($get, $set)),
@@ -68,9 +68,9 @@ class PayrollResource extends Resource
                 Forms\Components\TextInput::make('total_thp')
                     ->label('Total THP (Otomatis)')
                     ->required()
-                    ->dehydrated(true) // Pastikan field ini tersimpan
+                    ->dehydrated(true)
                     ->numeric()
-                    ->readOnly() // Gunakan readOnly instead of disabled
+                    ->readOnly() 
                     ->helperText(function ($get) {
                         $employeeId = $get('employee_id');
                         if (!$employeeId) {

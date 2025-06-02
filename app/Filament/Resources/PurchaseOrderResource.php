@@ -106,6 +106,7 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                                 TextInput::make('quantity')
                                     ->label('Jumlah')
                                     ->required()
+                                    ->debounce(500)
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, callable $get, callable $set) {
                                         static::updateTotal($get, $set);
@@ -114,6 +115,7 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                                 TextInput::make('unit_price')
                                     ->label('Harga Satuan')
                                     ->default(0)
+                                    ->debounce(500)
                                     ->required()
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, callable $get, callable $set) {
