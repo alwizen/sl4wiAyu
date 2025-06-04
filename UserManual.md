@@ -12,10 +12,11 @@ Buka aplikasi SPPG, kemudian masukkan username dan password yang telah diberikan
 
 ### 2. Dashboard
 
-Tampilan dashboard berisi informasi penting seperti:  
-- Ringkasan kas masuk dan keluar  
-- Data pengiriman hari ini  
-- Barang masuk dan keluar  
+Tampilan dashboard berisi informasi penting seperti:
+
+- Ringkasan kas masuk dan keluar
+- Data pengiriman hari ini
+- Barang masuk dan keluar
 
 ![Dashboard](https://i.imgur.com/ksYR4eR.png)
 
@@ -47,6 +48,7 @@ Untuk menghapus, klik tombol **Hapus**.
 #### d. Ekspor (Download)
 
 Untuk mengunduh data:
+
 - Pilih data satu per satu, atau klik **kotak kecil di atas tabel** untuk memilih semua (Select All).
 - Lalu klik tombol **Ekspor Daily Menu**.
 
@@ -76,17 +78,16 @@ Form yang muncul akan terisi otomatis sesuai data yang dipilih, dan bisa langsun
 
 Untuk menghapus data rencana nutrisi, klik tombol **Hapus** di tabel.
 
-![Edit Nutrisi Harian](LINK-GAMBAR)
-
 ---
 
 #### c. Ekspor (Download) Rencana Nutrisi
 
 Untuk mendownload data rencana nutrisi:
+
 - Pilih data yang ingin diunduh, atau klik **Select All** untuk memilih semua data.
 - Klik tombol **Ekspor Rencana Nutrisi** untuk mendownload dalam format Excel.
 
-![Export Nutrisi Harian](LINK-GAMBAR)
+![Export Nutrisi Harian](https://i.imgur.com/bDZxDoJ.png)
 
 #### d. Cetak PDF
 
@@ -96,7 +97,51 @@ Untuk mencetak rencana nutrisi ke dalam format PDF:
 - Pilih opsi **Cetak PDF** dari menu dropdown yang muncul.
 - File akan otomatis didownload dalam format PDF.
 
-![Cetak PDF Nutrisi](LINK-GAMBAR)
+![Cetak PDF Nutrisi](https://i.imgur.com/FUwniVC.png)
 
 ---
+
+## **5. Pemesanan Supplier (Purchase Order)**
+
+Menu ini digunakan untuk mencatat pemesanan barang dari supplier. Fitur ini hanya bisa digunakan oleh **admin pembelian** dan akan diproses lebih lanjut oleh **PIC/SPV** untuk disetujui, sebelum barang dapat diterima oleh bagian gudang.
+
+### a. Tampilan Daftar Purchase Order
+
+![Daftar PO](https://i.imgur.com/KxX9MGw.png)
+
+1. Klik menu **Pemesanan Supplier (PO)** pada sidebar.
+2. Tekan tombol **Tambah Purchase Order (PO)** untuk membuat PO baru.
+3. Menu titik tiga (⋮) menyediakan aksi lanjutan:
+   - **Tandai Lunas / Sebagian Lunas**
+   - **Approve** (hanya bisa dilakukan oleh SPV/PIC)
+   - **Edit / Histori**
+   - **Hapus**
+
+> **Catatan Penting:**  
+> Purchase Order **tidak bisa diproses di menu Penerimaan Barang** sebelum mendapatkan **status Approved** dari PIC/SPV.
+
+---
+
+### b. Form Buat Purchase Order
+
+![Form Buat PO](https://i.imgur.com/RtWM44l.png)
+
+#### **1. Informasi Umum**
+- **Nomor Order**: Diisi otomatis oleh sistem.
+- **Tanggal Pemesanan**: Pilih tanggal pesanan dibuat.
+- **Supplier**: Pilih supplier dari daftar.  
+Jika belum tersedia, klik tombol **+ (plus)** di samping form untuk menambahkan supplier baru.
+- **Status**: Default `Pending`.
+
+#### **2. Daftar Item Pembelian**
+- Pilih **Item** bahan baku yang akan dipesan.
+- Isi **Jumlah** yang dibutuhkan.
+- **Harga Satuan** diisi `0` terlebih dahulu (harga akan diinput saat barang diterima).
+- Klik **Tambahkan ke Items** untuk menambahkan item ke daftar pembelian.
+
+#### **3. Informasi Pembayaran**
+- **Status Pembayaran**: Pilih `Belum Lunas` atau `Lunas`.
+- **Total**: Kosongkan. Akan dihitung otomatis setelah harga dimasukkan.
+
+> Setelah barang dikirim dan supplier memberikan **nota pembelian**, admin bisa **mengedit PO** untuk mengisi harga satuan sesuai nota, agar total pembelian tercatat dengan benar.
 
