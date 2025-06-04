@@ -14,6 +14,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Actions\ActionGroup;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
@@ -28,6 +29,16 @@ class InventoryResource extends Resource
     protected static ?string $navigationLabel = 'Inventaris';
 
     protected static ?string $label = 'Inventaris';
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        return [
+            // 'Name' => $record->name,
+            'Stok' => $record->stock_end,
+        ];
+    }
 
     public static function form(Form $form): Form
     {

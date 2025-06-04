@@ -8,6 +8,7 @@ use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
 
+
 class ListWarehouseItems extends ListRecords
 {
     protected static string $resource = WarehouseItemResource::class;
@@ -18,6 +19,7 @@ class ListWarehouseItems extends ListRecords
             Actions\CreateAction::make(),
         ];
     }
+
     public function getTabs(): array
     {
         return [

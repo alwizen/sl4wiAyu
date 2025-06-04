@@ -16,7 +16,7 @@ class EmployeeRelationManager extends RelationManager
 {
     protected static string $relationship = 'payrolls';
     
-    protected static ?string $title = 'Riwayat Penggajian';
+    protected static ?string $title = '';
 
     public function form(Form $form): Form
     {

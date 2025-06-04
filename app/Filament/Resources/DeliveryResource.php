@@ -35,6 +35,8 @@ class DeliveryResource extends Resource implements HasShieldPermissions
 
     protected static ?string $navigationLabel = 'Pengiriman';
 
+    protected static ?string $label = 'Pengiriman';
+
     public static function form(Form $form): Form
     {
         return $form
@@ -76,16 +78,16 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                     ->preload()
                     ->required(),
 
-                    Forms\Components\Select::make('user_id')
-    ->label('Supir')
-    ->options(function () {
-        return \App\Models\User::whereHas('roles', function ($query) {
-            $query->where('name', 'driver');
-        })->pluck('name', 'id');
-    })
-    ->searchable()
-    ->preload()
-    ->required(),
+                Forms\Components\Select::make('user_id')
+                    ->label('Supir')
+                    ->options(function () {
+                        return \App\Models\User::whereHas('roles', function ($query) {
+                            $query->where('name', 'driver');
+                        })->pluck('name', 'id');
+                    })
+                    ->searchable()
+                    ->preload()
+                    ->required(),
 
                 Forms\Components\Select::make('status')
                     ->label('Status Pengiriman')
@@ -122,6 +124,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultPaginationPageOption(50)
             ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('delivery_number')
@@ -204,24 +207,24 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
-                            ->when($data['from'], fn ($q) => $q->whereDate('delivery_date', '>=', $data['from']))
-                            ->when($data['until'], fn ($q) => $q->whereDate('delivery_date', '<=', $data['until']));
+                            ->when($data['from'], fn($q) => $q->whereDate('delivery_date', '>=', $data['from']))
+                            ->when($data['until'], fn($q) => $q->whereDate('delivery_date', '<=', $data['until']));
                     })
                     ->indicateUsing(function (array $data): array {
                         $indicators = [];
-            
+
                         if ($data['from']) {
                             $indicators[] = 'Dari: ' . Carbon::parse($data['from'])->translatedFormat('d M Y');
                         }
-            
+
                         if ($data['until']) {
                             $indicators[] = 'Sampai: ' . Carbon::parse($data['until'])->translatedFormat('d M Y');
                         }
-            
+
                         return $indicators;
                     }),
             ])
-            
+
             ->actions([
                 ActionGroup::make([
                     Tables\Actions\Action::make('kirimWhatsApp')

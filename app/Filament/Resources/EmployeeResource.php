@@ -11,8 +11,10 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Actions\EditAction as ActionsEditAction;
 use Filament\Tables\Table;
+use Guava\FilamentModalRelationManagers\Actions\Table\RelationManagerAction;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
@@ -20,9 +22,12 @@ class EmployeeResource extends Resource
 {
     protected static ?string $model = Employee::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-users';
-    protected static ?string $navigationGroup = 'Relawan';
-    protected static ?string $navigationLabel = 'Relawan';
+    protected static ?string $navigationIcon = 'heroicon-o-briefcase';
+
+    protected static ?string $navigationGroup = 'Keuangan';
+
+    protected static ?string $navigationLabel = 'Daftar Relawan';
+    
     protected static ?string $label = 'Relawan';
 
     public static function form(Form $form): Form
@@ -41,33 +46,33 @@ class EmployeeResource extends Resource
                     ->disabled() // Nonaktifkan field agar tidak dapat diubah
                     ->dehydrated() // Pastikan nilai tetap dikirim ke database
                     ->helperText('NIP otomatis dihasilkan dengan format MGS-5xxxxx'),
-                
+
                 Forms\Components\TextInput::make('nik')
                     ->label('NIK')
                     ->required()
                     ->maxLength(255),
-                
+
                 Forms\Components\Select::make('department_id')
                     ->relationship('department', 'name')
                     ->searchable()
                     ->preload()
                     ->required(),
-                
+
                 Forms\Components\TextInput::make('name')
                     ->label('Nama')
                     ->required()
                     ->maxLength(255),
-                
+
                 Forms\Components\TextInput::make('phone')
                     ->label('Telepon')
                     ->tel()
                     ->required()
                     ->maxLength(255),
-                
+
                 Forms\Components\DatePicker::make('start_join')
                     ->label('Tanggal Bergabung')
                     ->required(),
-                
+
                 Forms\Components\Textarea::make('address')
                     ->label('Alamat')
                     ->maxLength(255)
@@ -84,42 +89,51 @@ class EmployeeResource extends Resource
                     ->label('NIP')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('nik')
                     ->label('NIK')
                     ->searchable(),
-                
+
                 Tables\Columns\TextColumn::make('department.name')
-                    ->label('Departemen')
+                    ->label('Posisi')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nama')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('phone')
                     ->label('Telepon')
                     ->searchable(),
-                
+
                 Tables\Columns\TextColumn::make('start_join')
                     ->label('Tanggal Bergabung')
                     ->date()
-                    ->sortable(),
-                
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 Tables\Columns\TextColumn::make('address')
                     ->label('Alamat')
                     ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->limit(50),
             ])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make()
-                ->label('Edit / Riwayat Gaji'),
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                ActionGroup::make([
+                    RelationManagerAction::make('stockIssueItemsHistory')
+                        ->label('Riwayat Penggajian')
+                        ->color('gray')
+                        ->icon('heroicon-o-clock')
+                        ->relationManager(EmployeeRelationManager::make()),
+
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make()
+                        ->color('warning'),
+                    Tables\Actions\DeleteAction::make(),
+                ])
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -131,7 +145,7 @@ class EmployeeResource extends Resource
     public static function getRelations(): array
     {
         return [
-            EmployeeRelationManager::class,
+            // EmployeeRelationManager::class,
         ];
     }
 

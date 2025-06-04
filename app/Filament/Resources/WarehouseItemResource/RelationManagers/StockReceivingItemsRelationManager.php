@@ -16,7 +16,7 @@ class StockReceivingItemsRelationManager extends RelationManager
 {
     protected static string $relationship = 'stockReceivingItems';
 
-    protected static ?string $title = 'Riwayat Penerimaan Barang';
+    protected static ?string $title = ''; 
 
     public function form(Form $form): Form
     {

@@ -57,6 +57,7 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
+            ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->brandLogo(fn() => setting('logo_light_url') ?? asset('images/ms_light.svg'))
             ->brandLogoHeight('3.5rem')
             ->darkModeBrandLogo(fn() => setting('logo_dark_url') ?? asset('images/ms_dark.svg'))
@@ -82,7 +83,6 @@ class AdminPanelProvider extends PanelProvider
                 'Keuangan',
                 'Gudang',
                 'Master Data',
-                'Relawan'
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([

@@ -4,6 +4,8 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\WarehouseItemResource\Pages;
 use App\Filament\Resources\WarehouseItemResource\RelationManagers;
+use App\Filament\Resources\WarehouseItemResource\RelationManagers\StockIssueItemsRelationManager;
+use App\Filament\Resources\WarehouseItemResource\RelationManagers\StockReceivingItemsRelationManager;
 use App\Models\WarehouseItem;
 use Filament\Forms;
 use Filament\Forms\Components\Section;
@@ -17,10 +19,15 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Notifications\Notification;
+use Filament\Support\Enums\ActionSize;
+use Filament\Tables\Actions\ActionGroup;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Filament\Tables\Actions\DeleteAction;
+use Guava\FilamentModalRelationManagers\Actions\Table\RelationManagerAction;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Database\Eloquent\Model;
 
 class WarehouseItemResource extends Resource
 {
@@ -31,6 +38,15 @@ class WarehouseItemResource extends Resource
     protected static ?string $navigationGroup = 'Gudang';
 
     protected static ?string $navigationLabel = 'Daftar Barang Gudang';
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        return [
+            'Stok Barang' => $record->stock,
+        ];
+    }
 
     public static function form(Form $form): Form
     {
@@ -158,6 +174,23 @@ class WarehouseItemResource extends Resource
                             }
                         }
                     }),
+                ActionGroup::make([
+                    RelationManagerAction::make('stockIssueItemsHistory')
+                        ->label('Pengeluaran Stok')
+                        ->color('danger')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->relationManager(StockIssueItemsRelationManager::make()),
+                    RelationManagerAction::make('stockReceivingItemsHistory')
+                        ->label('Penerimaan Stok')
+                        ->color('success')
+                        ->icon('heroicon-o-arrow-up-tray')
+                        ->relationManager(StockReceivingItemsRelationManager::make()),
+                ])
+                    ->label('Riwayat Stok')
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->size(ActionSize::Small)
+                    ->color('primary')
+                    ->button(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

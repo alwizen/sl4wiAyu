@@ -14,7 +14,7 @@ class ReceivingsRelationManager extends RelationManager
 {
     protected static string $relationship = 'receivings';
 
-    protected static ?string $title = 'Riwayat Penerimaan Barang';
+    protected static ?string $title = ''; 
 
     public function form(Form $form): Form
     {
@@ -30,6 +30,7 @@ class ReceivingsRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('received_date')
+            ->paginated(false)
             ->columns([
                     TextColumn::make('received_date')
                         ->dateTime('d M Y')

@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Exports\PurchaseOrderItemsExport;
 use App\Filament\Resources\PurchaseOrderResource\Pages;
 use App\Filament\Resources\PurchaseOrderResource\RelationManagers;
+use App\Filament\Resources\PurchaseOrderResource\RelationManagers\ReceivingsRelationManager;
 use App\Filament\Resources\WarehouseItemResource\RelationManagers\StockReceivingItemsRelationManager;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
@@ -23,17 +24,22 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Carbon\Carbon;
 use Filament\Forms\Components\Card;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Section as ComponentsSection;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Actions\BulkAction;
+use Guava\FilamentModalRelationManagers\Actions\Table\RelationManagerAction;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
-
+use Filament\Tables\Filters\DateRangeFilter;
 use Filament\Tables\Columns\BadgeColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Collection;
 use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\Finder\Iterator\DateRangeFilterIterator;
 
 class PurchaseOrderResource extends Resource implements HasShieldPermissions
 // implements HasShieldPermissions
@@ -51,7 +57,7 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
         return $form
             ->schema([
                 Card::make('Informasi Umum')
-                ->collapsible()
+                    ->collapsible()
                     ->schema([
                         TextInput::make('order_number')
                             ->label('Nomor Order')
@@ -138,7 +144,7 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                             ->options([
                                 'Paid' => 'Lunas',
                                 'Unpaid' => 'Belum Lunas',
-                                'Partially Paid' => 'Sebagian Lunas',
+                                // 'Partially Paid' => 'Sebagian Lunas',
                             ])
                             ->default('Unpaid'),
 
@@ -168,6 +174,8 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultPaginationPageOption(50)
+            ->defaultSort('order_date', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('order_number')
                     ->label('Nomor Order')
@@ -206,8 +214,49 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
 
             ])
             ->filters([
-                // filters can be added here
+                // Filter Range Tanggal (Manual)
+                Filter::make('order_date_range')
+                    ->form([
+                        DatePicker::make('from')->label('Dari Tanggal'),
+                        DatePicker::make('until')->label('Sampai Tanggal'),
+                    ])
+                    ->query(function (Builder $query, array $data) {
+                        return $query
+                            ->when($data['from'], fn($q) => $q->whereDate('order_date', '>=', $data['from']))
+                            ->when($data['until'], fn($q) => $q->whereDate('order_date', '<=', $data['until']));
+                    }),
+
+                // Filter Status Pemesanan
+                Filter::make('status')
+                    ->form([
+                        Select::make('status')
+                            ->options([
+                                'Pending' => 'Pending',
+                                'Ordered' => 'Ordered',
+                                'Approved' => 'Approved',
+                                'Rejected' => 'Rejected',
+                            ])
+                            ->placeholder('Pilih status'),
+                    ])
+                    ->query(function (Builder $query, array $data) {
+                        return $query->when($data['status'], fn($q) => $q->where('status', $data['status']));
+                    }),
+
+                // Filter Status Pembayaran
+                Filter::make('payment_status')
+                    ->form([
+                        Select::make('payment_status')
+                            ->options([
+                                'Paid' => 'Lunas',
+                                'Unpaid' => 'Belum Lunas',
+                            ])
+                            ->placeholder('Pilih status pembayaran'),
+                    ])
+                    ->query(function (Builder $query, array $data) {
+                        return $query->when($data['payment_status'], fn($q) => $q->where('payment_status', $data['payment_status']));
+                    }),
             ])
+
             ->actions([
                 Tables\Actions\Action::make('print_pdf')
                     ->label('Cetak PDF')
@@ -254,6 +303,12 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                     ])
                     ->slideOver(),
                 ActionGroup::make([
+                    RelationManagerAction::make('stockReceivingItemsHistory')
+                        ->label('Riwayat Penerimaan Stok')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('warning')
+                        ->relationManager(ReceivingsRelationManager::make()),
+
                     Tables\Actions\Action::make('mark_paid')
                         ->label('Tandai Lunas')
                         ->icon('heroicon-o-currency-dollar')
@@ -267,18 +322,18 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                             ]);
                         }),
 
-                    Tables\Actions\Action::make('mark_partially_paid')
-                        ->label('Tandai Sebagian Lunas')
-                        ->icon('heroicon-o-adjustments-horizontal')
-                        ->color('warning')
-                        ->visible(fn($record) => $record->payment_status !== 'Partially Paid')
-                        ->requiresConfirmation()
-                        ->action(function ($record) {
-                            $record->update([
-                                'payment_status' => 'Partially Paid',
-                                'payment_date' => now(),
-                            ]);
-                        }),
+                    // Tables\Actions\Action::make('mark_partially_paid')
+                    //     ->label('Tandai Sebagian Lunas')
+                    //     ->icon('heroicon-o-adjustments-horizontal')
+                    //     ->color('warning')
+                    //     ->visible(fn($record) => $record->payment_status !== 'Partially Paid')
+                    //     ->requiresConfirmation()
+                    //     ->action(function ($record) {
+                    //         $record->update([
+                    //             'payment_status' => 'Partially Paid',
+                    //             'payment_date' => now(),
+                    //         ]);
+                    //     }),
 
                     Tables\Actions\Action::make('mark_unpaid')
                         ->label('Tandai Belum Lunas')
@@ -305,9 +360,6 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                         ->action(function ($record) {
                             $record->update(['status' => 'Approved']);
                         }),
-
-                    Tables\Actions\EditAction::make()
-                    ->label('Edit / Histori'),
 
                     Tables\Actions\Action::make('Send to WhatsApp')
                         ->label('Kirim ke WA')
@@ -358,19 +410,20 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                         ),
                     // ->visible(fn(PurchaseOrder $record) => $record->status === 'Approved'),
 
-                    Tables\Actions\Action::make('mark_ordered')
-                        ->label('Tandai Sudah kirim Wa')
-                        ->tooltip('Tandai Sudah Dikirim')
-                        ->icon('heroicon-o-truck')
-                        ->color('warning')
-                        ->requiresConfirmation()
-                        ->action(fn(PurchaseOrder $record) => $record->update(['status' => 'Ordered']))
-                        // ->visible(fn($record) => $record->status === 'Approved'),
-                        ->visible(
-                            fn($record) =>
-                            $record->status === 'Approved' &&
-                                auth()->user()?->can('mark_ordered_purchase::order')
-                        ),
+                    // Tables\Actions\Action::make('mark_ordered')
+                    //     ->label('Tandai Sudah kirim Wa')
+                    //     ->tooltip('Tandai Sudah Dikirim')
+                    //     ->icon('heroicon-o-truck')
+                    //     ->color('warning')
+                    //     ->requiresConfirmation()
+                    //     ->action(fn(PurchaseOrder $record) => $record->update(['status' => 'Ordered']))
+                    //     // ->visible(fn($record) => $record->status === 'Approved'),
+                    //     ->visible(
+                    //         fn($record) =>
+                    //         $record->status === 'Approved' &&
+                    //             auth()->user()?->can('mark_ordered_purchase::order')
+                    //     ),
+                    Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make()
                 ])
             ])
@@ -390,7 +443,7 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                             "purchase-order-items_{$timestamp}.xlsx"
                         );
                     }),
-                
+
             ]);
     }
 

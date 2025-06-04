@@ -17,13 +17,15 @@ class DepartmentResource extends Resource
 {
     protected static ?string $model = Department::class;
 
-    protected static ?string $label = 'Departemen';
+    protected static ?string $navigationLabel = 'Daftar Posisi';
+
+    protected static ?string $label = 'Posisi';
 
     protected static bool $shouldRegisterNavigation = true;
 
-    protected static ?string $navigationGroup = 'Relawan';
+    protected static ?string $navigationGroup = 'Master Data';
 
-    protected static ?string $navigationIcon = 'heroicon-o-bookmark';
+    protected static ?string $navigationIcon = '';
 
     public static function form(Form $form): Form
     {
@@ -46,9 +48,9 @@ class DepartmentResource extends Resource
                     ->numeric()
                     ->default(0)
                     ->helperText('Denda untuk setiap ketidakhadiran'),
-                Forms\Components\TextInput::make('bonus')
-                    ->numeric()
-                    ->default(null),
+                // Forms\Components\TextInput::make('bonus')
+                //     ->numeric()
+                //     ->default(null),
             ]);
     }
 
@@ -57,21 +59,28 @@ class DepartmentResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                ->label('Nama Posisi')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('salary')
+                    ->label('Gaji Harian')
                     ->numeric()
                     ->suffix(' /Hari')
                     ->prefix('Rp. ')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('allowance')
                     ->numeric()
+                    ->label('Tunjangan')
+                    ->prefix('Rp. ')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('absence_deduction')
                     ->numeric()
+                    ->label('Denda Ketidakhadiran')
+                    ->suffix(' /Hari')
+                    ->prefix('Rp. ')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('bonus')
-                    ->numeric()
-                    ->sortable(),
+                // Tables\Columns\TextColumn::make('bonus')
+                //     ->numeric()
+                //     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
