@@ -34,6 +34,7 @@ use Rupadana\ApiService\ApiServicePlugin;
 use Laravel\Socialite\Contracts\User as SocialiteUserContract;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Schema;
+use TomatoPHP\FilamentPWA\FilamentPWAPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -57,6 +58,7 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
+            ->spa()
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->brandLogo(fn() => setting('logo_light_url') ?? asset('images/ms_light.svg'))
             ->brandLogoHeight('3.5rem')
@@ -119,6 +121,7 @@ class AdminPanelProvider extends PanelProvider
     private function getPlugins(): array
     {
         $plugins = [
+            FilamentPWAPlugin::make(),
             ThemesPlugin::make(),
             FilamentShieldPlugin::make(),
             ApiServicePlugin::make(),
