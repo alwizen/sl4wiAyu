@@ -18,6 +18,7 @@ use App\Filament\Resources\StockIssueResource;
 use App\Filament\Resources\StockReceivingResource;
 use App\Filament\Resources\TargetGroupResource;
 use App\Filament\Resources\UserResource;
+use App\Filament\Resources\WarehouseItemResource;
 use App\Filament\Widgets\CashTransactionStats;
 use App\Models\CashCategory;
 use App\Models\User;
@@ -153,6 +154,7 @@ class AdminPanelProvider extends PanelProvider
                     StockReceivingResource::class,
                     StockIssueResource::class,
                     ProductionReportResource::class,
+                    WarehouseItemResource::class,
                     UserResource::class
                 ]),
             FilamentPWAPlugin::make(),
