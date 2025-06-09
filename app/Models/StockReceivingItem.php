@@ -9,7 +9,11 @@ class StockReceivingItem extends Model
     protected $fillable = [
         'stock_receiving_id',
         'warehouse_item_id',
-        'received_quantity'
+        'expected_quantity',
+        'received_quantity',
+        'good_quantity',
+        'damaged_quantity',
+        'is_quantity_matched',
     ];
 
     public function stockReceiving()

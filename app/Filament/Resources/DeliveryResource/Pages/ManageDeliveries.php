@@ -14,16 +14,16 @@ class ManageDeliveries extends ManageRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()
-                ->label('Tambah Pengiriman')
-                ->icon('heroicon-o-plus')
-                ->color('primary'),
-            Action::make('Lihat Penerima')
-                ->label('Lihat Penerima')
+            Action::make('Daftar penerima')
+                ->label('Daftar Penerima')
                 ->icon('heroicon-o-user-group')
                 ->url(route('filament.admin.resources.recipients.index')) // Sesuaikan dengan nama resource tujuan
                 ->color('success')
                 ->openUrlInNewTab(),
+            Actions\CreateAction::make()
+                ->label('Buat Jadwal Pengiriman')
+                ->icon('heroicon-o-plus')
+                ->color('primary'),
         ];
     }
 }

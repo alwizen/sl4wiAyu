@@ -4,6 +4,7 @@ import defaultTheme from 'tailwindcss/defaultTheme';
 export default {
     content: [
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
+        './vendor/awcodes/filament-quick-create/resources/**/*.blade.php',
         './vendor/guava/filament-modal-relation-managers/resources/**/*.blade.php',
         './storage/framework/views/*.php',
         './resources/**/*.blade.php',

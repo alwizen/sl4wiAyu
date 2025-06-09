@@ -26,22 +26,40 @@
             width: 100%;
         }
 
-        .logo-section {
+        .logo-left-section {
             display: table-cell;
-            width: 100px;
+            width: 150px;
             vertical-align: middle;
+            padding-right: 15px;
         }
 
-        .logo {
-            width: 180px;
+        .logo-left {
+            width: 200px;
             height: auto;
+            max-height: 120px;
+            object-fit: contain;
         }
-
 
         .company-info {
             display: table-cell;
             vertical-align: middle;
-            padding-left: 20px;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .logo-right-section {
+            display: table-cell;
+            width: 150px;
+            vertical-align: middle;
+            padding-left: 15px;
+            text-align: right;
+        }
+
+        .logo-right {
+            width: 180px;
+            height: auto;
+            max-height: 80px;
+            object-fit: contain;
         }
 
         .company-name {
@@ -324,16 +342,27 @@
     <!-- Letterhead/Kop -->
     <div class="letterhead">
         <div class="letterhead-content">
-            <div class="logo-section">
-                <img src="{{ public_path('images/bgn.png') }}" class="logo" alt="Logo BGN">
+            <!-- Logo Kiri (dari Setting) -->
+            <div class="logo-left-section">
+                @if(setting('logo_light'))
+                    <img src="{{ public_path('storage/' . setting('logo_light')) }}" class="logo-left" alt="Logo {{ setting('sppg_name') }}">
+                @else
+                    <!-- Debug: Logo tidak ditemukan -->
+                    <div style="font-size: 8px; color: red;">Logo: {{ setting('logo_light') ?? 'NULL' }}</div>
+                @endif
             </div>
+            
+            <!-- Informasi Perusahaan -->
             <div class="company-info">
-                {{-- <h1 class="company-name">Badan Gizi Nasional</h1> --}}
-                <h2 class="company-subtitle">Kementerian Kesehatan Republik Indonesia</h2>
+                <h2 class="company-subtitle">{{ setting('sppg_name') ?? 'Kementerian Kesehatan Republik Indonesia' }}</h2>
                 <p class="company-address">
-                    Jl. HR. Rasuna Said Blok X-5 Kav. 4-9, Kuningan, Jakarta Selatan 12950<br>
-                    Telepon: (021) 5201590 | Email: info@giznas.kemkes.go.id
+                    {{ setting('address') ?? 'Jl. HR. Rasuna Said Blok X-5 Kav. 4-9, Kuningan, Jakarta Selatan 12950' }}
                 </p>
+            </div>
+            
+            <!-- Logo Kanan (BGN) -->
+            <div class="logo-right-section">
+                <img src="{{ public_path('images/bgn.png') }}" class="logo-right" alt="Logo BGN">
             </div>
         </div>
     </div>

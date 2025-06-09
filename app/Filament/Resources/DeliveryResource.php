@@ -52,14 +52,17 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                     ->dehydrated()
                     ->required(),
                 Forms\Components\DatePicker::make('delivery_date')
+                    ->label('Tanggal Pengiriman')
                     ->default(now())
                     ->required(),
                 Forms\Components\Select::make('recipient_id')
+                    ->label('Nama Penerima')
                     ->relationship('recipient', 'name')
                     ->searchable()
                     ->preload()
                     ->required(),
                 Forms\Components\TextInput::make('qty')
+                    ->label('Jumlah')
                     ->suffix('Box')
                     ->numeric()
                     ->required(),

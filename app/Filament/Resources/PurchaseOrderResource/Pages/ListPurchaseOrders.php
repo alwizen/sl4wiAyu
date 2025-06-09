@@ -14,23 +14,22 @@ class ListPurchaseOrders extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-
-            Actions\CreateAction::make()
-                ->label('Tambah Purchase Order (PO)')
-                ->icon('heroicon-o-plus')
-                ->color('primary'),
             Action::make('Stok Gudang')
                 ->label('Stok Gudang')
-                ->icon('heroicon-o-archive-box')
-                ->url(route('filament.admin.resources.warehouse-items.index')) // Sesuaikan dengan nama resource tujuan
+                ->icon('heroicon-o-list-bullet')
+                ->url(route('filament.admin.resources.warehouse-items.index')) 
                 ->color('warning')
                 ->openUrlInNewTab(),
             Action::make('Penerima Barang')
                 ->label('Penerima Barang')
-                ->icon('heroicon-o-truck')
-                ->url(route('filament.admin.resources.stock-receivings.index')) // Sesuaikan dengan nama resource tujuan
+                ->icon('heroicon-o-queue-list')
+                ->url(route('filament.admin.resources.stock-receivings.index')) 
                 ->color('success')
                 ->openUrlInNewTab(),
+            Actions\CreateAction::make()
+                ->label('Tambah Purchase Order (PO)')
+                ->icon('heroicon-o-plus')
+                ->color('primary'),
         ];
     }
 }

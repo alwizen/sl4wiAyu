@@ -5,6 +5,7 @@ use App\Filament\Resources\StockIssueResource\Pages\ProcessStockIssue;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\PurchaseOrderPdfController;
+use App\Http\Controllers\StockReceivingController;
 use App\Models\PurchaseOrder;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Route;
@@ -40,6 +41,9 @@ Route::get('/purchase-orders/{purchaseOrder}/print', function (PurchaseOrder $pu
 })->name('purchase-orders.print');
 
 Route::get('/payroll/{payroll}/slip', [PayrollController::class, 'cetakSlip'])->name('payroll.slip');
+
+Route::get('/stock-receiving/{record}/print', [StockReceivingController::class, 'print'])
+    ->name('stock-receiving.print');
 
 // Route::get('/export-nutrition-plan-items', function () {
 //     return Excel::download(new NutritionPlanItemsExport, 'nutrition-plan-items.xlsx');

@@ -18,7 +18,6 @@ class ManageSetting extends SettingsPage
 
     protected static bool $shouldRegisterNavigation = false;
 
-
     protected static string $settings = KaidoSetting::class;
 
     protected static ?string $navigationGroup = 'Settings';

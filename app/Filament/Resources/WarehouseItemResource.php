@@ -39,12 +39,15 @@ class WarehouseItemResource extends Resource
 
     protected static ?string $navigationLabel = 'Daftar Barang Gudang';
 
+    protected static ?string $label = 'Daftar Barang Gudang';
+
     protected static ?string $recordTitleAttribute = 'name';
 
     public static function getGlobalSearchResultDetails(Model $record): array
     {
         return [
             'Stok Barang' => $record->stock,
+            // 'Stok Barang' => $record->unit,
         ];
     }
 

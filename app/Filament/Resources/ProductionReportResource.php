@@ -25,7 +25,9 @@ class ProductionReportResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-archive-box-arrow-down';
 
-    protected static ?string $label = 'Laporan Produksi';
+    protected static ?string $label = 'Produksi';
+
+    protected static ?string $navigationLabel = 'Produksi';
 
     protected static ?string $navigationGroup = 'Produksi & Pengiriman';
 

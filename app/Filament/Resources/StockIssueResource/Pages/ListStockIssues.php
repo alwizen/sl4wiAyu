@@ -13,7 +13,10 @@ class ListStockIssues extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->label('Tambah Permintaan ahan mask)')
+                ->icon('heroicon-o-plus')
+                ->color('primary'),
         ];
     }
 }

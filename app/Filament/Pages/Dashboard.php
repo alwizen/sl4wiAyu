@@ -19,13 +19,15 @@ class Dashboard extends BaseDashboard
 {
     // use HasPageShield;
 
-    protected static ?string $navigationIcon = 'heroicon-o-squares-2x2';
+    protected static ?string $navigationGroup = 'Overview';
+
+    protected static ?string $navigationIcon = 'heroicon-o-chart-bar-square';
 
     public function getTitle(): string
     {
         $greeting = $this->getGreeting();
         $userName = Auth::user()->name ?? 'User';
-        return "{$greeting}, {$userName}! 🎉";
+        return "{$greeting}, {$userName}! ✨";
 }
 
     // Atau alternatif menggunakan getHeading() jika ingin lebih fleksibel

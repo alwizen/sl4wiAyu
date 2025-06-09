@@ -13,7 +13,9 @@ class ListProductionReports extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+            ->label('Buat Laporan Produksi')
+            ->icon('heroicon-o-plus'),
         ];
     }
 }

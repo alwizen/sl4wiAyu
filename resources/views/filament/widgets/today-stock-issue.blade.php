@@ -1,9 +1,9 @@
 <x-filament::widget>
     <x-filament::card class="space-y-4">
-        <h2 class="text-xl font-bold">Permintaan Bahan Masak Hari Ini ({{ now()->format('d M Y') }})</h2>
+        <h2 class="text-xl font-bold">Permintaan Bahan Masak Hari Ini ({{ now()->format('d M Y') }})</h2><br>
 
         @forelse ($issues as $issue)
-            <div class="border rounded-lg p-4 space-y-2">
+            <div class="border rounded-lg p-4 space-y-2 mb-4">
                 <div>
                     <strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($issue->issue_date)->format('d M Y') }}
                 </div>

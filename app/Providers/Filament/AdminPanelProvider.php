@@ -4,9 +4,26 @@ namespace App\Providers\Filament;
 
 use App\Filament\Display\Widgets\DeliveryStatusTable;
 use App\Filament\Pages\Login;
+use App\Filament\Resources\CarResource;
+use App\Filament\Resources\CashCategoryResource;
+use App\Filament\Resources\DailyMenuResource;
+use App\Filament\Resources\DepartmentResource;
+use App\Filament\Resources\MenuResource;
+use App\Filament\Resources\NutritionPlanResource;
+use App\Filament\Resources\ProductionReportResource;
+use App\Filament\Resources\PurchaseOrderResource;
+use App\Filament\Resources\RoleResource;
+use App\Filament\Resources\SppgSettingResource;
+use App\Filament\Resources\StockIssueResource;
+use App\Filament\Resources\StockReceivingResource;
+use App\Filament\Resources\TargetGroupResource;
+use App\Filament\Resources\UserResource;
 use App\Filament\Widgets\CashTransactionStats;
+use App\Models\CashCategory;
 use App\Models\User;
 use App\Settings\KaidoSetting;
+use Awcodes\FilamentQuickCreate\QuickCreatePlugin;
+use Awcodes\FilamentStickyHeader\StickyHeaderPlugin;
 use Filament\Http\Middleware\Authenticate;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use DutchCodingCompany\FilamentSocialite\FilamentSocialitePlugin;
@@ -34,6 +51,7 @@ use Rupadana\ApiService\ApiServicePlugin;
 use Laravel\Socialite\Contracts\User as SocialiteUserContract;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Schema;
+use Rupadana\ApiService\Resources\TokenResource;
 use TomatoPHP\FilamentPWA\FilamentPWAPlugin;
 
 class AdminPanelProvider extends PanelProvider
@@ -59,10 +77,10 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->spa()
-            ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
-            ->brandLogo(fn() => setting('logo_light_url') ?? asset('images/ms_light.svg'))
+            ->globalSearchKeyBindings(['command+k', 'alt+k'])
+            ->brandLogo(fn() => setting('logo_light_url') ?? asset('images/bgn.png'))
             ->brandLogoHeight('3.5rem')
-            ->darkModeBrandLogo(fn() => setting('logo_dark_url') ?? asset('images/ms_dark.svg'))
+            ->darkModeBrandLogo(fn() => setting('logo_dark_url') ?? asset('images/bgn_dark.png'))
             ->favicon(fn() => setting('favicon_url') ?? asset('images/logo.svg'))
             ->path('')
             ->when($this->settings->login_enabled ?? true, fn($panel) => $panel->login(Login::class))
@@ -79,6 +97,7 @@ class AdminPanelProvider extends PanelProvider
                 //                Pages\Dashboard::class,
             ])
             ->navigationGroups([
+                'Overview',
                 'Ahli Gizi',
                 'Produksi & Pengiriman',
                 'Pengadaan & Permintaan',
@@ -121,6 +140,21 @@ class AdminPanelProvider extends PanelProvider
     private function getPlugins(): array
     {
         $plugins = [
+            QuickCreatePlugin::make()
+                ->rounded(false)
+                ->label('Buat')
+                ->slideOver()
+                ->keyBindings(['alt+c', 'alt+c'])
+                ->sort()
+                ->includes([
+                    DailyMenuResource::class,
+                    NutritionPlanResource::class,
+                    PurchaseOrderResource::class,
+                    StockReceivingResource::class,
+                    StockIssueResource::class,
+                    ProductionReportResource::class,
+                    UserResource::class
+                ]),
             FilamentPWAPlugin::make(),
             ThemesPlugin::make(),
             FilamentShieldPlugin::make(),
