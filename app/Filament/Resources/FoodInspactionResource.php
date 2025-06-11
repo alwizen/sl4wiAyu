@@ -14,6 +14,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -28,7 +29,10 @@ class FoodInspactionResource extends Resource
 
     protected static ?string $navigationGroup = 'Ahli Gizi';
 
-    // protected static ?string $navigationLabel = 'M';
+    protected static ?string $navigationLabel = 'Pemerikasaan Sample Makanan';
+
+    protected static ?string $label = 'Pemerikasaan Sample Makanan';
+
 
     public static function form(Form $form): Form
     {
@@ -56,9 +60,11 @@ class FoodInspactionResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('inspaction_date')
+                    ->label('Tanggal Pemeriksaan')
                     ->dateTime()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('items.menu.menu_name')
+                    ->label('Uraian Jenis Makanan')
                     ->listWithLineBreaks(),
 
                 Tables\Columns\IconColumn::make('items.is_good')
@@ -85,9 +91,15 @@ class FoodInspactionResource extends Resource
             ])
             ->filters([])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-
+                ActionGroup::make([
+                    \Filament\Tables\Actions\Action::make('print')
+                        ->label('Cetak PDF')
+                        ->icon('heroicon-o-printer')
+                        ->url(fn(FoodInspaction $record) => route('food-inspaction.print', $record))
+                        ->openUrlInNewTab(),
+                    \Filament\Tables\Actions\EditAction::make(),
+                    \Filament\Tables\Actions\DeleteAction::make(),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

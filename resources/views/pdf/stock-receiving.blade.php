@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Format Pemeriksaan Bahan Makanan</title>
+    <title>Pemeriksaan Bahan Makanan</title>
     <style>
         body { 
             font-family: Arial, sans-serif; 
@@ -128,7 +128,7 @@
         .signature-section {
             margin-top: 30px;
             text-align: right;
-        }
+        } 
         
         .signature-section p {
             margin: 5px 0;
@@ -158,8 +158,8 @@
                 <img src="{{ public_path('images/bgn.png') }}" alt="Logo Badan Gizi Nasional">
             </td>
             <td class="header-text">
-                <h2>KOP BADAN GIZI NASIONAL</h2>
-                <p>Format Pemeriksaan Bahan Makanan</p>
+                {{-- <h2>KOP BADAN GIZI NASIONAL</h2>
+                <p>Format Pemeriksaan Bahan Makanan</p> --}}
             </td>
         </tr>
     </table>
@@ -168,7 +168,7 @@
 
     {{-- DOCUMENT TITLE --}}
     <div class="document-title">
-        FORMAT PEMERIKSAAN BAHAN MAKANAN
+        PEMERIKSAAN BAHAN MAKANAN
     </div>
     
     <div class="document-number">
@@ -176,28 +176,24 @@
     </div>
 
     {{-- INFORMATION SECTION --}}
-    <div class="info-section">
-        <div class="info-row">
-            <div class="info-label">Dari :</div>
-            {{-- <div class="info-colon">:</div>
-            <div class="info-value"></div> --}}
-        </div>
-        <div class="info-row">
-            <div class="info-label">Kepada :</div>
-            {{-- <div class="info-colon">:</div>
-            <div class="info-value"></div> --}}
-        </div>
-        <div class="info-row">
-            <div class="info-label">Alamat :</div>
-            {{-- <div class="info-colon">:</div>
-            <div class="info-value"></div> --}}
-        </div>
-        <div class="info-row">
-            <div class="info-label">Waktu :</div>
-            {{-- <div class="info-colon">:</div>
-            <div class="info-value"></div>
-        </div> --}}
-    </div>
+    <table class="info">
+        <tr>
+            <td width="60px">Dari</td>
+            <td>: ..................................................</td>
+        </tr>
+        <tr>
+            <td>Kepada</td>
+            <td>: ..................................................</td>
+        </tr>
+        <tr>
+            <td>Alamat</td>
+            <td>: ..................................................</td>
+        </tr>
+        <tr>
+            <td>Waktu</td>
+            <td>: {{ \Carbon\Carbon::parse($data->receiving_date)->translatedFormat('d F Y') }}</td>
+        </tr>
+    </table>
 
     {{-- MAIN TABLE --}}
     <table class="main-table">

@@ -3,6 +3,7 @@
 use App\Exports\NutritionPlanItemsExport;
 use App\Filament\Resources\StockIssueResource\Pages\ProcessStockIssue;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\FoodInspactionController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\PurchaseOrderPdfController;
 use App\Http\Controllers\StockReceivingController;
@@ -44,6 +45,12 @@ Route::get('/payroll/{payroll}/slip', [PayrollController::class, 'cetakSlip'])->
 
 Route::get('/stock-receiving/{record}/print', [StockReceivingController::class, 'print'])
     ->name('stock-receiving.print');
+
+Route::get('food-inspaction/{record}/print',[FoodInspactionController::class, 'print'])
+->name('food-inspaction.print');
+
+
+
 
 // Route::get('/export-nutrition-plan-items', function () {
 //     return Excel::download(new NutritionPlanItemsExport, 'nutrition-plan-items.xlsx');
