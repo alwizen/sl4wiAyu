@@ -23,6 +23,7 @@ use Filament\Tables\Actions\ExportBulkAction;
 use App\Filament\Resources\UserResource\Pages;
 use STS\FilamentImpersonate\Tables\Actions\Impersonate;
 use Filament\Infolists\Components\Section as InfolistSection;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction as TablesExportBulkAction;
 
 class UserResource extends Resource
 {
@@ -111,17 +112,18 @@ class UserResource extends Resource
                 Tables\Actions\DeleteAction::make(),
             ])
             ->headerActions([
-                ExportAction::make()
-                    ->exporter(UserExporter::class),
+                // ExportAction::make()
+                //     ->exporter(UserExporter::class),
                 ImportAction::make()
                     ->importer(UserImporter::class)
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    ExportBulkAction::make()
                 ]),
-                ExportBulkAction::make()
-                    ->exporter(UserExporter::class)
+                // ExportBulkAction::make()
+                //     ->exporter(UserExporter::class)
             ]);
     }
 

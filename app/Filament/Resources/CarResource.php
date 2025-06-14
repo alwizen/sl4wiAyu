@@ -23,6 +23,8 @@ class CarResource extends Resource
 
     protected static ?string $navigationLabel = 'Mobil Pengiriman';
 
+    protected static ?string $label = 'Mobil Pengiriman';
+
     protected static ?string $navigationGroup = 'Master Data';
 
     public static function form(Form $form): Form

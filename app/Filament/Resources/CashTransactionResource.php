@@ -183,8 +183,8 @@ class CashTransactionResource extends Resource
                     ->collapsible()
                     ->titlePrefixedWithLabel(false)
                     ->getTitleFromRecordUsing(fn($record) => match ($record->category->type) {
-                        'income' => '💰 Pemasukan',
-                        'expense' => '💸 Pengeluaran',
+                        'income' => 'Pemasukan',
+                        'expense' => 'Pengeluaran',
                         default => $record->category->type
                     }),
             ])
