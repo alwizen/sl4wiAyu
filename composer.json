@@ -36,7 +36,8 @@
         "rupadana/filament-api-service": "^3.4.4",
         "socialiteproviders/google": "^4.1",
         "stechstudio/filament-impersonate": "^3.15",
-        "tomatophp/filament-pwa": "^1.0"
+        "tomatophp/filament-pwa": "^1.0",
+        "z3d0x/filament-logger": "^0.8.0"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.14",

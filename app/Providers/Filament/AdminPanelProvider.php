@@ -77,7 +77,7 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->spa()
+            // ->spa()
             ->globalSearchKeyBindings(['command+k', 'alt+k'])
             ->brandLogo(fn() => setting('logo_light_url') ?? asset('images/bgn.png'))
             ->brandLogoHeight('3.5rem')
@@ -94,6 +94,9 @@ class AdminPanelProvider extends PanelProvider
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
+            ->resources([
+                config('filament-logger.activity_resource')
+            ])
             ->pages([
                 //                Pages\Dashboard::class,
             ])
