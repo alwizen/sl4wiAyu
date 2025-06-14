@@ -34,6 +34,8 @@ class DailyMenuResource extends Resource
 
     protected static ?string $navigationLabel = 'Menu Harian';
 
+    protected static ?string $label = 'Menu Harian';
+
     public static function form(Form $form): Form
     {
         return $form

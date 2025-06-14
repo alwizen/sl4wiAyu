@@ -28,6 +28,6 @@ class PayrollController extends Controller
         
         $filename = 'Slip-Gaji-' . $payroll->employee->name . '-' . \Carbon\Carbon::parse($payroll->month)->format('Y-m') . '.pdf';
         
-        return $pdf->download($filename);
+        return $pdf->stream($filename);
     }
 }

@@ -230,6 +230,11 @@ class DeliveryResource extends Resource implements HasShieldPermissions
 
             ->actions([
                 ActionGroup::make([
+                    \Filament\Tables\Actions\Action::make('print')
+                    ->label('Cetak PDF')
+                    ->icon('heroicon-o-printer')
+                    ->url(fn(Delivery $record) => route('delivery.print', $record))
+                    ->openUrlInNewTab(),
                     Tables\Actions\Action::make('kirimWhatsApp')
                         ->label('Kirim WhatsApp')
                         ->icon('heroicon-o-chat-bubble-left-ellipsis')

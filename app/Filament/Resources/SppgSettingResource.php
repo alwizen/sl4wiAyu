@@ -32,7 +32,7 @@ class SppgSettingResource extends Resource
             Forms\Components\FileUpload::make('logo_light')
                 ->image()
                 ->directory('logos')
-                ->label('Logo (Light Mode)'),
+                ->label('Logo'),
 
             Forms\Components\FileUpload::make('logo_dark')
                 ->image()
