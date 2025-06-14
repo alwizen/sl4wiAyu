@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Display\Widgets\DailyMenuToday as WidgetsDailyMenuToday;
 use App\Filament\Display\Widgets\DeliveryStatusTable;
 use App\Filament\Display\Widgets\MenuDisplayWidget;
 use App\Filament\Display\Widgets\TargetGroupTable;
@@ -31,7 +32,7 @@ class DisplayPanelProvider extends PanelProvider
             ->path('display')
             ->brandLogo(asset('images/bgn.png'))
             ->brandLogoHeight('3.5rem')
-            ->darkModeBrandLogo(asset('images/bgn.png'))
+            ->darkModeBrandLogo(asset('images/bgn_dark.png'))
             ->favicon(asset('images/logo.svg'))
             ->colors([
                 'primary' => Color::Blue,
@@ -47,7 +48,7 @@ class DisplayPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Display/Widgets'), for: 'App\\Filament\\Display\\Widgets')
             ->widgets([
-                DailyMenuToday::class,
+                WidgetsDailyMenuToday::class,
                 TargetGroupTable::class,
                 DeliveryStatusTable::class,
             ])

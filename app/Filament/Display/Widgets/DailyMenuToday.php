@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Widgets;
+namespace App\Filament\Display\Widgets;
 
 use App\Models\DailyMenuItem;
 use App\Models\NutritionPlanItem;

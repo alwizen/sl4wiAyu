@@ -8,6 +8,7 @@ use App\Filament\Widgets\CashTransactionChart;
 use App\Filament\Widgets\CashTransactionStats;
 use App\Filament\Widgets\DeliveryStats as WidgetsDeliveryStats;
 use App\Filament\Widgets\GreetingWidget;
+use App\Filament\Widgets\StatusDeliveryTabel;
 use App\Filament\Widgets\TodayStockIssue;
 use App\Filament\Widgets\TodayStockReceiving;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
@@ -59,7 +60,7 @@ class Dashboard extends BaseDashboard
             CashTransactionStats::class,
             CashTransactionChart::class,
             WidgetsDeliveryStats::class,
-            DeliveryStatusTable::class,
+            StatusDeliveryTabel::class,
             TodayStockReceiving::class,
             TodayStockIssue::class
         ];
