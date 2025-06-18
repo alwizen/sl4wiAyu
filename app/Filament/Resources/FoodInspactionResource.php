@@ -29,7 +29,7 @@ class FoodInspactionResource extends Resource
 
     protected static ?string $navigationGroup = 'Ahli Gizi';
 
-    protected static ?string $navigationLabel = 'Pemerikasaan Sample Makanan';
+    protected static ?string $navigationLabel = 'Sample Makanan';
 
     protected static ?string $label = 'Pemerikasaan Sample Makanan';
 
