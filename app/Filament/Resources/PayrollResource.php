@@ -14,6 +14,7 @@ use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Carbon;
 
 class PayrollResource extends Resource
 {
@@ -26,11 +27,29 @@ class PayrollResource extends Resource
     protected static ?string $navigationLabel = 'Penggajian';
 
     protected static ?string $label = 'Penggajian';
+    protected static function updateTotalDays(callable $get, callable $set): void
+    {
+        $start = $get('start_date');
+        $end = $get('end_date');
+
+        if ($start && $end) {
+            $startDate = Carbon::parse($start);
+            $endDate = Carbon::parse($end);
+
+            if ($endDate->greaterThanOrEqualTo($startDate)) {
+                $days = $startDate->diffInDays($endDate) + 1; // tambahkan +1 untuk inklusif
+                $set('total_day', $days);
+            } else {
+                $set('total_day', 0);
+            }
+        }
+    }
+
 
     public static function form(Form $form): Form
     {
         return $form
-        ->columns(1)
+            ->columns(1)
             ->schema([
                 Forms\Components\Select::make('employee_id')
                     ->relationship('employee', 'name')
@@ -49,6 +68,23 @@ class PayrollResource extends Resource
                     ->format('Y-m')
                     ->displayFormat('F Y'),
 
+                Forms\Components\DatePicker::make('start_date')
+                    ->label('Tanggal Mulai')
+                    ->required()
+                    ->reactive()
+                    ->afterStateUpdated(fn($state, callable $set, callable $get) => static::updateTotalDays($get, $set)),
+
+                Forms\Components\DatePicker::make('end_date')
+                    ->label('Tanggal Akhir')
+                    ->required()
+                    ->reactive()
+                    ->afterStateUpdated(fn($state, callable $set, callable $get) => static::updateTotalDays($get, $set)),
+
+                Forms\Components\TextInput::make('total_day')
+                    ->label('Jumlah Hari')
+                    ->numeric()
+                    ->readOnly()
+                    ->required(),
                 Forms\Components\TextInput::make('work_days')
                     ->label('Jumlah Hari Masuk')
                     ->numeric()
@@ -70,7 +106,7 @@ class PayrollResource extends Resource
                     ->required()
                     ->dehydrated(true)
                     ->numeric()
-                    ->readOnly() 
+                    ->readOnly()
                     ->helperText(function ($get) {
                         $employeeId = $get('employee_id');
                         if (!$employeeId) {
@@ -129,20 +165,30 @@ class PayrollResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('employee.name')
-                    ->label('Nama Relawan')
+                    ->label('Nama')
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('month')
                     ->label('Bulan')
                     ->date('F Y')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('start_date')
+                    ->date('d M')
+                    ->label('Dari')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('end_date')
+                    ->label('Sampai')
+                    ->date('d M')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('work_days')
                     ->label('Hari Masuk')
                     ->numeric()
-                    ->sortable(),
+                    ->sortable()
+                    ->suffix(' Hari'),
                 Tables\Columns\TextColumn::make('absences')
                     ->label('Absen')
                     ->numeric()
+                    ->suffix(' Hari')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total_thp')
                     ->label('Total THP')
@@ -159,14 +205,41 @@ class PayrollResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                // Filter Nama Relawan
+                Tables\Filters\SelectFilter::make('employee_id')
+                    ->label('Nama Relawan')
+                    ->relationship('employee', 'name')
+                    ->searchable()
+                    ->preload(),
+            
+                    Tables\Filters\Filter::make('month')
+                    ->label('Bulan & Tahun')
+                    ->form([
+                        \Coolsam\Flatpickr\Forms\Components\Flatpickr::make('month')
+                            ->label('Pilih Bulan')
+                            ->monthPicker()
+                            ->format('Y-m')
+                            ->displayFormat('F Y')
+                            ->required(),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (! isset($data['month'])) {
+                            return $query;
+                        }
+                
+                        $monthDate = Carbon::createFromFormat('Y-m', $data['month']);
+                        return $query
+                            ->whereYear('month', $monthDate->year)
+                            ->whereMonth('month', $monthDate->month);
+                    }),
             ])
+            
             ->actions([
                 Tables\Actions\Action::make('cetak_slip')
                     ->label('Cetak Slip')
                     ->icon('heroicon-o-printer')
                     ->color('success')
-                    ->url(fn (Payroll $record): string => route('payroll.slip', $record))
+                    ->url(fn(Payroll $record): string => route('payroll.slip', $record))
                     ->openUrlInNewTab(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),

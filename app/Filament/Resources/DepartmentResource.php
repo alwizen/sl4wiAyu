@@ -35,16 +35,19 @@ class DepartmentResource extends Resource
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('salary')
+                    ->label('Gaji Harian')
                     ->required()
                     ->numeric()
                     ->suffix(' /Hari')
                     ->default(0),
                 Forms\Components\TextInput::make('allowance')
+                    ->label('Tunjangan')
                     ->required()
                     ->numeric()
                     ->default(0),
                 Forms\Components\TextInput::make('absence_deduction')
                     ->required()
+                    ->label('Denda Harian')
                     ->numeric()
                     ->default(0)
                     ->helperText('Denda untuk setiap ketidakhadiran'),

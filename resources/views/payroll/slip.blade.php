@@ -185,7 +185,7 @@
     </div>
 
     <div class="note">
-        <strong>Catatan:</strong> Slip gaji ini dicetak secara otomatis oleh sistem. Untuk pertanyaan terkait gaji, silakan hubungi bagian HRD.
+        <strong>Catatan:</strong> Slip gaji ini dicetak secara otomatis oleh sistem. Untuk pertanyaan terkait gaji, silakan hubungi bagian Keuangan.
     </div>
 </body>
 </html>
