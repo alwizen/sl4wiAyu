@@ -69,8 +69,6 @@
             text-align: center;
             margin: 8px 0 8px 0; /* Further reduced for tighter spacing */
             padding: 10px; /* Further reduced */
-            background: linear-gradient(135deg, #183fbe 0%, #3764c4 100%);
-            color: white;
             border-radius: 8px;
         }
         
@@ -90,17 +88,17 @@
         
         /* Date Section */
         .date-section {
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
+            /* background: #f0fdf4;
+            border: 1px solid #bbf7d0; */
             border-radius: 6px;
             padding: 6px 10px; /* Further reduced */
-            margin-bottom: 8px; /* Further reduced to make table closer */
+            margin-bottom: 10px; /* Further reduced to make table closer */
             display: inline-block;
         }
         
         .date-label {
             font-weight: bold;
-            color: #4171c9;
+            /* color: #4171c9; */
             margin-right: 10px;
         }
         
@@ -326,21 +324,21 @@
             <div class="logo-section">
                 <img src="{{ public_path('images/bgn.png') }}" class="logo" alt="Logo BGN">
             </div>
-            <div class="company-info">
-                {{-- <h1 class="company-name">Badan Gizi Nasional</h1> --}}
+            {{-- <div class="company-info">
+                <h1 class="company-name">Badan Gizi Nasional</h1>
                 <h2 class="company-subtitle">Kementerian Kesehatan Republik Indonesia</h2>
                 <p class="company-address">
                     Jl. HR. Rasuna Said Blok X-5 Kav. 4-9, Kuningan, Jakarta Selatan 12950<br>
                     Telepon: (021) 5201590 | Email: info@giznas.kemkes.go.id
                 </p>
-            </div>
+            </div> --}}
         </div>
     </div>
 
     <!-- Document Title -->
     <div class="document-title">
         <h1>Rencana Nutrisi</h1>
-        <p class="document-subtitle">Perencanaan Asupan Gizi Harian</p>
+        {{-- <p class="document-subtitle">Perencanaan Asupan Gizi Harian</p> --}}
     </div>
 
     <!-- Date Section -->
@@ -384,7 +382,49 @@
     </div>
 
     <!-- Summary Section -->
-    <div class="summary-section">
+
+@php
+$groupedItems = $plan->nutritionPlanItems->groupBy('target_group_id');
+@endphp
+
+@foreach($groupedItems as $groupId => $items)
+@php
+    $groupName = $items->first()->targetGroup->name ?? 'Tidak diketahui';
+@endphp
+
+<div class="summary-section">
+    <div class="summary-title">Ringkasan Nutrisi: {{ $groupName }}</div>
+    <div class="summary-grid">
+        {{-- <div class="summary-item">
+            <div class="summary-label">Total Item</div>
+            <div class="summary-value">{{ $items->count() }}</div>
+        </div> --}}
+        <div class="summary-item">
+            <div class="summary-label">Total Energi (kkal)</div>
+            <div class="summary-value">{{ number_format($items->sum('energy'), 1, ',', '.') }}</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-label">Total Protein (gr)</div>
+            <div class="summary-value">{{ number_format($items->sum('protein'), 1, ',', '.') }}</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-label">Total Lemak (gr)</div>
+            <div class="summary-value">{{ number_format($items->sum('fat'), 1, ',', '.') }}</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-label">Total Karbo (gr)</div>
+            <div class="summary-value">{{ number_format($items->sum('carb'), 1, ',', '.') }}</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-label">Total Serat (gr)</div>
+            <div class="summary-value">{{ number_format($items->sum('serat'), 1, ',', '.') }}</div>
+        </div>
+    </div>
+</div>
+@endforeach
+
+    
+    {{-- <div class="summary-section">
         <div class="summary-title">Ringkasan Total Nutrisi</div>
         <div class="summary-grid">
             <div class="summary-item">
@@ -408,7 +448,7 @@
                 <div class="summary-value">{{ number_format($plan->nutritionPlanItems->sum('carb'), 1, ',', '.') }}</div>
             </div>
         </div>
-    </div>
+    </div> --}}
 
     <!-- Signature Section -->
     {{-- <div class="signature-section">
