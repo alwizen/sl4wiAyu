@@ -10,12 +10,14 @@ use App\Models\Inventory;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\ActionSize;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Actions\ActionGroup;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Guava\FilamentModalRelationManagers\Actions\Table\RelationManagerAction;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
 class InventoryResource extends Resource
@@ -140,6 +142,24 @@ class InventoryResource extends Resource
             ])
             ->actions([
                 ActionGroup::make([
+                    RelationManagerAction::make('additionalItemsHistory')
+                        ->label('Penambahan inv.')
+                        ->color('success')
+                        ->icon('heroicon-o-arrow-up-tray')
+                        ->relationManager(AdditionsRelationManager::make()),
+                    RelationManagerAction::make('missingItemsHistory')
+                        ->label('inv. Hilang')
+                        ->color('danger')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->relationManager(MissingsRelationManager::make()),
+                ])
+                    ->label('Riwayat')
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->size(ActionSize::Small)
+                    ->color('primary')
+                    ->button(),
+                
+                ActionGroup::make([
                     Tables\Actions\Action::make('inputAddition')
                         ->label('Input Tambahan')
                         ->icon('heroicon-o-clipboard-document-check')
@@ -206,7 +226,7 @@ class InventoryResource extends Resource
 
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make()
-                        ->label('Edit / Riwayat'),
+                        ->label('Edit'),
                     Tables\Actions\DeleteAction::make(),
                 ]),
             ])
@@ -222,8 +242,8 @@ class InventoryResource extends Resource
     public static function getRelations(): array
     {
         return [
-            AdditionsRelationManager::class,
-            MissingsRelationManager::class,
+            // AdditionsRelationManager::class,
+            // MissingsRelationManager::class,
         ];
     }
 

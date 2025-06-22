@@ -143,6 +143,10 @@
                 <span>: {{ $payroll->absences }} hari</span>
             </div>
             <div class="info-item">
+                <span class="info-label">Izin</span>
+                <span>: {{ $payroll->permit ?? 0 }} hari</span>
+            </div>
+            <div class="info-item">
                 <span class="info-label">Tanggal Cetak</span>
                 <span>: {{ $tanggal_cetak }}</span>
             </div>

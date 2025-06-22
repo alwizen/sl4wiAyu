@@ -8,6 +8,7 @@ use App\Http\Controllers\FoodInspactionController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\PurchaseOrderPdfController;
 use App\Http\Controllers\StockReceivingController;
+use App\Livewire\AttendanceScan;
 use App\Models\PurchaseOrder;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Route;
@@ -53,6 +54,10 @@ Route::get('food-inspaction/{record}/print', [FoodInspactionController::class, '
 Route::get('/delivery/{record}/print', [DeliveryController::class, 'print'])
     ->name('delivery.print');
 
+
+//absen
+Route::get('/absen', AttendanceScan::class)->name('attendance.scan');
+    
 
 // Route::middleware([
 //     'auth',

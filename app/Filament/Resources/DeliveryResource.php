@@ -6,6 +6,7 @@ use App\Filament\Resources\DeliveryResource\Pages;
 use App\Filament\Resources\DeliveryResource\RelationManagers;
 use App\Helpers\BitlyHelper;
 use App\Models\Delivery;
+use App\Models\User;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -23,6 +24,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Enums\ActionsPosition;
+use Illuminate\Database\Eloquent\Model;
 
 
 class DeliveryResource extends Resource implements HasShieldPermissions
@@ -36,6 +38,27 @@ class DeliveryResource extends Resource implements HasShieldPermissions
     protected static ?string $navigationLabel = 'Pengiriman';
 
     protected static ?string $label = 'Pengiriman';
+
+    public static function afterCreate(Model $record, Form $form): void
+    {
+        // Notifikasi untuk pengguna yang sedang login (sebagai feedback langsung)
+        Notification::make()
+            ->title('Pengiriman baru berhasil dibuat!')
+            ->success()
+            ->send();
+
+        // Ambil super admin untuk menerima notifikasi database
+        // Asumsi Anda menggunakan Filament Shield dan role 'super_admin'
+        $superAdmins = User::whereHas('roles', fn($query) => $query->where('name', 'super_admin'))->get();
+
+        if ($superAdmins->isNotEmpty()) { // Pastikan ada super admin yang ditemukan
+            Notification::make()
+                ->title('Pengiriman Baru Dibuat: #' . $record->id)
+                ->body('Pengiriman dengan ID ' . $record->id . ' telah berhasil dibuat.')
+                ->info() // Atau success(), warning(), dll.
+                ->sendToDatabase($superAdmins);
+        }
+    }
 
     public static function form(Form $form): Form
     {
@@ -231,10 +254,10 @@ class DeliveryResource extends Resource implements HasShieldPermissions
             ->actions([
                 ActionGroup::make([
                     \Filament\Tables\Actions\Action::make('print')
-                    ->label('Cetak PDF')
-                    ->icon('heroicon-o-printer')
-                    ->url(fn(Delivery $record) => route('delivery.print', $record))
-                    ->openUrlInNewTab(),
+                        ->label('Cetak PDF')
+                        ->icon('heroicon-o-printer')
+                        ->url(fn(Delivery $record) => route('delivery.print', $record))
+                        ->openUrlInNewTab(),
                     Tables\Actions\Action::make('kirimWhatsApp')
                         ->label('Kirim WhatsApp')
                         ->icon('heroicon-o-chat-bubble-left-ellipsis')
@@ -377,11 +400,12 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                             $record->status = 'disiapkan';
                             $record->prepared_at = now();
                             $record->save();
+                            $recipient = auth()->user();
 
                             Notification::make()
                                 ->title('Pengiriman berhasil ditandai sebagai Disiapkan')
                                 ->success()
-                                ->send();
+                                ->sendToDatabase($recipient);
                         }),
                     Tables\Actions\Action::make('setShipped')
                         ->label('Dalam Perjalanan')
@@ -476,8 +500,6 @@ class DeliveryResource extends Resource implements HasShieldPermissions
             'kirimWhatsApp',
         ];
     }
-
-
 
     public static function getPages(): array
     {

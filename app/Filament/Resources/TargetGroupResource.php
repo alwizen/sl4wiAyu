@@ -14,7 +14,7 @@ class TargetGroupResource extends Resource
 {
     protected static ?string $model = TargetGroup::class;
 
-    protected static ?string $navigationIcon = '';
+    protected static ?string $navigationIcon = 'heroicon-o-window';
 
     protected static ?string $navigationGroup = 'Master Data';
 

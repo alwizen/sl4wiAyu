@@ -17,15 +17,15 @@ class DepartmentResource extends Resource
 {
     protected static ?string $model = Department::class;
 
-    protected static ?string $navigationLabel = 'Daftar Posisi';
+    protected static ?string $navigationLabel = 'Daftar Jabatan';
 
-    protected static ?string $label = 'Posisi';
+    protected static ?string $label = 'Jabatan';
 
     protected static bool $shouldRegisterNavigation = true;
 
     protected static ?string $navigationGroup = 'Master Data';
 
-    protected static ?string $navigationIcon = '';
+    protected static ?string $navigationIcon = 'heroicon-o-window';
 
     public static function form(Form $form): Form
     {
@@ -62,7 +62,7 @@ class DepartmentResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                ->label('Nama Posisi')
+                    ->label('Nama Posisi')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('salary')
                     ->label('Gaji Harian')

@@ -4,8 +4,10 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\EmployeeResource\Pages;
 use App\Filament\Resources\EmployeeResource\RelationManagers;
+use App\Filament\Resources\EmployeeResource\RelationManagers\AttendancesRelationManager;
 use App\Filament\Resources\EmployeeResource\RelationManagers\EmployeeRelationManager;
 use App\Models\Employee;
+use App\Models\WorkSchedule;
 use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -17,6 +19,8 @@ use Filament\Tables\Table;
 use Guava\FilamentModalRelationManagers\Actions\Table\RelationManagerAction;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Notifications\Notification;
+use Filament\Support\Enums\ActionSize;
 
 class EmployeeResource extends Resource
 {
@@ -24,10 +28,10 @@ class EmployeeResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-briefcase';
 
-    protected static ?string $navigationGroup = 'Keuangan';
+    protected static ?string $navigationGroup = 'Relawan';
 
     protected static ?string $navigationLabel = 'Daftar Relawan';
-    
+
     protected static ?string $label = 'Relawan';
 
     public static function form(Form $form): Form
@@ -51,6 +55,20 @@ class EmployeeResource extends Resource
                     ->label('NIK')
                     ->required()
                     ->maxLength(255),
+
+                Forms\Components\TextInput::make('rfid_uid')
+                    ->label('RFID')
+                    ->required()
+                    ->maxLength(255),
+
+                // Forms\Components\Select::make('work_type')
+                //     ->label('Tipe Kerja')
+                //     ->options([
+                //         'shift' => 'Shift (Perlu Jadwal)',
+                //         'office' => 'Kantor (08:00-17:00)'
+                //     ])
+                //     ->required()
+                //     ->helperText('Pilih "Shift" jika memerlukan jadwal khusus, "Kantor" untuk jam kerja tetap'),
 
                 Forms\Components\Select::make('department_id')
                     ->relationship('department', 'name')
@@ -84,24 +102,31 @@ class EmployeeResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->recordUrl(null)
             ->columns([
                 Tables\Columns\TextColumn::make('nip')
                     ->label('NIP')
                     ->searchable()
-                    ->sortable(),
+                    ->copyable(),
+
+                Tables\Columns\TextColumn::make('name')
+                    ->label('Nama')
+                    ->searchable(),
 
                 Tables\Columns\TextColumn::make('nik')
                     ->label('NIK')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+
+                Tables\Columns\TextColumn::make('rfid_uid')
+                    ->label('RFID')
+                    ->copyable()
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('department.name')
                     ->label('Posisi')
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('name')
-                    ->label('Nama')
-                    ->searchable()
-                    ->sortable(),
+                    ->searchable(),
 
                 Tables\Columns\TextColumn::make('phone')
                     ->label('Telepon')
@@ -116,17 +141,22 @@ class EmployeeResource extends Resource
                 Tables\Columns\TextColumn::make('address')
                     ->label('Alamat')
                     ->searchable()
-                    ->limit(50),
+                    ->limit(50)
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([
-                //
-            ])
+            ->filters([])
             ->actions([
                 ActionGroup::make([
-                    RelationManagerAction::make('stockIssueItemsHistory')
-                        ->label('Riwayat Penggajian')
-                        ->color('gray')
+                    RelationManagerAction::make('attendanceHistory')
+                        ->label('Riwayat Absensi')
+                        ->color('primary')
                         ->icon('heroicon-o-clock')
+                        ->relationManager(AttendancesRelationManager::make()),
+
+                    RelationManagerAction::make('payrollHistory')
+                        ->label('Riwayat Penggajian')
+                        ->color('success')
+                        ->icon('heroicon-o-document-currency-dollar')
                         ->relationManager(EmployeeRelationManager::make()),
 
                     Tables\Actions\ViewAction::make(),
@@ -134,6 +164,11 @@ class EmployeeResource extends Resource
                         ->color('warning'),
                     Tables\Actions\DeleteAction::make(),
                 ])
+                    ->label('More actions')
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->size(ActionSize::Small)
+                    ->color('primary')
+                    ->button()
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

@@ -78,6 +78,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             // ->spa()
+            ->databaseNotifications()
             ->globalSearchKeyBindings(['command+k', 'alt+k'])
             ->brandLogo(fn() => setting('logo_light_url') ?? asset('images/bgn.png'))
             ->brandLogoHeight('3.5rem')
@@ -107,6 +108,7 @@ class AdminPanelProvider extends PanelProvider
                 'Pengadaan & Permintaan',
                 'Keuangan',
                 'Gudang',
+                'Relawan',
                 'Master Data',
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')

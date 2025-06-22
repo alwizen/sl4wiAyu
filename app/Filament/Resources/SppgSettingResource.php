@@ -17,7 +17,7 @@ class SppgSettingResource extends Resource
 {
     protected static ?string $model = SppgSetting::class;
 
-    protected static ?string $navigationIcon = '';
+    protected static ?string $navigationIcon = 'heroicon-o-window';
 
     protected static ?string $navigationGroup = 'Master Data';
 

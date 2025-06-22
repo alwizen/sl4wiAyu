@@ -15,7 +15,7 @@ use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 class EmployeeRelationManager extends RelationManager
 {
     protected static string $relationship = 'payrolls';
-    
+
     protected static ?string $title = '';
 
     public function form(Form $form): Form
@@ -38,14 +38,17 @@ class EmployeeRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('month')
                     ->label('Bulan')
                     ->date('F Y')
-                    ->sortable(),
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('work_days')
-                    ->label('Jumlah Hari Masuk')
-                    ->suffix(' hari')
-                    ->sortable(),
+                    ->label('Masuk')
+                    ->suffix(' hari'),
+                Tables\Columns\TextColumn::make('permit')
+                    ->label('Izin')
+                    ->suffix(' hari'),
                 Tables\Columns\TextColumn::make('absences')
-                    ->label('Jumlah Ketidakhadiran')
-                    ->sortable(),
+                    ->label('Alpa')
+                    ->suffix(' hari'),
                 Tables\Columns\TextColumn::make('total_thp')
                     ->label('Total THP')
                     ->summarize(Sum::make())
@@ -55,13 +58,13 @@ class EmployeeRelationManager extends RelationManager
             ->filters([
                 //
             ])
-    
+
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     ExportBulkAction::make()
                         ->label('Ekspor Data Penggajian')
-                        // ->icon('heroicon-o-download')
-                        // ->fileName(fn () => 'penggajian-' . now()->format('Y-m-d') . '.xlsx'),
+                    // ->icon('heroicon-o-download')
+                    // ->fileName(fn () => 'penggajian-' . now()->format('Y-m-d') . '.xlsx'),
                 ]),
             ]);
     }

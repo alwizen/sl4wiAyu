@@ -22,11 +22,12 @@ class PayrollResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-calculator';
 
-    protected static ?string $navigationGroup = 'Keuangan';
+    protected static ?string $navigationGroup = 'Relawan';
 
     protected static ?string $navigationLabel = 'Penggajian';
 
     protected static ?string $label = 'Penggajian';
+
     protected static function updateTotalDays(callable $get, callable $set): void
     {
         $start = $get('start_date');
@@ -45,11 +46,79 @@ class PayrollResource extends Resource
         }
     }
 
+    protected static function hitungKehadiran($get, $set): void
+    {
+        $employeeId = $get('employee_id');
+        $startDate = $get('start_date');
+        $endDate = $get('end_date');
+
+        if (!$employeeId || !$startDate || !$endDate) {
+            $set('work_days', 0);
+            $set('absences', 0);
+            $set('permit', 0);
+            return;
+        }
+
+        $masuk = \App\Models\Attendance::where('employee_id', $employeeId)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->where('status', 'masuk')
+            ->count();
+
+        $permit = \App\Models\Attendance::where('employee_id', $employeeId)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->where('status', 'izin')
+            ->count();
+
+        $alpa = \App\Models\Attendance::where('employee_id', $employeeId)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->where('status', 'alpa')
+            ->count();
+
+        $workDays = $masuk + $permit;
+
+        $set('work_days', $workDays);
+        $set('absences', $alpa);
+        $set('permit', $permit);
+
+        static::hitungTHP($get, $set);
+    }
+
+    protected static function hitungTHP($get, $set): void
+    {
+        $employeeId = $get('employee_id');
+        $workDays = (int) $get('work_days') ?? 0;
+        $absences = (int) $get('absences') ?? 0;
+
+        if (!$employeeId) {
+            $set('total_thp', 0);
+            return;
+        }
+
+        $employee = Employee::with('department')->find($employeeId);
+
+        if (!$employee || !$employee->department) {
+            $set('total_thp', 0);
+            return;
+        }
+
+        $dept = $employee->department;
+        $salaryPerDay = $dept->salary ?? 0;        // Salary per hari (contoh: 50.000)
+        $insentif = $dept->allowance ?? 0;         // Insentif bulanan (contoh: 500.000)
+        $potonganPerHari = $dept->absence_deduction ?? 0; // Potongan per hari absen (contoh: 10.000)
+
+        // Rumus: (salary/hari × hari kehadiran) + insentif bulanan - (absen × potongan per hari)
+        $gajiHarian = $salaryPerDay * $workDays;
+        $potonganAbsen = $absences * $potonganPerHari;
+
+        $total = $gajiHarian + $insentif - $potonganAbsen;
+
+        $set('total_thp', max($total, 0));
+    }
+
 
     public static function form(Form $form): Form
     {
         return $form
-            ->columns(1)
             ->schema([
                 Forms\Components\Select::make('employee_id')
                     ->relationship('employee', 'name')
@@ -58,7 +127,10 @@ class PayrollResource extends Resource
                     ->searchable()
                     ->preload()
                     ->reactive()
-                    ->afterStateUpdated(fn($state, callable $set, callable $get) => self::hitungTHP($get, $set)),
+                    ->afterStateUpdated(fn($state, callable $set, callable $get) => [
+                        static::updateTotalDays($get, $set),
+                        static::hitungKehadiran($get, $set),
+                    ]),
 
                 \Coolsam\Flatpickr\Forms\Components\Flatpickr::make('month')
                     ->required()
@@ -72,19 +144,27 @@ class PayrollResource extends Resource
                     ->label('Tanggal Mulai')
                     ->required()
                     ->reactive()
-                    ->afterStateUpdated(fn($state, callable $set, callable $get) => static::updateTotalDays($get, $set)),
+                    ->afterStateUpdated(fn($state, callable $set, callable $get) => [
+                        static::updateTotalDays($get, $set),
+                        static::hitungKehadiran($get, $set),
+                    ]),
 
                 Forms\Components\DatePicker::make('end_date')
                     ->label('Tanggal Akhir')
                     ->required()
                     ->reactive()
-                    ->afterStateUpdated(fn($state, callable $set, callable $get) => static::updateTotalDays($get, $set)),
+                    ->default(now())
+                    ->afterStateUpdated(fn($state, callable $set, callable $get) => [
+                        static::updateTotalDays($get, $set),
+                        static::hitungKehadiran($get, $set),
+                    ]),
 
                 Forms\Components\TextInput::make('total_day')
                     ->label('Jumlah Hari')
                     ->numeric()
                     ->readOnly()
                     ->required(),
+
                 Forms\Components\TextInput::make('work_days')
                     ->label('Jumlah Hari Masuk')
                     ->numeric()
@@ -92,6 +172,11 @@ class PayrollResource extends Resource
                     ->required()
                     ->reactive()
                     ->afterStateUpdated(fn($state, callable $set, callable $get) => self::hitungTHP($get, $set)),
+
+                Forms\Components\TextInput::make('permit')
+                    ->label('Jumlah permit')
+                    ->numeric()
+                    ->default(0),
 
                 Forms\Components\TextInput::make('absences')
                     ->label('Jumlah Absen')
@@ -128,38 +213,6 @@ class PayrollResource extends Resource
             ]);
     }
 
-    protected static function hitungTHP($get, $set): void
-    {
-        $employeeId = $get('employee_id');
-        $workDays = (int) $get('work_days') ?? 0;
-        $absences = (int) $get('absences') ?? 0;
-
-        if (!$employeeId) {
-            $set('total_thp', 0);
-            return;
-        }
-
-        $employee = Employee::with('department')->find($employeeId);
-
-        if (!$employee || !$employee->department) {
-            $set('total_thp', 0);
-            return;
-        }
-
-        $dept = $employee->department;
-        $salaryPerDay = $dept->salary ?? 0;        // Salary per hari (contoh: 50.000)
-        $insentif = $dept->allowance ?? 0;         // Insentif bulanan (contoh: 500.000)
-        $potonganPerHari = $dept->absence_deduction ?? 0; // Potongan per hari absen (contoh: 10.000)
-
-        // Rumus: (salary/hari × hari kehadiran) + insentif bulanan - (absen × potongan per hari)
-        $gajiHarian = $salaryPerDay * $workDays;
-        $potonganAbsen = $absences * $potonganPerHari;
-
-        $total = $gajiHarian + $insentif - $potonganAbsen;
-
-        $set('total_thp', max($total, 0));
-    }
-
     public static function table(Table $table): Table
     {
         return $table
@@ -182,6 +235,11 @@ class PayrollResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('work_days')
                     ->label('Hari Masuk')
+                    ->numeric()
+                    ->sortable()
+                    ->suffix(' Hari'),
+                Tables\Columns\TextColumn::make('permit')
+                    ->label('Jml permit')
                     ->numeric()
                     ->sortable()
                     ->suffix(' Hari'),
@@ -211,8 +269,8 @@ class PayrollResource extends Resource
                     ->relationship('employee', 'name')
                     ->searchable()
                     ->preload(),
-            
-                    Tables\Filters\Filter::make('month')
+
+                Tables\Filters\Filter::make('month')
                     ->label('Bulan & Tahun')
                     ->form([
                         \Coolsam\Flatpickr\Forms\Components\Flatpickr::make('month')
@@ -226,14 +284,14 @@ class PayrollResource extends Resource
                         if (! isset($data['month'])) {
                             return $query;
                         }
-                
+
                         $monthDate = Carbon::createFromFormat('Y-m', $data['month']);
                         return $query
                             ->whereYear('month', $monthDate->year)
                             ->whereMonth('month', $monthDate->month);
                     }),
             ])
-            
+
             ->actions([
                 Tables\Actions\Action::make('cetak_slip')
                     ->label('Cetak Slip')

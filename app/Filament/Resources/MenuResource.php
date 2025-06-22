@@ -14,11 +14,11 @@ class MenuResource extends Resource
 {
     protected static ?string $model = Menu::class;
 
-    protected static ?string $navigationIcon = '';
+    protected static ?string $navigationIcon = 'heroicon-o-bars-3-bottom-left';
 
     protected static ?int $navigationSort = 3;
 
-    protected static ?string $navigationGroup = 'Master Data';
+    protected static ?string $navigationGroup = 'Ahli Gizi';
 
     protected static ?string $navigationLabel = 'Daftar Menu';
 
