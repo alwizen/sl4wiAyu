@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Resources\DeliveryResource\Api\Transformers;
 
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -18,6 +19,10 @@ class DeliveryTransformer extends JsonResource
      */
     public function toArray($request)
     {
-        return $this->resource->toArray();
+        return [
+            'delivery_number' => $this->delivery_number,
+            'car_number' => $this->car->car_number ?? null,
+            'recipient_name' => $this->recipient->name ?? null,
+        ];
     }
 }
