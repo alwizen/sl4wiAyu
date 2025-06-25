@@ -27,6 +27,7 @@ use Awcodes\FilamentQuickCreate\QuickCreatePlugin;
 use Awcodes\FilamentStickyHeader\StickyHeaderPlugin;
 use Filament\Http\Middleware\Authenticate;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
+use Devonab\FilamentEasyFooter\EasyFooterPlugin;
 use DutchCodingCompany\FilamentSocialite\FilamentSocialitePlugin;
 use DutchCodingCompany\FilamentSocialite\Provider;
 use Filament\Forms\Components\FileUpload;
@@ -48,7 +49,6 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Rupadana\ApiService\ApiServicePlugin;
-
 use Laravel\Socialite\Contracts\User as SocialiteUserContract;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Schema;
@@ -146,6 +146,10 @@ class AdminPanelProvider extends PanelProvider
     private function getPlugins(): array
     {
         $plugins = [
+            EasyFooterPlugin::make()
+                ->withFooterPosition('sidebar.footer')
+                ->withBorder()
+                ->withLoadTime(),
             QuickCreatePlugin::make()
                 ->rounded(false)
                 ->label('Buat')
