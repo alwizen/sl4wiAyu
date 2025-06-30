@@ -29,6 +29,7 @@ class MenuResource extends Resource
             ->schema([
                 Forms\Components\TextInput::make('menu_name')
                     ->required()
+                    ->label('Nama Menu')
                     ->maxLength(255),
             ]);
     }
@@ -36,8 +37,10 @@ class MenuResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultSort('menu_name', 'asc')
             ->columns([
                 Tables\Columns\TextColumn::make('menu_name')
+                    ->label('Nama Menu')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()

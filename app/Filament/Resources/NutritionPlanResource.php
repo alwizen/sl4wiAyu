@@ -35,6 +35,8 @@ use Maatwebsite\Excel\Facades\Excel;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction as FilamentExcelExportBulkAction;
 use pxlrbt\FilamentExcel\Columns\Column;
 use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use Icetalker\FilamentTableRepeater\Forms\Components\TableRepeater;
+
 
 class NutritionPlanResource extends Resource
 {
@@ -116,7 +118,7 @@ class NutritionPlanResource extends Resource
 
                 Section::make('Rencana Nutrisi')
                     ->schema([
-                        Repeater::make('nutrition_plan_items')
+                        TableRepeater::make('nutrition_plan_items')
                             ->label('Item Rencana Nutrisi')
                             ->relationship('nutritionPlanItems')
                             ->schema([
@@ -125,6 +127,7 @@ class NutritionPlanResource extends Resource
                                     ->options(Menu::pluck('menu_name', 'id'))
                                     ->required()
                                     ->disabled()
+                                    ->extraAttributes(['style' => 'width: 130px'])
                                     ->dehydrated(),
 
                                 Select::make('target_group_id')
@@ -132,42 +135,49 @@ class NutritionPlanResource extends Resource
                                     ->options(TargetGroup::pluck('name', 'id'))
                                     ->required()
                                     ->disabled()
+                                    ->extraAttributes(['style' => 'width: 200px'])
                                     ->dehydrated(),
 
                                 TextInput::make('netto')
-                                    ->label('Netto')
+                                    ->label('Netto "gr"')
                                     ->numeric()
-                                    ->suffix('gr')
+                                    ->extraAttributes(['style' => 'width: 90px'])
+                                    // ->suffix('gr')
                                     ->required(),
 
                                 TextInput::make('energy')
-                                    ->label('Energi')
+                                    ->label('EN "kkal"')
+                                    ->extraAttributes(['style' => 'width: 80px'])
                                     ->numeric()
-                                    ->suffix('kkal')
+                                    // ->suffix('kkal')
                                     ->required(),
 
                                 TextInput::make('protein')
-                                    ->label('Protein')
+                                    ->label('PRO "gr')
+                                    ->extraAttributes(['style' => 'width: 80px'])
+
                                     ->numeric()
-                                    ->suffix('gr')
+                                    // ->suffix('gr')
                                     ->required(),
 
                                 TextInput::make('fat')
-                                    ->label('Lemak')
+                                    ->label('FAT "gr"')
+                                    ->extraAttributes(['style' => 'width: 80px'])
                                     ->numeric()
-                                    ->suffix('gr')
+                                    // ->suffix('gr')
                                     ->required(),
 
                                 TextInput::make('carb')
-                                    ->label('Karbohidrat')
+                                    ->label('KH "gr"')
                                     ->numeric()
-                                    ->required()
-                                    ->suffix('gr'),
+                                    ->extraAttributes(['style' => 'width: 80px'])
+                                    ->required(),
 
                                 TextInput::make('serat')
-                                    ->label('Serat.pgn')
+                                    ->label('SP "gr"')
+                                    ->extraAttributes(['style' => 'width: 80px'])
                                     ->numeric()
-                                    ->suffix('gr')
+                                    // ->suffix('gr')
                                     ->required(),
 
                             ])

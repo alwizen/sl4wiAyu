@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Maatwebsite\Excel\Facades\Excel;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use Icetalker\FilamentTableRepeater\Forms\Components\TableRepeater;
 
 class DailyMenuResource extends Resource
 {
@@ -45,7 +46,8 @@ class DailyMenuResource extends Resource
                         Forms\Components\DatePicker::make('menu_date')
                             ->default(now()),
 
-                        Forms\Components\Repeater::make('dailyMenuItems')
+                        TableRepeater::make('dailyMenuItems')
+                            ->cloneable()
                             ->relationship()
                             ->schema([
                                 Forms\Components\Select::make('menu_id')
