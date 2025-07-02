@@ -29,6 +29,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Maatwebsite\Excel\Facades\Excel;
+use Icetalker\FilamentTableRepeater\Forms\Components\TableRepeater;
 
 class StockReceivingResource extends Resource
 {
@@ -95,7 +96,7 @@ class StockReceivingResource extends Resource
             Section::make('Item Penerimaan')
                 ->collapsible()
                 ->schema([
-                    Repeater::make('stockReceivingItems')
+                    TableRepeater::make('stockReceivingItems')
                         ->label('')
                         ->relationship()
                         ->schema([
@@ -205,7 +206,7 @@ class StockReceivingResource extends Resource
                                 }),
 
                             Checkbox::make('is_quantity_matched')
-                                ->label('Jumlah Sesuai')
+                                ->label('Sesuai?')
                                 ->disabled()
                                 ->dehydrated(true),
                         ])
@@ -357,7 +358,7 @@ class StockReceivingResource extends Resource
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
                 ])
-               
+
             ])
             ->bulkActions([
                 BulkAction::make('export-selected')

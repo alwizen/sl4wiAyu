@@ -31,6 +31,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Maatwebsite\Excel\Facades\Excel;
+use Icetalker\FilamentTableRepeater\Forms\Components\TableRepeater;
+
 
 class StockIssueResource extends Resource implements HasShieldPermissions
 {
@@ -66,7 +68,7 @@ class StockIssueResource extends Resource implements HasShieldPermissions
 
                 Card::make()
                     ->schema([
-                        Repeater::make('items')
+                        TableRepeater::make('items')
                             ->label('Daftar Item yang Diminta')
                             ->relationship()
                             ->schema([

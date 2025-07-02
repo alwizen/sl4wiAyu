@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\EmployeeResource\Api\Handlers;
 
-use App\Filament\Resources\SettingResource;
 use App\Filament\Resources\EmployeeResource;
 use Rupadana\ApiService\Http\Handlers;
 use Spatie\QueryBuilder\QueryBuilder;
@@ -12,8 +11,8 @@ use App\Filament\Resources\EmployeeResource\Api\Transformers\EmployeeTransformer
 class DetailHandler extends Handlers
 {
     public static string | null $uri = '/{id}';
-    public static string | null $resource = EmployeeResource::class;
 
+    public static string | null $resource = EmployeeResource::class;
 
     /**
      * Show Employee
@@ -24,7 +23,7 @@ class DetailHandler extends Handlers
     public function handler(Request $request)
     {
         $id = $request->route('id');
-        
+
         $query = static::getEloquentQuery();
 
         $query = QueryBuilder::for(
