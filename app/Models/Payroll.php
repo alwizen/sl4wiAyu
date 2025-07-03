@@ -14,6 +14,7 @@ class Payroll extends Model
         'end_date',
         'work_days',
         'permit',
+        'off_day',
         'absences',
         'total_thp',
     ];

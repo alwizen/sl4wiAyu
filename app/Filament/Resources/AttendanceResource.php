@@ -43,6 +43,7 @@ class AttendanceResource extends Resource
                 Forms\Components\Select::make('status')
                     ->options([
                         'masuk' => 'Masuk',
+                        'libur' =>'Libur',
                         'izin' => 'Izin',
                         'alpa' => 'Alpa'
                     ])
@@ -79,28 +80,11 @@ class AttendanceResource extends Resource
                     ->badge()
                     ->colors([
                         'success' => 'masuk',
+                        'primary' => 'libur',
                         'warning' => 'izin',
                         'danger'  => 'alpa'
                     ])
                     ->sortable(),
-
-                // Tables\Columns\TextColumn::make('status_in')
-                //     ->label('Status Masuk')
-                //     ->badge()
-                //     ->colors([
-                //         'success' => 'on_time',
-                //         'warning' => 'late',
-                //     ])
-                //     ->sortable(),
-
-                // Tables\Columns\TextColumn::make('status_out')
-                //     ->label('Status Pulang')
-                //     ->badge()
-                //     ->colors([
-                //         'success' => 'on_time',
-                //         'danger' => 'early',
-                //     ])
-                //     ->sortable(),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -126,7 +110,7 @@ class AttendanceResource extends Resource
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
-                            ->whereNotNull('check_in') // Hanya yang masuk
+                            // ->whereNotNull('check_in') // Hanya yang masuk
                             ->when($data['from'], fn($q) => $q->whereDate('date', '>=', $data['from']))
                             ->when($data['until'], fn($q) => $q->whereDate('date', '<=', $data['until']));
                     }),

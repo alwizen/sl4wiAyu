@@ -56,6 +56,7 @@ class PayrollResource extends Resource
             $set('work_days', 0);
             $set('absences', 0);
             $set('permit', 0);
+            $set('off_day', 0);
             return;
         }
 
@@ -64,7 +65,7 @@ class PayrollResource extends Resource
             ->where('status', 'masuk')
             ->count();
 
-        $permit = \App\Models\Attendance::where('employee_id', $employeeId)
+        $izin = \App\Models\Attendance::where('employee_id', $employeeId)
             ->whereBetween('date', [$startDate, $endDate])
             ->where('status', 'izin')
             ->count();
@@ -74,11 +75,17 @@ class PayrollResource extends Resource
             ->where('status', 'alpa')
             ->count();
 
-        $workDays = $masuk + $permit;
+        $libur = \App\Models\Attendance::where('employee_id', $employeeId)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->where('status', 'libur')
+            ->count();
+
+        $workDays = $masuk + $izin;
 
         $set('work_days', $workDays);
         $set('absences', $alpa);
-        $set('permit', $permit);
+        $set('permit', $izin);
+        $set('off_day', $libur);
 
         static::hitungTHP($get, $set);
     }
@@ -102,9 +109,9 @@ class PayrollResource extends Resource
         }
 
         $dept = $employee->department;
-        $salaryPerDay = $dept->salary ?? 0;        // Salary per hari (contoh: 50.000)
-        $insentif = $dept->allowance ?? 0;         // Insentif bulanan (contoh: 500.000)
-        $potonganPerHari = $dept->absence_deduction ?? 0; // Potongan per hari absen (contoh: 10.000)
+        $salaryPerDay = $dept->salary ?? 0;
+        $insentif = $dept->allowance ?? 0;
+        $potonganPerHari = $dept->absence_deduction ?? 0;
 
         // Rumus: (salary/hari × hari kehadiran) + insentif bulanan - (absen × potongan per hari)
         $gajiHarian = $salaryPerDay * $workDays;
@@ -172,11 +179,17 @@ class PayrollResource extends Resource
                     ->required()
                     ->reactive()
                     ->afterStateUpdated(fn($state, callable $set, callable $get) => self::hitungTHP($get, $set)),
-
-                Forms\Components\TextInput::make('permit')
-                    ->label('Jumlah permit')
+                    
+                Forms\Components\TextInput::make('off_day')
+                    ->label('Jumlah Libur')
                     ->numeric()
                     ->default(0),
+
+                Forms\Components\TextInput::make('permit')
+                    ->label('Jumlah Izin')
+                    ->numeric()
+                    ->reactive()
+                    ->afterStateUpdated(fn($state, callable $set, callable $get) => self::hitungTHP($get, $set)),
 
                 Forms\Components\TextInput::make('absences')
                     ->label('Jumlah Absen')
@@ -238,8 +251,13 @@ class PayrollResource extends Resource
                     ->numeric()
                     ->sortable()
                     ->suffix(' Hari'),
+                Tables\Columns\TextColumn::make('off_day')
+                    ->label('Libur')
+                    ->numeric()
+                    ->sortable()
+                    ->suffix(' Hari'),
                 Tables\Columns\TextColumn::make('permit')
-                    ->label('Jml permit')
+                    ->label('Izin')
                     ->numeric()
                     ->sortable()
                     ->suffix(' Hari'),

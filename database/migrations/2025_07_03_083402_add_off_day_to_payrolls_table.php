@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('payrolls', function (Blueprint $table) {
-            $table->integer('permit')->default(0); 
+            $table->integer('off_day')->default(0); 
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('payrolls', function (Blueprint $table) {
-            $table->dropColumn('permit');
+            $table->dropColumn('off_day');
         });
     }
 };
