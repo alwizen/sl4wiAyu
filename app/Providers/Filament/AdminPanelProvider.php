@@ -37,6 +37,7 @@ use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets;
 use Hasnayeen\Themes\Http\Middleware\SetTheme;
 use Hasnayeen\Themes\ThemesPlugin;
@@ -77,7 +78,6 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            // ->spa()
             ->databaseNotifications()
             ->globalSearchKeyBindings(['command+k', 'alt+k'])
             ->brandLogo(fn() => setting('logo_light_url') ?? asset('images/bgn.png'))
@@ -92,6 +92,11 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
+            ->renderHook(
+                // PanelsRenderHook::BODY_END,
+                PanelsRenderHook::FOOTER,
+                fn() => view('footer')
+            )
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -146,10 +151,10 @@ class AdminPanelProvider extends PanelProvider
     private function getPlugins(): array
     {
         $plugins = [
-            EasyFooterPlugin::make()
-                ->withFooterPosition('sidebar.footer')
-                ->withBorder()
-                ->withLoadTime(),
+            // EasyFooterPlugin::make()
+            //     ->withFooterPosition('sidebar.footer')
+            //     ->withBorder()
+            //     ->withLoadTime(),
             QuickCreatePlugin::make()
                 ->rounded(false)
                 ->label('Buat')
