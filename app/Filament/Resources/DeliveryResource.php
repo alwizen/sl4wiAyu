@@ -46,9 +46,6 @@ class DeliveryResource extends Resource implements HasShieldPermissions
             ->title('Pengiriman baru berhasil dibuat!')
             ->success()
             ->send();
-
-        // Ambil super admin untuk menerima notifikasi database
-        // Asumsi Anda menggunakan Filament Shield dan role 'super_admin'
         $superAdmins = User::whereHas('roles', fn($query) => $query->where('name', 'super_admin'))->get();
 
         if ($superAdmins->isNotEmpty()) { // Pastikan ada super admin yang ditemukan
@@ -66,6 +63,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
             ->schema([
                 Forms\Components\TextInput::make('delivery_number')
                     ->label('No. Pengiriman')
+                    ->columnSpanFull()
                     ->default(function () {
                         $date = Carbon::now();
                         $randomStr = Str::random(3);
@@ -140,7 +138,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                     ->disabled()
                     ->visible(fn($record) => $record && $record->returned_at),
             ])
-            ->columns(1);
+            ->columns(2);
     }
 
     public static function table(Table $table): Table
@@ -193,6 +191,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                     })
                     ->label('Status'),
                 Tables\Columns\ImageColumn::make('proof_delivery')
+                    ->label('Bukti Pengiriman')
                     ->square(),
                 Tables\Columns\TextColumn::make('prepared_at')
                     ->dateTime()

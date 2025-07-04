@@ -78,7 +78,6 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->databaseNotifications()
             ->globalSearchKeyBindings(['command+k', 'alt+k'])
             ->brandLogo(fn() => setting('logo_light_url') ?? asset('images/bgn.png'))
             ->brandLogoHeight('3.5rem')
@@ -144,8 +143,9 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->plugins(
                 $this->getPlugins()
-            )
-            ->databaseNotifications();
+            );
+            // ->databaseNotifications()
+            // ->databaseNotificationsPolling('30s');
     }
 
     private function getPlugins(): array

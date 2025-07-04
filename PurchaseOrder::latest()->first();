@@ -1,0 +1,17 @@
+[90m= [39m[34;4mApp\Models\User[39;24m {#8131
+    [34mid[39m: [35m3[39m,
+    [34mname[39m: "[32moke gas[39m",
+    [34memail[39m: "[32makuntan@mbg.com[39m",
+    [34memail_verified_at[39m: [36mnull[39m,
+    #[33mpassword[39m: "[32m$2y$12$Y/xdM1DnHcDvk265VUkj3uNcBCcN7rbinn4bxDcjxrwJGV12.dJJe[39m",
+    #[33mremember_token[39m: [36mnull[39m,
+    [34mcreated_at[39m: "[32m2025-07-04 08:28:28[39m",
+    [34mupdated_at[39m: "[32m2025-07-04 08:28:28[39m",
+    [34mavatar_url[39m: [36mnull[39m,
+    [34mtheme[39m: "[32mdefault[39m",
+    [34mtheme_color[39m: [36mnull[39m,
+    [34mbreezySessions[39m: [34;4mIlluminate\Database\Eloquent\Collection[39;24m {#8133
+      [34mall[39m: [],
+    },
+  }
+

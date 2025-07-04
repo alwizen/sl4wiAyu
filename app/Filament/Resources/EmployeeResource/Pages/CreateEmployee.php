@@ -19,26 +19,26 @@ class CreateEmployee extends CreateRecord
         return $this->getResource()::getUrl('index');
     }
 
-    // protected function afterCreate(): void
-    // {
-    //     $delivery = $this->record;
-    //     $currentUser = auth()->user();
+    protected function afterCreate(): void
+    {
+        $delivery = $this->record;
+        $currentUser = auth()->user();
 
-    //     // Siapkan notifikasi
-    //     $notification = Notification::make()
-    //         ->title('Jadwal Pengiriman Ditambahkan')
-    //         ->body("Jadwal pengiriman dengan nomor *{$delivery->delivery_number}* berhasil dibuat oleh *{$currentUser->name}*.")
-    //         ->success();
+        // Siapkan notifikasi
+        $notification = Notification::make()
+            ->title('Relawan Baru Ditambahkan')
+            // ->body("Jadwal pengiriman dengan nomor *{$delivery->delivery_number}* berhasil dibuat oleh *{$currentUser->name}*.")
+            ->success();
 
-    //     // 1. Kirim ke user yang sedang login
-    //     $notification->sendToDatabase($currentUser);
+        // 1. Kirim ke user yang sedang login
+        $notification->sendToDatabase($currentUser);
 
-    //     // 2. Kirim ke semua super_admin KECUALI user yang sedang login
-    //     \App\Models\User::role('super_admin')
-    //         ->where('id', '!=', $currentUser->id)
-    //         ->get()
-    //         ->each(function ($admin) use ($notification) {
-    //             $notification->sendToDatabase($admin);
-    //         });
-    // }
+        // 2. Kirim ke semua super_admin KECUALI user yang sedang login
+        \App\Models\User::role('super_admin')
+            ->where('id', '!=', $currentUser->id)
+            ->get()
+            ->each(function ($admin) use ($notification) {
+                $notification->sendToDatabase($admin);
+            });
+    }
 }

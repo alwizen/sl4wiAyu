@@ -6,10 +6,11 @@ use App\Exports\PurchaseOrderItemsExport;
 use App\Filament\Resources\PurchaseOrderResource\Pages;
 use App\Filament\Resources\PurchaseOrderResource\RelationManagers;
 use App\Filament\Resources\PurchaseOrderResource\RelationManagers\ReceivingsRelationManager;
-use App\Filament\Resources\WarehouseItemResource\RelationManagers\StockReceivingItemsRelationManager;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
 use App\Models\WarehouseItem;
+use App\Models\User;
+use App\Notifications\PurchaseOrderApproved;
 use Filament\Forms;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -25,6 +26,7 @@ use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Carbon\Carbon;
 use Filament\Forms\Components\Card;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Section as ComponentsSection;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\Section;
@@ -34,15 +36,13 @@ use Filament\Tables\Actions\BulkAction;
 use Guava\FilamentModalRelationManagers\Actions\Table\RelationManagerAction;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use Filament\Tables\Filters\DateRangeFilter;
-use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Collection;
 use Maatwebsite\Excel\Facades\Excel;
-use Symfony\Component\Finder\Iterator\DateRangeFilterIterator;
+use Filament\Notifications\Notification;
 
 class PurchaseOrderResource extends Resource implements HasShieldPermissions
-// implements HasShieldPermissions
 {
     protected static ?string $model = PurchaseOrder::class;
 
@@ -56,6 +56,11 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
     {
         return $form
             ->schema([
+                // Tambahkan hidden field untuk created_by
+                Hidden::make('created_by')
+                    ->default(auth()->id())
+                    ->dehydrated(),
+
                 Card::make('Informasi Umum')
                     ->collapsible()
                     ->schema([
@@ -65,7 +70,7 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                                 return PurchaseOrder::generateOrderNumber();
                             })
                             ->disabled()
-                            ->dehydrated() // Pastikan nilai tetap disimpan
+                            ->dehydrated()
                             ->required(),
 
                         Forms\Components\DatePicker::make('order_date')
@@ -144,7 +149,6 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                             ->options([
                                 'Paid' => 'Lunas',
                                 'Unpaid' => 'Belum Lunas',
-                                // 'Partially Paid' => 'Sebagian Lunas',
                             ])
                             ->default('Unpaid'),
 
@@ -164,7 +168,6 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
         $items = $get('items') ?? [];
 
         $total = collect($items)->reduce(function ($carry, $item) {
-            // return $carry + (($item['quantity'] ?? 0) * ($item['unit_price'] ?? 0));
             return $carry + ((float)($item['quantity'] ?? 0) * (float)($item['unit_price'] ?? 0));
         }, 0);
 
@@ -186,6 +189,9 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                 Tables\Columns\TextColumn::make('order_date')
                     ->date('d-m-Y'),
                 Tables\Columns\TextColumn::make('supplier.name')->label('Supplier'),
+                Tables\Columns\TextColumn::make('creator.name')
+                    ->label('Dibuat Oleh')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
@@ -199,7 +205,8 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                         };
                     })
                     ->sortable(),
-                Tables\Columns\BadgeColumn::make('payment_status')
+                Tables\Columns\TextColumn::make('payment_status')
+                    ->badge()
                     ->label('Pembayaran')
                     ->colors([
                         'success' => 'Paid',
@@ -209,12 +216,10 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total_amount')
                     ->label('Total Amount')
-                    ->money('IDR', locale: 'id_ID') // Format ke rupiah
+                    ->money('IDR', locale: 'id_ID')
                     ->summarize(Sum::make()->label('Total Seluruh')),
-
             ])
             ->filters([
-                // Filter Range Tanggal (Manual)
                 Filter::make('order_date_range')
                     ->form([
                         DatePicker::make('from')->label('Dari Tanggal'),
@@ -226,7 +231,6 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                             ->when($data['until'], fn($q) => $q->whereDate('order_date', '<=', $data['until']));
                     }),
 
-                // Filter Status Pemesanan
                 Filter::make('status')
                     ->form([
                         Select::make('status')
@@ -242,7 +246,6 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                         return $query->when($data['status'], fn($q) => $q->where('status', $data['status']));
                     }),
 
-                // Filter Status Pembayaran
                 Filter::make('payment_status')
                     ->form([
                         Select::make('payment_status')
@@ -256,7 +259,6 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                         return $query->when($data['payment_status'], fn($q) => $q->where('payment_status', $data['payment_status']));
                     }),
             ])
-
             ->actions([
                 Tables\Actions\Action::make('print_pdf')
                     ->label('Cetak PDF')
@@ -274,17 +276,13 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                     ->infolist([
                         Section::make('Informasi Umum')
                             ->schema([
-                                // TextEntry::make('order_date')->label('Tanggal Pemesanan'),
-                                // TextEntry::make('supplier.name')->label('Nama Supplier'),
-                                // TextEntry::make('status')->label('Status'),
                                 TextEntry::make('order_number')
                                     ->label('Nomor Order'),
+                                TextEntry::make('creator.name')
+                                    ->label('Dibuat Oleh'),
                                 TextEntry::make('total_amount')
                                     ->label('Total')
                                     ->money('IDR', true),
-                                // TextEntry::make('rejection_note')
-                                //     ->label('Catatan Penolakan')
-                                //     ->hidden(fn($record) => $record->status !== 'Rejected'),
                             ]),
 
                         Section::make('Daftar Item Pembelian')
@@ -313,7 +311,7 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                         ->label('Tandai Lunas')
                         ->icon('heroicon-o-currency-dollar')
                         ->color('success')
-                        ->visible(fn($record) => $record->payment_status !== 'Paid')
+                        ->visible(fn($record) => $record->status === 'Approved' && $record->payment_status !== 'Paid')
                         ->requiresConfirmation()
                         ->action(function ($record) {
                             $record->update([
@@ -322,24 +320,11 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                             ]);
                         }),
 
-                    // Tables\Actions\Action::make('mark_partially_paid')
-                    //     ->label('Tandai Sebagian Lunas')
-                    //     ->icon('heroicon-o-adjustments-horizontal')
-                    //     ->color('warning')
-                    //     ->visible(fn($record) => $record->payment_status !== 'Partially Paid')
-                    //     ->requiresConfirmation()
-                    //     ->action(function ($record) {
-                    //         $record->update([
-                    //             'payment_status' => 'Partially Paid',
-                    //             'payment_date' => now(),
-                    //         ]);
-                    //     }),
-
                     Tables\Actions\Action::make('mark_unpaid')
                         ->label('Tandai Belum Lunas')
                         ->icon('heroicon-o-x-circle')
                         ->color('danger')
-                        ->visible(fn($record) => $record->payment_status !== 'Unpaid')
+                        ->visible(fn($record) => $record->status === 'Approved' && $record->payment_status !== 'Unpaid')
                         ->requiresConfirmation()
                         ->action(function ($record) {
                             $record->update([
@@ -347,7 +332,8 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                                 'payment_date' => null,
                             ]);
                         }),
-                    Tables\Actions\Action::make('approve')
+
+                        Tables\Actions\Action::make('approve')
                         ->label('Approve')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
@@ -359,6 +345,19 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                         ->requiresConfirmation()
                         ->action(function ($record) {
                             $record->update(['status' => 'Approved']);
+                            
+                            // Kirim notifikasi menggunakan service
+                            // \App\Services\NotificationService::sendPurchaseOrderApprovalNotification(
+                            //     $record, 
+                            //     auth()->user()
+                            // );
+                            
+                            // Tampilkan notifikasi sukses di UI
+                            Notification::make()
+                                ->title('Purchase Order Disetujui')
+                                ->body("PO {$record->order_number} berhasil disetujui dan notifikasi telah dikirim.")
+                                ->success()
+                                ->send();
                         }),
 
                     Tables\Actions\Action::make('Send to WhatsApp')
@@ -371,22 +370,17 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                             $record->update(['status' => 'Ordered']);
                         })
                         ->url(function (PurchaseOrder $record) {
-                            // Ambil nomor telepon supplier
                             $phoneNumber = preg_replace('/[^0-9]/', '', $record->supplier->phone);
 
-                            // Format nomor telepon ke format internasional Indonesia
                             if (strlen($phoneNumber) > 0) {
                                 if (substr($phoneNumber, 0, 1) === '0') {
-                                    // Jika dimulai dengan 0, ganti dengan 62
                                     $phoneNumber = '62' . substr($phoneNumber, 1);
                                 }
-                                // Jika nomor tidak dimulai dengan '62', tambahkan '62'
                                 elseif (substr($phoneNumber, 0, 2) !== '62') {
                                     $phoneNumber = '62' . $phoneNumber;
                                 }
                             }
 
-                            // Format pesan WhatsApp
                             $message = "**Purchase Order **" . "\n" . $record->order_number . "\n" .
                                 "Tanggal: " . \Carbon\Carbon::parse($record->order_date)->format('d-m-Y') . "\n" .
                                 "Supplier: " . $record->supplier->name . "\n\n" .
@@ -397,7 +391,6 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                                 )->implode("\n") .
                                 "\n\nTotal: Rp " . number_format($record->total_amount, 0, ',', '.');
 
-                            // Encode pesan untuk URL WhatsApp
                             $encodedMessage = urlencode($message);
 
                             return "https://wa.me/{$phoneNumber}?text={$encodedMessage}";
@@ -408,29 +401,14 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                             $record->status === 'Approved' &&
                                 auth()->user()?->can('send_whatsapp_purchase::order')
                         ),
-                    // ->visible(fn(PurchaseOrder $record) => $record->status === 'Approved'),
-
-                    // Tables\Actions\Action::make('mark_ordered')
-                    //     ->label('Tandai Sudah kirim Wa')
-                    //     ->tooltip('Tandai Sudah Dikirim')
-                    //     ->icon('heroicon-o-truck')
-                    //     ->color('warning')
-                    //     ->requiresConfirmation()
-                    //     ->action(fn(PurchaseOrder $record) => $record->update(['status' => 'Ordered']))
-                    //     // ->visible(fn($record) => $record->status === 'Approved'),
-                    //     ->visible(
-                    //         fn($record) =>
-                    //         $record->status === 'Approved' &&
-                    //             auth()->user()?->can('mark_ordered_purchase::order')
-                    //     ),
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make()
                 ])
+                ->button()
+                ->label('Aksi')
+                ->icon('heroicon-o-bars-3-bottom-left')
             ])
-
             ->bulkActions([
-                // ExportBulkAction::make()
-                // ->label('Ekspor Status PO'),
                 BulkAction::make('export-selected')
                     ->label('Ekspor PO Item')
                     ->icon('heroicon-o-document-arrow-down')
@@ -443,7 +421,6 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                             "purchase-order-items_{$timestamp}.xlsx"
                         );
                     }),
-
             ]);
     }
 
@@ -463,11 +440,9 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
         ];
     }
 
-
     public static function getRelations(): array
     {
         return [
-            // StockReceivingItemsRelationManager::class
             RelationManagers\ReceivingsRelationManager::class,
         ];
     }

@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 
 class PurchaseOrder extends Model
 {
-    protected $fillable = ['supplier_id', 'total_amount', 'status', 'order_date', 'order_number', 'payment_status', 'payment_date'];
+    protected $fillable = ['supplier_id', 'total_amount', 'status', 'order_date', 'order_number', 'payment_status', 'payment_date', 'created_by'];
 
     public function supplier(): BelongsTo
     {
@@ -19,6 +19,11 @@ class PurchaseOrder extends Model
     public function items(): HasMany
     {
         return $this->hasMany(PurchaseOrderItem::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function receivings(): HasMany
