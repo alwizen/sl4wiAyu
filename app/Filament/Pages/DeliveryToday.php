@@ -1,8 +1,8 @@
 <?php
 
 namespace App\Filament\Pages;
-
-use Filament\Actions\ActionGroup;
+// 
+// use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\FileUpload;
 use Filament\Pages\Page;
 use App\Models\Delivery;
@@ -19,6 +19,8 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Enums\ActionsPosition;
 use Illuminate\Support\Str;
 
 class DeliveryToday extends Page implements HasTable
@@ -127,6 +129,7 @@ class DeliveryToday extends Page implements HasTable
                     ->label('Status Pengiriman'),
             ])
             ->filtersFormColumns(2)
+
             ->actions([
                 Action::make('setPrepared')
                     ->label('Disiapkan')
@@ -184,7 +187,8 @@ class DeliveryToday extends Page implements HasTable
                     ->icon('heroicon-o-check-badge')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->visible(fn(Delivery $record) => $record->status === 'terkirim' && !is_null($record->received_qty))
+                    ->visible(fn(Delivery $record) => $record->status === 'terkirim' && !is_null($record->returned_qty))
+                    // ->visible(fn(Delivery $record) => $record->status === 'terkirim' && !is_null($record->received_qty))
                     ->action(function (Delivery $record) {
                         $record->status = 'selesai';
                         $record->returned_at = now();
@@ -270,8 +274,12 @@ class DeliveryToday extends Page implements HasTable
                                 ->success()
                                 ->send();
                         }),
-                ]),
-            ])
+                ])
+                    ->label('Aksi')
+                    ->icon('heroicon-m-paper-clip')
+                    ->color('primary')
+                    ->button(),
+            ], position: ActionsPosition::BeforeColumns)
 
             ->bulkActions([
                 \Filament\Tables\Actions\BulkAction::make('bulkSetReturned')
@@ -310,8 +318,8 @@ class DeliveryToday extends Page implements HasTable
             ->emptyStateIcon('heroicon-o-truck');
     }
 
-//    public static function canAccess(): bool
-//    {
-//        return auth()->user()?->hasRole('driver');
-//    }
+    //    public static function canAccess(): bool
+    //    {
+    //        return auth()->user()?->hasRole('driver');
+    //    }
 }

@@ -100,8 +100,6 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                 Forms\Components\Select::make('car_id')
                     ->label('Mobil')
                     ->relationship('car', 'car_number')
-                    ->searchable()
-                    ->preload()
                     ->required(),
 
                 Forms\Components\Select::make('user_id')
@@ -111,8 +109,6 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                             $query->where('name', 'driver');
                         })->pluck('name', 'id');
                     })
-                    ->searchable()
-                    ->preload()
                     ->required(),
 
                 Forms\Components\Select::make('status')

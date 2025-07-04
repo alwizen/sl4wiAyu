@@ -4,44 +4,44 @@
     <meta charset="UTF-8">
     <title>Rencana Nutrisi - {{ \Carbon\Carbon::parse($plan->nutrition_plan_date)->translatedFormat('d F Y') }}</title>
     <style>
-        body { 
-            font-family: 'DejaVu Sans', Arial, sans-serif; 
-            font-size: 11px; 
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 11px;
             line-height: 1.4;
             margin: 0;
             padding: 15px;
             color: #333;
         }
-        
+
         /* Header/Kop Styles */
         .letterhead {
             border-bottom: 3px solid #1c5bad;
             padding-bottom: 15px;
             margin-bottom: 8px; /* Further reduced to make content closer */
         }
-        
+
         .letterhead-content {
             display: table;
             width: 100%;
         }
-        
+
         .logo-section {
             display: table-cell;
             width: 100px;
             vertical-align: middle;
         }
-        
+
         .logo {
             width: 150px;
             height: auto;
         }
-        
+
         .company-info {
             display: table-cell;
             vertical-align: middle;
             padding-left: 20px;
         }
-        
+
         .company-name {
             font-size: 18px;
             font-weight: bold;
@@ -50,20 +50,20 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-        
+
         .company-subtitle {
             font-size: 14px;
             color: #374151;
             margin: 0 0 3px 0;
         }
-        
+
         .company-address {
             font-size: 10px;
             color: #6b7280;
             margin: 0;
             line-height: 1.3;
         }
-        
+
         /* Document Title */
         .document-title {
             text-align: center;
@@ -71,7 +71,7 @@
             padding: 10px; /* Further reduced */
             border-radius: 8px;
         }
-        
+
         .document-title h1 {
             font-size: 16px; /* Reduced from 18px */
             font-weight: bold;
@@ -79,13 +79,13 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-        
+
         .document-subtitle {
             font-size: 11px; /* Reduced from 12px */
             margin: 0;
             opacity: 0.9;
         }
-        
+
         /* Date Section */
         .date-section {
             /* background: #f0fdf4;
@@ -95,23 +95,23 @@
             margin-bottom: 10px; /* Further reduced to make table closer */
             display: inline-block;
         }
-        
+
         .date-label {
             font-weight: bold;
             /* color: #4171c9; */
             margin-right: 10px;
         }
-        
+
         .date-value {
             color: #374151;
             font-weight: 600;
         }
-        
+
         /* Table Styles */
         .table-section {
             margin-bottom: 20px; /* Reduced from 25px */
         }
-        
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -119,12 +119,12 @@
             background: white;
             font-size: 9px; /* Reduced from inherited 11px */
         }
-        
+
         .table-header {
             background: #f8f9fa;
             border-bottom: 2px solid #d1d5db;
         }
-        
+
         .table-header th {
             padding: 8px 4px; /* Reduced from 10px 8px */
             text-align: center;
@@ -134,63 +134,63 @@
             border-right: 1px solid #d1d5db;
             vertical-align: middle;
         }
-        
+
         .table-header th:last-child {
             border-right: none;
         }
-        
+
         tbody tr {
             border-bottom: 1px solid #e5e7eb;
         }
-        
+
         tbody td {
             padding: 6px 4px; /* Reduced from 8px */
             border-right: 1px solid #e5e7eb;
             vertical-align: middle;
             text-align: center;
         }
-        
+
         tbody td:last-child {
             border-right: none;
         }
-        
+
         /* Column Specific Styles - More compact and symmetric */
-        .col-no { 
+        .col-no {
             width: 35px; /* Reduced from 40px */
             font-weight: 600;
         }
-        
-        .col-menu { 
+
+        .col-menu {
             width: 140px; /* Reduced from 180px */
             text-align: left;
             font-weight: 500;
         }
-        
-        .col-recipient { 
+
+        .col-recipient {
             width: 100px; /* Reduced from 140px */
             text-align: left;
             font-weight: 500;
         }
-        
+
         .col-netto,
         .col-energy,
         .col-protein,
         .col-fat,
         .col-carb,
-        .col-fiber { 
+        .col-fiber {
             width: 65px; /* Reduced from 80px */
             font-family: 'Courier New', monospace;
             font-size: 8px; /* Reduced from 10px */
         }
-        
+
         /* Summary Section */
         .summary-section {
             margin-top: 20px; /* Reduced from 30px */
             background: #f9fafb;
             border: 1px solid #e5e7eb;
-            padding: 15px; /* Reduced from 20px */
+            padding: 5px; /* Reduced from 20px */
         }
-        
+
         .summary-title {
             font-size: 11px; /* Reduced from 12px */
             font-weight: bold;
@@ -199,55 +199,55 @@
             border-bottom: 1px solid #d1d5db;
             padding-bottom: 4px; /* Reduced from 5px */
         }
-        
+
         .summary-grid {
             display: table;
             width: 100%;
         }
-        
+
         .summary-item {
             display: table-cell;
             text-align: center;
             padding: 8px; /* Reduced from 10px */
             border-right: 1px solid #d1d5db;
         }
-        
+
         .summary-item:last-child {
             border-right: none;
         }
-        
+
         .summary-label {
             font-size: 9px; /* Reduced from 10px */
             color: #6b7280;
             margin-bottom: 4px; /* Reduced from 5px */
         }
-        
+
         .summary-value {
             font-size: 12px; /* Reduced from 14px */
             font-weight: bold;
             font-family: 'Courier New', monospace;
             color: #374151;
         }
-        
+
         /* Signature Section */
         .signature-section {
             margin-top: 30px; /* Reduced from 40px */
             display: table;
             width: 100%;
         }
-        
+
         .signature-left {
             display: table-cell;
             width: 50%;
             padding-right: 20px;
         }
-        
+
         .signature-right {
             display: table-cell;
             width: 50%;
             padding-left: 20px;
         }
-        
+
         .signature-box {
             text-align: center;
             padding: 15px; /* Reduced from 20px */
@@ -255,7 +255,7 @@
             border-radius: 6px;
             background: #f9fafb;
         }
-        
+
         .signature-title {
             font-size: 10px; /* Reduced from 11px */
             font-weight: bold;
@@ -263,18 +263,18 @@
             margin-bottom: 35px; /* Reduced from 40px */
             text-transform: uppercase;
         }
-        
+
         .signature-line {
             border-bottom: 1px solid #6b7280;
             margin: 0 20px 8px 20px;
         }
-        
+
         .signature-name {
             font-size: 9px; /* Reduced from 10px */
             color: #6b7280;
             font-style: italic;
         }
-        
+
         /* Footer */
         .footer {
             position: fixed;
@@ -288,11 +288,11 @@
             padding-top: 10px;
             background: white;
         }
-        
+
         /* Print Optimization */
         @media print {
-            body { 
-                padding: 10px; 
+            body {
+                padding: 10px;
                 padding-bottom: 50px; /* Add space for fixed footer */
             }
             .table-section { overflow-x: visible; }
@@ -302,7 +302,7 @@
                 bottom: 10px;
             }
         }
-        
+
         /* Responsive adjustments */
         @media screen and (max-width: 800px) {
             table { font-size: 8px; }
@@ -423,7 +423,7 @@ $groupedItems = $plan->nutritionPlanItems->groupBy('target_group_id');
 </div>
 @endforeach
 
-    
+
     {{-- <div class="summary-section">
         <div class="summary-title">Ringkasan Total Nutrisi</div>
         <div class="summary-grid">
@@ -459,7 +459,7 @@ $groupedItems = $plan->nutritionPlanItems->groupBy('target_group_id');
                 <div class="signature-name">Ahli Gizi</div>
             </div>
         </div>
-        
+
         <div class="signature-right">
             <div class="signature-box">
                 <div class="signature-title">Mengetahui & Menyetujui</div>
