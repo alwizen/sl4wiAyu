@@ -62,7 +62,9 @@ class StockReceivingResource extends Resource
                             titleAttribute: 'order_number',
                             modifyQueryUsing: fn(Builder $query) => $query
                                 ->where('payment_status', '!=', 'paid')
-                                ->where('status', 'approved')
+                                // ->where('status', 'approved')
+                                ->where('is_received_complete', false)
+
                             // modifyQueryUsing: fn(Builder $query) => $query->where('order_date', '>=', now()->subDays(10))
                         )
                         ->searchable()

@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 
 class PurchaseOrder extends Model
 {
-    protected $fillable = ['supplier_id', 'total_amount', 'status', 'order_date', 'order_number', 'payment_status', 'payment_date', 'created_by'];
+    protected $fillable = ['supplier_id', 'total_amount', 'status', 'order_date', 'order_number', 'payment_status', 'payment_date', 'created_by','is_received_complete'];
 
     public function supplier(): BelongsTo
     {

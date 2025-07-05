@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\StockReceiving;
 use App\Models\User;
+use App\Observers\StockReceivingObserver;
 use App\Policies\ActivityPolicy;
 use Filament\Support\Facades\FilamentView;
 use Illuminate\Support\Facades\Blade;
@@ -43,5 +45,6 @@ class AppServiceProvider extends ServiceProvider
         // Memastikan helper setting.php dimuat
         require_once app_path('Helpers/setting.php');
         Gate::policy(Activity::class, ActivityPolicy::class);
+        StockReceiving::observe(StockReceivingObserver::class);
     }
 }
