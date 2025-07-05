@@ -29,20 +29,12 @@ class Dashboard extends BaseDashboard
         $greeting = $this->getGreeting();
         $userName = Auth::user()->name ?? 'User';
         return "{$greeting}, {$userName}! ✨";
-}
-
-    // Atau alternatif menggunakan getHeading() jika ingin lebih fleksibel
-    // public function getHeading(): string
-    // {
-    //     $greeting = $this->getGreeting();
-    //     $userName = Auth::user()->name ?? 'User';
-    //     return "Dashboard | {$greeting}, {$userName}! 👋🏻";
-    // }
+    }
 
     private function getGreeting(): string
     {
         $hour = Carbon::now()->hour;
-        
+
         if ($hour >= 0 && $hour < 12) {
             return 'Selamat Pagi';
         } elseif ($hour >= 12 && $hour < 18) {

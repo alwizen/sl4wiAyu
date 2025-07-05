@@ -190,9 +190,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                         default => 'info',
                     })
                     ->label('Status'),
-                Tables\Columns\ImageColumn::make('proof_delivery')
-                    ->label('Bukti Pengiriman')
-                    ->square(),
+
                 Tables\Columns\TextColumn::make('prepared_at')
                     ->dateTime()
                     ->sortable()
@@ -248,6 +246,12 @@ class DeliveryResource extends Resource implements HasShieldPermissions
 
             ->actions([
                 ActionGroup::make([
+                    Tables\Actions\EditAction::make()
+                        ->color('warning'),
+                    Tables\Actions\ViewAction::make()
+                        ->color('primary'),
+                    Tables\Actions\DeleteAction::make()
+                        ->color('danger'),
                     \Filament\Tables\Actions\Action::make('print')
                         ->label('Cetak PDF')
                         ->icon('heroicon-o-printer')
@@ -287,7 +291,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                                 return;
                             }
 
-                            // Pastikan short_code sudah ada
+                            // memastikan short_code sudah ada
                             if (empty($record->short_code)) {
                                 $record->short_code = $record->generateShortCode();
                                 $record->save();
@@ -316,9 +320,6 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                         ->modalHeading('Kirim Link Tracking')
                         ->modalDescription('Apakah Anda yakin ingin mengirim link tracking via WhatsApp?')
                         ->modalSubmitActionLabel('Ya, Kirim'),
-
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\DeleteAction::make(),
 
                     Tables\Actions\Action::make('inputReceivedQty')
                         ->label('Jumlah Diterima')
@@ -442,7 +443,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                         ->icon('heroicon-o-check-badge')
                         ->color('success')
                         ->requiresConfirmation()
-                        ->visible(fn(Delivery $record) => $record->status === 'terkirim' && !is_null($record->received_qty))
+                        ->visible(fn(Delivery $record) => $record->status === 'terkirim' && !is_null($record->returned_qty))
                         ->action(function (Delivery $record) {
                             $record->status = 'selesai';
                             $record->returned_at = now();
@@ -464,9 +465,10 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                             'imageUrl' => $record->proof_delivery,
                         ])),
 
-                ]),
+                ])->button(),
 
-            ], position: ActionsPosition::BeforeColumns)
+            ])
+
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),

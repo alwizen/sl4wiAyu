@@ -60,7 +60,9 @@ class StockReceivingResource extends Resource
                         ->relationship(
                             name: 'purchaseOrder',
                             titleAttribute: 'order_number',
-                            modifyQueryUsing: fn(Builder $query) => $query->where('payment_status', '!=', 'paid')
+                            modifyQueryUsing: fn(Builder $query) => $query
+                                ->where('payment_status', '!=', 'paid')
+                                ->where('status', 'approved')
                             // modifyQueryUsing: fn(Builder $query) => $query->where('order_date', '>=', now()->subDays(10))
                         )
                         ->searchable()
@@ -86,6 +88,7 @@ class StockReceivingResource extends Resource
                                 ];
                             })->toArray());
                         }),
+
                     Textarea::make('note')
                         ->label('Catatan')
                         ->rows(3)

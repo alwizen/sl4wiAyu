@@ -143,9 +143,9 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->plugins(
                 $this->getPlugins()
-            );
-            // ->databaseNotifications()
-            // ->databaseNotificationsPolling('30s');
+            )
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s');
     }
 
     private function getPlugins(): array

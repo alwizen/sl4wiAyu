@@ -180,25 +180,6 @@ class DeliveryToday extends Page implements HasTable
                             ->send();
                     }),
 
-
-                Action::make('setCompleted')
-                    ->label('Selesai')
-                    ->icon('heroicon-o-check-badge')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->visible(fn(Delivery $record) => $record->status === 'terkirim' && !is_null($record->returned_qty))
-                    // ->visible(fn(Delivery $record) => $record->status === 'terkirim' && !is_null($record->received_qty))
-                    ->action(function (Delivery $record) {
-                        $record->status = 'selesai';
-                        $record->returned_at = now();
-                        $record->save();
-
-                        Notification::make()
-                            ->title('Status berhasil diperbarui ke Selesai')
-                            ->success()
-                            ->send();
-                    }),
-
                 Action::make('viewProofDelivery')
                     ->label('Lihat Bukti')
                     ->icon('heroicon-o-eye')
@@ -208,6 +189,7 @@ class DeliveryToday extends Page implements HasTable
                     ->modalContent(fn(Delivery $record) => view('filament.modals.view-proof-delivery', [
                         'imageUrl' => $record->proof_delivery,
                     ])),
+
                 \Filament\Tables\Actions\ActionGroup::make([
                     Action::make('inputReceivedQty')
                         ->label('Jumlah Diterima')
@@ -251,7 +233,7 @@ class DeliveryToday extends Page implements HasTable
                                 ->success()
                                 ->send();
                         }),
-                        
+
                     Action::make('inputReturedQty')
                         ->label('Jumlah Dikembalikan')
                         ->icon('heroicon-o-exclamation-triangle')
@@ -279,6 +261,23 @@ class DeliveryToday extends Page implements HasTable
                     ->icon('heroicon-m-paper-clip')
                     ->color('primary')
                     ->button(),
+
+                Action::make('setCompleted')
+                    ->label('Selesai')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->visible(fn(Delivery $record) => $record->status === 'terkirim' && !is_null($record->returned_qty))
+                    ->action(function (Delivery $record) {
+                        $record->status = 'selesai';
+                        $record->returned_at = now();
+                        $record->save();
+
+                        Notification::make()
+                            ->title('Status berhasil diperbarui ke Selesai')
+                            ->success()
+                            ->send();
+                    }),
             ], position: ActionsPosition::BeforeColumns)
 
             ->bulkActions([

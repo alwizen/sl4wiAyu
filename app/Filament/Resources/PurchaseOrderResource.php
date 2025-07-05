@@ -79,6 +79,7 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                             ->default(now()),
 
                         Select::make('supplier_id')
+                            ->required()
                             ->label('Supplier')
                             ->relationship('supplier', 'name')
                             ->searchable()
@@ -333,7 +334,7 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                             ]);
                         }),
 
-                        Tables\Actions\Action::make('approve')
+                    Tables\Actions\Action::make('approve')
                         ->label('Approve')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
@@ -345,20 +346,19 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                         ->requiresConfirmation()
                         ->action(function ($record) {
                             $record->update(['status' => 'Approved']);
-                            
-                            // Kirim notifikasi menggunakan service
-                            // \App\Services\NotificationService::sendPurchaseOrderApprovalNotification(
-                            //     $record, 
-                            //     auth()->user()
-                            // );
-                            
-                            // Tampilkan notifikasi sukses di UI
+
+                            if ($record->creator) {
+                                $record->creator->notify(new \App\Notifications\PurchaseOrderApproved($record));
+                            }
+
+                            // Tetap tampilkan pesan sukses lokal (jika mau)
                             Notification::make()
                                 ->title('Purchase Order Disetujui')
                                 ->body("PO {$record->order_number} berhasil disetujui dan notifikasi telah dikirim.")
                                 ->success()
                                 ->send();
                         }),
+
 
                     Tables\Actions\Action::make('Send to WhatsApp')
                         ->label('Kirim ke WA')
@@ -375,8 +375,7 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                             if (strlen($phoneNumber) > 0) {
                                 if (substr($phoneNumber, 0, 1) === '0') {
                                     $phoneNumber = '62' . substr($phoneNumber, 1);
-                                }
-                                elseif (substr($phoneNumber, 0, 2) !== '62') {
+                                } elseif (substr($phoneNumber, 0, 2) !== '62') {
                                     $phoneNumber = '62' . $phoneNumber;
                                 }
                             }
@@ -404,9 +403,9 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make()
                 ])
-                ->button()
-                ->label('Aksi')
-                ->icon('heroicon-o-bars-3-bottom-left')
+                    ->button()
+                    ->label('Aksi')
+                    ->icon('heroicon-o-bars-3-bottom-left')
             ])
             ->bulkActions([
                 BulkAction::make('export-selected')
