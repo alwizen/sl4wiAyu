@@ -60,14 +60,16 @@ class StockReceivingResource extends Resource
                         ->relationship(
                             name: 'purchaseOrder',
                             titleAttribute: 'order_number',
-                            modifyQueryUsing: fn(Builder $query) => $query
-                                ->where('payment_status', '!=', 'paid')
-                                // ->where('status', 'approved')
-                                ->where('is_received_complete', false)
-
-                            // modifyQueryUsing: fn(Builder $query) => $query->where('order_date', '>=', now()->subDays(10))
+                            modifyQueryUsing: fn(Builder $query) => $query->availableForReceiving()
                         )
-                        ->searchable()
+                        ->getOptionLabelFromRecordUsing(function ($record) {
+                            // Tambahkan info status delivery di label
+                            $deliveryStatus = $record->delivery_status;
+                            $progress = number_format($record->delivery_progress, 1);
+
+                            return "{$record->order_number} - {$deliveryStatus} ({$progress}%)";
+                        })
+                        // ->searchable()
                         ->preload()
                         ->required()
                         ->reactive()
@@ -79,16 +81,24 @@ class StockReceivingResource extends Resource
                                 return;
                             }
 
-                            $set('stockReceivingItems', $po->items->map(function ($item) {
+                            // Hanya ambil item yang masih perlu diterima
+                            $itemsNeedingReceiving = $po->getItemsNeedingReceiving();
+
+                            if ($itemsNeedingReceiving->isEmpty()) {
+                                $set('stockReceivingItems', []);
+                                return;
+                            }
+
+                            $set('stockReceivingItems', $itemsNeedingReceiving->map(function ($item) {
                                 return [
-                                    'warehouse_item_id' => $item->item_id,
-                                    'expected_quantity' => $item->quantity, // Quantity dari PO
+                                    'warehouse_item_id' => $item->item->id,
+                                    'expected_quantity' => $item->remaining_quantity,
                                     'received_quantity' => null,
                                     'good_quantity' => null,
                                     'damaged_quantity' => null,
                                     'is_quantity_matched' => false,
                                 ];
-                            })->toArray());
+                            })->values()->toArray());
                         }),
 
                     Textarea::make('note')

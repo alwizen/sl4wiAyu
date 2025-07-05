@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 
 class PurchaseOrder extends Model
 {
-    protected $fillable = ['supplier_id', 'total_amount', 'status', 'order_date', 'order_number', 'payment_status', 'payment_date', 'created_by','is_received_complete'];
+    protected $fillable = ['supplier_id', 'total_amount', 'status', 'order_date', 'order_number', 'payment_status', 'payment_date', 'created_by', 'is_received_complete'];
 
     public function supplier(): BelongsTo
     {
@@ -67,6 +67,7 @@ class PurchaseOrder extends Model
 
         return $orderNumber;
     }
+
     /**
      * Get delivery status summary
      */
@@ -147,6 +148,22 @@ class PurchaseOrder extends Model
     }
 
     /**
+     * Check if PO has partial delivery (some items received but not complete)
+     */
+    public function hasPartialDelivery(): bool
+    {
+        return in_array($this->delivery_status, ['Partial', 'Over Delivery']);
+    }
+
+    /**
+     * Check if PO is available for receiving (not fully delivered)
+     */
+    public function isAvailableForReceiving(): bool
+    {
+        return !$this->isFullyDelivered() || $this->hasPartialDelivery();
+    }
+
+    /**
      * Get items with their delivery progress
      */
     public function getItemsWithProgress(): \Illuminate\Support\Collection
@@ -183,6 +200,16 @@ class PurchaseOrder extends Model
     }
 
     /**
+     * Get only items that still need to be received
+     */
+    public function getItemsNeedingReceiving(): \Illuminate\Support\Collection
+    {
+        return $this->getItemsWithProgress()->filter(function ($item) {
+            return $item->remaining_quantity > 0;
+        });
+    }
+
+    /**
      * Get individual item delivery status
      */
     private function getItemDeliveryStatus($received, $ordered): string
@@ -190,5 +217,27 @@ class PurchaseOrder extends Model
         if ($received == 0) return 'Not Started';
         if ($received >= $ordered) return 'Complete';
         return 'Partial';
+    }
+
+    /**
+     * Scope untuk query PO yang masih bisa menerima barang
+     */
+    public function scopeAvailableForReceiving($query)
+    {
+        return $query->where('status', 'approved')
+            ->where(function ($subQuery) {
+                $subQuery->where('is_received_complete', false)
+                    ->orWhereHas('items', function ($itemQuery) {
+                        $itemQuery->whereRaw('
+                            quantity > (
+                                SELECT COALESCE(SUM(sri.received_quantity), 0) 
+                                FROM stock_receiving_items sri 
+                                JOIN stock_receivings sr ON sr.id = sri.stock_receiving_id 
+                                WHERE sr.purchase_order_id = purchase_orders.id 
+                                AND sri.warehouse_item_id = purchase_order_items.item_id
+                            )
+                        ');
+                    });
+            });
     }
 }

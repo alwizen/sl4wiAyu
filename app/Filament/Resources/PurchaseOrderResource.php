@@ -179,7 +179,7 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
     {
         return $table
             ->defaultPaginationPageOption(50)
-            ->defaultSort('order_date', 'desc')
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('order_number')
                     ->label('Nomor Order')
@@ -359,6 +359,26 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                                 ->send();
                         }),
 
+                    Tables\Actions\Action::make('rejected')
+                        ->label('Tolak / Cancel')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->visible(
+                            fn($record) =>
+                            $record->status === 'Pending' &&
+                                auth()->user()?->can('rejected_purchase::order')
+                        )
+                        ->requiresConfirmation()
+                        ->action(function ($record) {
+                            $record->update(['status' => 'Rejected']);
+
+                            Notification::make()
+                                ->title('Purchase Order Ditolak / Batal')
+                                ->body("PO {$record->order_number} ditolak / batal.")
+                                ->success()
+                                ->send();
+                        }),
+
 
                     Tables\Actions\Action::make('Send to WhatsApp')
                         ->label('Kirim ke WA')
@@ -401,7 +421,7 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                                 auth()->user()?->can('send_whatsapp_purchase::order')
                         ),
                     Tables\Actions\EditAction::make(),
-                    Tables\Actions\DeleteAction::make()
+                    // Tables\Actions\DeleteAction::make()
                 ])
                     ->button()
                     ->label('Aksi')
@@ -434,6 +454,7 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
             'delete_any',
             'publish',
             'approve',
+            'rejected',
             'send_whatsapp',
             'mark_ordered'
         ];
