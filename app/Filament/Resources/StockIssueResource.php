@@ -97,14 +97,15 @@ class StockIssueResource extends Resource implements HasShieldPermissions
                     ->date('d-m-Y')
                     ->sortable(),
 
-                BadgeColumn::make('status')
+                TextColumn::make('status')
+                    ->badge()
                     ->label('Status')
                     ->formatStateUsing(function ($state) {
                         return $state === 'Submitted' ? 'Selesai' : $state;
                     })
                     ->colors([
-                        'gray' => 'Draft',
-                        'success' => 'Submitted', // Tetap menggunakan 'Submitted' untuk pencocokan warna
+                        'warning' => 'Draft',
+                        'success' => 'Submitted',
                     ])
                     ->sortable()
                     ->searchable(),
@@ -116,7 +117,6 @@ class StockIssueResource extends Resource implements HasShieldPermissions
                 TextColumn::make('updated_at')
                     ->label('Terakhir Diperbarui')
                     ->date('d-m-Y H:i')
-
 
             ])
             ->actions([

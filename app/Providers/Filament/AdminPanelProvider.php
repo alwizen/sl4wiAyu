@@ -91,11 +91,11 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
-            ->renderHook(
-                // PanelsRenderHook::BODY_END,
-                PanelsRenderHook::FOOTER,
-                fn() => view('footer')
-            )
+            // ->renderHook(
+            //     // PanelsRenderHook::BODY_END,
+            //     PanelsRenderHook::FOOTER,
+            //     fn() => view('footer')
+            // )
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -134,7 +134,6 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->sidebarFullyCollapsibleOnDesktop(true)
-            //->topNavigation()
             ->authMiddleware([
                 Authenticate::class,
             ])
@@ -144,17 +143,18 @@ class AdminPanelProvider extends PanelProvider
             ->plugins(
                 $this->getPlugins()
             );
-            // ->databaseNotifications()
-            // ->databaseNotificationsPolling('30s');
+        // ->databaseNotifications()
+        // ->databaseNotificationsPolling('30s');
     }
 
     private function getPlugins(): array
     {
         $plugins = [
-            // EasyFooterPlugin::make()
-            //     ->withFooterPosition('sidebar.footer')
-            //     ->withBorder()
-            //     ->withLoadTime(),
+            EasyFooterPlugin::make()
+                // ->withFooterPosition('sidebar.footer')
+                ->withSentence('Made with ❤️ in Tegal | RBJ Corp. All Rights Reserved.')
+                ->withBorder()
+                ->withLoadTime('page loaded in'),
             QuickCreatePlugin::make()
                 ->rounded(false)
                 ->label('Buat')

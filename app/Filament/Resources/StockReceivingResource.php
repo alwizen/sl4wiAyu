@@ -233,21 +233,13 @@ class StockReceivingResource extends Resource
                         ),
 
                 ]),
-
-            // Section::make('Catatan')
-            // ->collapsible()
-            //     ->schema([
-            //         Textarea::make('note')
-            //             ->label('Catatan')
-            //             ->rows(3)
-            //             ->placeholder('Masukkan catatan jika ada'),
-            //     ])
         ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultPaginationPageOption(50)
             ->columns([
                 TextColumn::make('received_date')
                     ->label('Tanggal')
@@ -259,20 +251,6 @@ class StockReceivingResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                // TextColumn::make('stockReceivingItems')
-                //     ->label('Total Item')
-                //     ->state(function (StockReceiving $record): string {
-                //         $total = $record->stockReceivingItems->count();
-                //         $matched = $record->stockReceivingItems->where('is_quantity_matched', true)->count();
-                //         return "{$matched}/{$total}";
-                //     })
-                //     ->badge()
-                //     ->color(
-                //         fn(StockReceiving $record): string =>
-                //         $record->is_all_quantity_matched ? 'primary' : 'success'
-                //     ),
-
-
                 TextColumn::make('stockReceivingItems.warehouseItem.name')
                     ->label('Nama Item')
                     ->listWithLineBreaks(),
@@ -282,14 +260,6 @@ class StockReceivingResource extends Resource
                     ->label('Total PO')
                     ->numeric()
                     ->listWithLineBreaks()
-                    // ->suffix(function (callable $get) {
-                    //     $itemId = $get('warehouse_item_id');
-                    //     if ($itemId) {
-                    //         $item = WarehouseItem::find($itemId);
-                    //         return $item?->unit ?? '';
-                    //     }
-                    //     return '';
-                    // })
                     ->sortable(),
 
                 TextColumn::make('stockReceivingItems.received_quantity')
