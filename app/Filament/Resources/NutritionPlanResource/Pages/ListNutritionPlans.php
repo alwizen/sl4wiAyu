@@ -22,7 +22,7 @@ class ListNutritionPlans extends ListRecords
                 ->openUrlInNewTab(),
 
             Actions\CreateAction::make()
-                ->label('Tambah Rencana Nutrisi')
+                ->label('Buat Rencana Nutrisi')
                 ->icon('heroicon-o-plus')
                 ->color('primary'),
         ];

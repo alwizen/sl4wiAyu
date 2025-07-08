@@ -16,7 +16,10 @@ class ListWarehouseItems extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->label('Buat Data Barang')
+                ->icon('heroicon-o-plus')
+                ->color('primary'),
         ];
     }
 
@@ -26,12 +29,11 @@ class ListWarehouseItems extends ListRecords
             'semua' => Tab::make('Semua')
                 ->label('Semua Barang'),
             'kering' => Tab::make('Kering')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('warehouse_category_id', 1)),
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('warehouse_category_id', 1)),
             'basah' => Tab::make('Basah')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('warehouse_category_id', 2)),
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('warehouse_category_id', 2)),
             'bumbu' => Tab::make('Bumbu')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('warehouse_category_id', 3)),
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('warehouse_category_id', 3)),
         ];
     }
-
 }

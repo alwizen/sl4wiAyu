@@ -20,7 +20,10 @@ class ManageRecipients extends ManageRecords
                 ->importer(RecipientImporter::class)
                 ->label('Import Penerima')
                 ->color('warning'),
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->label('Buat Penerima Manfaat')
+                ->icon('heroicon-o-plus')
+                ->color('primary'),
         ];
     }
 }

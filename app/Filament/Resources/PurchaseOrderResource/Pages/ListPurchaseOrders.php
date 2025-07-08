@@ -17,17 +17,17 @@ class ListPurchaseOrders extends ListRecords
             Action::make('Stok Gudang')
                 ->label('Stok Gudang')
                 ->icon('heroicon-o-list-bullet')
-                ->url(route('filament.admin.resources.warehouse-items.index')) 
+                ->url(route('filament.admin.resources.warehouse-items.index'))
                 ->color('warning')
                 ->openUrlInNewTab(),
             Action::make('Penerima Barang')
                 ->label('Penerima Barang')
                 ->icon('heroicon-o-queue-list')
-                ->url(route('filament.admin.resources.stock-receivings.index')) 
+                ->url(route('filament.admin.resources.stock-receivings.index'))
                 ->color('success')
                 ->openUrlInNewTab(),
             Actions\CreateAction::make()
-                ->label('Tambah Purchase Order (PO)')
+                ->label('Buat Purchase Order (PO)')
                 ->icon('heroicon-o-plus')
                 ->color('primary'),
         ];

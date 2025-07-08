@@ -14,7 +14,7 @@ class ListStockIssues extends ListRecords
     {
         return [
             Actions\CreateAction::make()
-                ->label('Tambah Permintaan bahan masak')
+                ->label('Buat Permintaan bahan masak')
                 ->icon('heroicon-o-plus')
                 ->color('primary'),
         ];

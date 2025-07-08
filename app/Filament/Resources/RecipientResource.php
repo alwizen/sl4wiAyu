@@ -27,6 +27,8 @@ class RecipientResource extends Resource
 
     protected static ?string $navigationLabel = 'Daftar Penerima';
 
+    protected static ?string $label = 'Daftar Penerima';
+
     public static function form(Form $form): Form
     {
         return $form

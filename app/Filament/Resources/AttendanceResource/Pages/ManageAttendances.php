@@ -13,7 +13,10 @@ class ManageAttendances extends ManageRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->label('Buat Absensi Kehadiran')
+                ->icon('heroicon-o-plus')
+                ->color('primary'),
         ];
     }
 }

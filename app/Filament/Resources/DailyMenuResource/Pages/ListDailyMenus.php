@@ -21,7 +21,7 @@ class ListDailyMenus extends ListRecords
                 ->color('warning')
                 ->openUrlInNewTab(),
             Actions\CreateAction::make()
-                ->label('Tambah Menu Harian')
+                ->label('Buat Menu Harian')
                 ->icon('heroicon-o-plus')
                 ->color('primary'),
 

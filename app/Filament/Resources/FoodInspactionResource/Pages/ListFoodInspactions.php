@@ -13,7 +13,10 @@ class ListFoodInspactions extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->label('Buat Pemerikasaan Makanan')
+                ->icon('heroicon-o-plus')
+                ->color('primary'),
         ];
     }
 }

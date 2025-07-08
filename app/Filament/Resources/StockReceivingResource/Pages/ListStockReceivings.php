@@ -13,7 +13,10 @@ class ListStockReceivings extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->label('Buat Penerimaan PO')
+                ->icon('heroicon-o-plus')
+                ->color('primary'),
         ];
     }
 }

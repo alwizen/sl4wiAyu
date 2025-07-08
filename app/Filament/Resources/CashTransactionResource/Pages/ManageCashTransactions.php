@@ -20,7 +20,7 @@ class ManageCashTransactions extends ManageRecords
                 ->color('warning')
                 ->url(route('filament.admin.resources.cash-categories.index')),
             Actions\CreateAction::make()
-                ->label('Tambah Transaksi Kas')
+                ->label('Buat Transaksi Kas')
                 ->icon('heroicon-o-plus')
                 ->color('primary'),
 

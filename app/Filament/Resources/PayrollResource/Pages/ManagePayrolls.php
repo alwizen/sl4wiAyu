@@ -14,7 +14,9 @@ class ManagePayrolls extends ManageRecords
     {
         return [
             Actions\CreateAction::make()
-                ->label('Buat Penggajian'),
+                ->label('Buat Data Penggajian')
+                ->icon('heroicon-o-plus')
+                ->color('primary'),
         ];
     }
 }
