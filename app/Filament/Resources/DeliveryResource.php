@@ -259,6 +259,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                         ->openUrlInNewTab(),
                     Tables\Actions\Action::make('kirimWhatsApp')
                         ->label('Kirim WhatsApp')
+                        ->openUrlInNewTab()
                         ->icon('heroicon-o-chat-bubble-left-ellipsis')
                         ->color('success')
                         ->action(function (Delivery $record) {
