@@ -257,67 +257,15 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                         ->icon('heroicon-o-printer')
                         ->url(fn(Delivery $record) => route('delivery.print', $record))
                         ->openUrlInNewTab(),
+
                     Tables\Actions\Action::make('kirimWhatsApp')
                         ->label('Kirim WhatsApp')
-                        ->openUrlInNewTab()
                         ->icon('heroicon-o-chat-bubble-left-ellipsis')
                         ->color('success')
-                        ->action(function (Delivery $record) {
-                            // Validasi nomor telepon
-                            $phone = $record->recipient->phone ?? '';
-                            if (empty($phone)) {
-                                Notification::make()
-                                    ->title('Error')
-                                    ->body('Nomor telepon tidak tersedia')
-                                    ->danger()
-                                    ->send();
-                                return;
-                            }
-
-                            // Format nomor HP
-                            $phone = preg_replace('/[^0-9]/', '', $phone);
-                            if (str_starts_with($phone, '0')) {
-                                $phone = '62' . substr($phone, 1);
-                            } elseif (!str_starts_with($phone, '62')) {
-                                $phone = '62' . $phone;
-                            }
-
-                            // Validasi format nomor Indonesia
-                            if (!preg_match('/^62\d{9,13}$/', $phone)) {
-                                Notification::make()
-                                    ->title('Error')
-                                    ->body('Format nomor telepon tidak valid')
-                                    ->danger()
-                                    ->send();
-                                return;
-                            }
-
-                            // memastikan short_code sudah ada
-                            if (empty($record->short_code)) {
-                                $record->short_code = $record->generateShortCode();
-                                $record->save();
-                            }
-
-                            // Gunakan short URL custom
-                            $shortUrl = config('app.url') . '/s/' . $record->short_code;
-                            $deliveryNumber = $record->delivery_number;
-
-                            // Siapkan pesan WhatsApp
-                            $message = "📦 *No. Pengiriman: {$deliveryNumber}*\nMakan Bergisi Gratis sedang dalam perjalanan! 🚚\nCek status pengiriman Anda melalui link berikut:\n{$shortUrl}";
-                            $encodedMessage = urlencode($message);
-
-                            // Tampilkan notifikasi sukses
-                            Notification::make()
-                                ->title('Berhasil')
-                                ->body('Membuka WhatsApp untuk mengirim link tracking')
-                                ->success()
-                                ->send();
-
-                            $whatsappUrl = "https://wa.me/{$phone}?text={$encodedMessage}";
-                            return redirect()->away($whatsappUrl);
-                        })
-                        ->requiresConfirmation()
+                        ->url(fn(Delivery $record) => $record->whatsapp_url)
                         ->openUrlInNewTab()
+                        ->visible(fn(Delivery $record) => !empty($record->whatsapp_url))
+                        ->requiresConfirmation()
                         ->modalHeading('Kirim Link Tracking')
                         ->modalDescription('Apakah Anda yakin ingin mengirim link tracking via WhatsApp?')
                         ->modalSubmitActionLabel('Ya, Kirim'),
@@ -476,6 +424,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                 ]),
             ]);
     }
+
 
     public static function getPermissionPrefixes(): array
     {

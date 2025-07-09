@@ -46,7 +46,6 @@ class Delivery extends Model
     public function isReady(): bool
     {
         return $this->status === 'disiapkan';
-
     }
     public function isDelivered(): bool
     {
@@ -95,5 +94,29 @@ class Delivery extends Model
     public function getShortUrlAttribute(): string
     {
         return config('app.url') . '/s/' . $this->short_code;
+    }
+
+    public function getWhatsAppUrlAttribute()
+    {
+        $phone = preg_replace('/[^0-9]/', '', $this->recipient->phone ?? '');
+        if (str_starts_with($phone, '0')) {
+            $phone = '62' . substr($phone, 1);
+        } elseif (!str_starts_with($phone, '62')) {
+            $phone = '62' . $phone;
+        }
+
+        if (!preg_match('/^62\d{9,13}$/', $phone)) {
+            return null;
+        }
+
+        if (empty($this->short_code)) {
+            $this->short_code = $this->generateShortCode();
+            $this->save();
+        }
+
+        $shortUrl = config('app.url') . '/s/' . $this->short_code;
+        $message = "📦 *No. Pengiriman: {$this->delivery_number}*\nMakan Bergisi Gratis sedang dalam perjalanan! 🚚\nCek status pengiriman Anda melalui link berikut:\n{$shortUrl}";
+
+        return "https://wa.me/{$phone}?text=" . urlencode($message);
     }
 }
