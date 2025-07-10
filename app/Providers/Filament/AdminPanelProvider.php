@@ -82,7 +82,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(fn() => setting('logo_light_url') ?? asset('images/bgn.png'))
             ->brandLogoHeight('3.5rem')
             ->darkModeBrandLogo(fn() => setting('logo_dark_url') ?? asset('images/bgn_dark.png'))
-            ->favicon(fn() => setting('favicon_url') ?? asset('images/logo.svg'))
+            ->favicon(fn() => setting('favicon_url') ?? asset('images/logo.png'))
             ->path('')
             ->when($this->settings->login_enabled ?? true, fn($panel) => $panel->login(Login::class))
             // ->when($this->settings->registration_enabled ?? true, fn($panel) => $panel->registration())
