@@ -189,6 +189,7 @@ class NutritionPlanResource extends Resource
     public static function table(\Filament\Tables\Table $table): \Filament\Tables\Table
     {
         return $table
+            ->defaultPaginationPageOption(50)
             ->groups([
                 \Filament\Tables\Grouping\Group::make('nutrition_plan_date')
                     ->label('Tanggal')

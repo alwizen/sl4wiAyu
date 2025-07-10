@@ -37,6 +37,7 @@ class MenuResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultPaginationPageOption(50)
             ->defaultSort('menu_name', 'asc')
             ->columns([
                 Tables\Columns\TextColumn::make('menu_name')

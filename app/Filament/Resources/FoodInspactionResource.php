@@ -58,6 +58,7 @@ class FoodInspactionResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultPaginationPageOption(50)
             ->columns([
                 Tables\Columns\TextColumn::make('inspaction_date')
                     ->label('Tanggal Pemeriksaan')
