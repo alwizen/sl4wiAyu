@@ -35,9 +35,9 @@ class DeliveryResource extends Resource implements HasShieldPermissions
 
     protected static ?string $navigationIcon = 'heroicon-o-truck';
 
-    protected static ?string $navigationLabel = 'Pengiriman';
+    protected static ?string $navigationLabel = 'Delivery';
 
-    protected static ?string $label = 'Pengiriman';
+    protected static ?string $label = 'Delivery';
 
     public static function afterCreate(Model $record, Form $form): void
     {
