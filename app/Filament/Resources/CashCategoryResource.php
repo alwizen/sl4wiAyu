@@ -32,14 +32,14 @@ class CashCategoryResource extends Resource
                     ->label('Nama Kategori')
                     ->required()
                     ->reactive()
+                    ->debounce(500)
                     ->afterStateUpdated(function (callable $set, $state) {
                         $set('slug', Str::slug($state));
                     }),
 
-                Forms\Components\TextInput::make('slug')
+                Forms\Components\Hidden::make('slug')
                     ->required()
-                    ->unique(ignoreRecord: true)
-                    ->disabled(),
+                    ->unique(ignoreRecord: true),
 
                 Forms\Components\Select::make('type')
                     ->required()

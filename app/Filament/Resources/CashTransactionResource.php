@@ -40,12 +40,13 @@ class CashTransactionResource extends Resource
                     ->schema([
                         Forms\Components\TextInput::make('transaction_code')
                             ->label('Kode Transaksi')
-                            ->default(fn() => 'SPPG-' . str_pad(random_int(0, 99999), 4, '0', STR_PAD_LEFT))
+                            ->default(fn() => 'Trx-' . str_pad(random_int(0, 99999), 3, '0', STR_PAD_LEFT))
                             ->disabled()
                             ->dehydrated()
                             ->required(),
 
                         Forms\Components\DatePicker::make('transaction_date')
+                            ->label('Tanggal Transaksi')
                             ->default(now())
                             ->required(),
                     ])
@@ -54,7 +55,7 @@ class CashTransactionResource extends Resource
                 Forms\Components\Section::make('Kategori & Jumlah')
                     ->schema([
                         Forms\Components\Select::make('category_type')
-                            ->label('Tipe Kategori')
+                            ->label('Jenis')
                             ->options([
                                 'income' => 'Pemasukan',
                                 'expense' => 'Pengeluaran',
@@ -108,6 +109,7 @@ class CashTransactionResource extends Resource
                             }),
 
                         Forms\Components\TextInput::make('amount')
+                            ->label('Jumlah')
                             ->required()
                             ->prefix('Rp')
                             ->numeric(),
@@ -116,7 +118,11 @@ class CashTransactionResource extends Resource
 
                 Forms\Components\Section::make('Keterangan Tambahan')
                     ->schema([
-                        Forms\Components\Textarea::make('description'),
+                        Forms\Components\Textarea::make('description')
+                            ->label('Keterangan')
+                            ->placeholder('Masukkan keterangan tambahan untuk transaksi jika ada')
+                            ->maxLength(500)
+                            ->rows(3),
 
                         Forms\Components\Select::make('methode')
                             ->label('Metode Pembayaran')

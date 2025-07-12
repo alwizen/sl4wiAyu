@@ -45,11 +45,17 @@ class FoodInspactionResource extends Resource
                             ->default(now())
                             ->required(),
                         Repeater::make('items')
+                            ->columns(2)
                             ->relationship()
                             ->schema([
                                 Select::make('menu_id')
                                     ->relationship('menu', 'menu_name'),
                                 Toggle::make('is_good')
+                                    ->label('Kondisi Makanan')
+                                    ->default(true)
+                                    ->inline(false)
+                                    ->required()
+                                    ->helperText('Tandai jika kondisi makanan baik'),
                             ])
                     ])
             ]);

@@ -28,6 +28,7 @@
         "hasnayeen/themes": "*",
         "icetalker/filament-table-repeater": "^1.4",
         "jeffgreco13/filament-breezy": "^2.4",
+        "joshembling/image-optimizer": "^1.6",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",

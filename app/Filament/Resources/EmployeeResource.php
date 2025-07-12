@@ -47,17 +47,19 @@ class EmployeeResource extends Resource
                         $randomDigits = str_pad(rand(1, 99999), 5, '0', STR_PAD_LEFT);
                         return 'SPPG-5' . $randomDigits;
                     })
-                    ->disabled() // Nonaktifkan field agar tidak dapat diubah
-                    ->dehydrated() // Pastikan nilai tetap dikirim ke database
-                    ->helperText('NIP otomatis dihasilkan dengan format MGS-5xxxxx'),
+                    ->disabled()
+                    ->dehydrated()
+                    ->helperText('NIP otomatis digenerate oleh sistem.'),
 
                 Forms\Components\TextInput::make('nik')
                     ->label('NIK')
                     ->required()
+                    ->unique()
                     ->maxLength(255),
 
                 Forms\Components\TextInput::make('rfid_uid')
                     ->label('RFID')
+                    ->unique()
                     ->required()
                     ->maxLength(255),
 
@@ -89,13 +91,13 @@ class EmployeeResource extends Resource
 
                 Forms\Components\DatePicker::make('start_join')
                     ->label('Tanggal Bergabung')
+                    ->placeholder('Tanggal bergabung')
                     ->required(),
 
                 Forms\Components\Textarea::make('address')
                     ->label('Alamat')
                     ->maxLength(255)
                     ->default(null)
-                    ->columnSpan('full'),
             ]);
     }
 

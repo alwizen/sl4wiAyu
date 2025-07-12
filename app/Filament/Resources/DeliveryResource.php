@@ -21,6 +21,7 @@ use Filament\Notifications\Notification;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Support\Enums\ActionSize;
 use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Enums\ActionsPosition;
@@ -301,7 +302,10 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                         ->form([
                             FileUpload::make('proof_delivery')
                                 ->label('Bukti Pengiriman')
-
+                                ->image()
+                                ->optimize('webp')
+                                ->directory('buktiPengiriman')
+                                ->resize(50),
                         ])
                         ->action(function (Delivery $record, array $data) {
                             $record->proof_delivery = $data['proof_delivery'];
@@ -414,7 +418,10 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                             'imageUrl' => $record->proof_delivery,
                         ])),
 
-                ])->button(),
+                ])->button()
+                    ->label('Aksi')
+                    ->size(ActionSize::Small)
+                    ->outlined(),
 
             ])
 

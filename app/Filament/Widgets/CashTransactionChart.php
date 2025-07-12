@@ -31,7 +31,6 @@ class CashTransactionChart extends ChartWidget
             'last_month' => 'Bulan Lalu',
             'this_year' => 'Tahun Ini',
             'last_year' => 'Tahun Lalu',
-            'custom' => 'Custom Range',
         ];
     }
 
@@ -57,21 +56,54 @@ class CashTransactionChart extends ChartWidget
         $dateRange = $this->getDateRange();
 
         // Ambil data transaksi berdasarkan rentang tanggal
-        $transactions = CashTransaction::with('category')
+        $incomeTransactions = CashTransaction::with('category')
             ->whereBetween('transaction_date', [$dateRange['start'], $dateRange['end']])
+            ->whereHas('category', function ($query) {
+                $query->where('type', 'income');
+            })
             ->select(
                 DB::raw('DATE(transaction_date) as date'),
-                DB::raw('SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END) as income'),
-                DB::raw('SUM(CASE WHEN amount < 0 THEN ABS(amount) ELSE 0 END) as expense')
+                DB::raw('SUM(amount) as total')
             )
             ->groupBy('date')
             ->orderBy('date')
-            ->get();
+            ->get()
+            ->keyBy('date');
+
+        $expenseTransactions = CashTransaction::with('category')
+            ->whereBetween('transaction_date', [$dateRange['start'], $dateRange['end']])
+            ->whereHas('category', function ($query) {
+                $query->where('type', 'expense');
+            })
+            ->select(
+                DB::raw('DATE(transaction_date) as date'),
+                DB::raw('SUM(amount) as total')
+            )
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->keyBy('date');
+
+        // Hitung saldo awal (sebelum periode yang dipilih)
+        $totalIncomeBeforePeriod = CashTransaction::whereHas('category', function ($query) {
+            $query->where('type', 'income');
+        })
+            ->where('transaction_date', '<', $dateRange['start'])
+            ->sum('amount');
+
+        $totalExpenseBeforePeriod = CashTransaction::whereHas('category', function ($query) {
+            $query->where('type', 'expense');
+        })
+            ->where('transaction_date', '<', $dateRange['start'])
+            ->sum('amount');
+
+        $initialBalance = $totalIncomeBeforePeriod - $totalExpenseBeforePeriod;
 
         // Buat array label dan data
         $labels = [];
         $incomeData = [];
         $expenseData = [];
+        $balanceData = [];
 
         // Generate semua tanggal dalam rentang
         $period = new \DatePeriod(
@@ -80,13 +112,21 @@ class CashTransactionChart extends ChartWidget
             $dateRange['end']->addDay()
         );
 
+        $runningBalance = $initialBalance;
+
         foreach ($period as $date) {
             $dateString = $date->format('Y-m-d');
             $labels[] = $date->format('d/m');
 
-            $transaction = $transactions->firstWhere('date', $dateString);
-            $incomeData[] = $transaction ? (float) $transaction->income : 0;
-            $expenseData[] = $transaction ? (float) $transaction->expense : 0;
+            $dailyIncome = $incomeTransactions->has($dateString) ? (float) $incomeTransactions[$dateString]->total : 0;
+            $dailyExpense = $expenseTransactions->has($dateString) ? (float) $expenseTransactions[$dateString]->total : 0;
+
+            $incomeData[] = $dailyIncome;
+            $expenseData[] = $dailyExpense;
+
+            // Update running balance
+            $runningBalance = $runningBalance + $dailyIncome - $dailyExpense;
+            $balanceData[] = $runningBalance;
         }
 
         return [
@@ -99,6 +139,7 @@ class CashTransactionChart extends ChartWidget
                     'borderWidth' => 2,
                     'fill' => true,
                     'tension' => 0.4,
+                    'yAxisID' => 'y',
                 ],
                 [
                     'label' => 'Pengeluaran',
@@ -108,6 +149,17 @@ class CashTransactionChart extends ChartWidget
                     'borderWidth' => 2,
                     'fill' => true,
                     'tension' => 0.4,
+                    'yAxisID' => 'y',
+                ],
+                [
+                    'label' => 'Saldo',
+                    'data' => $balanceData,
+                    'backgroundColor' => 'rgba(59, 130, 246, 0.1)',
+                    'borderColor' => 'rgb(59, 130, 246)',
+                    'borderWidth' => 3,
+                    'fill' => false,
+                    'tension' => 0.4,
+                    'yAxisID' => 'y1',
                 ],
             ],
             'labels' => $labels,
@@ -126,9 +178,25 @@ class CashTransactionChart extends ChartWidget
             'maintainAspectRatio' => false,
             'scales' => [
                 'y' => [
+                    'type' => 'linear',
+                    'display' => true,
+                    'position' => 'left',
                     'beginAtZero' => true,
-                    'ticks' => [
-                        'callback' => 'function(value) { return "Rp " + value.toLocaleString("id-ID"); }',
+                    'title' => [
+                        'display' => true,
+                        'text' => 'Pemasukan & Pengeluaran (Rp)',
+                    ],
+                ],
+                'y1' => [
+                    'type' => 'linear',
+                    'display' => true,
+                    'position' => 'right',
+                    'title' => [
+                        'display' => true,
+                        'text' => 'Saldo (Rp)',
+                    ],
+                    'grid' => [
+                        'drawOnChartArea' => false,
                     ],
                 ],
             ],
@@ -138,9 +206,7 @@ class CashTransactionChart extends ChartWidget
                     'position' => 'top',
                 ],
                 'tooltip' => [
-                    'callbacks' => [
-                        'label' => 'function(context) { return context.dataset.label + ": Rp " + context.parsed.y.toLocaleString("id-ID"); }',
-                    ],
+                    'enabled' => true,
                 ],
             ],
             'interaction' => [
@@ -154,7 +220,7 @@ class CashTransactionChart extends ChartWidget
     {
         $now = Carbon::now();
 
-        return match($this->filter) {
+        return match ($this->filter) {
             'today' => [
                 'start' => $now->copy()->startOfDay(),
                 'end' => $now->copy()->endOfDay(),
