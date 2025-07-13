@@ -15,7 +15,7 @@ class WarehouseDryChart extends ChartWidget
 
     protected static bool $isLazy = false;
 
-    protected static ?string $heading = 'Stok Kategori Kering';
+    protected static ?string $heading = 'Stok Gudang Kering';
 
     protected function getType(): string
     {
