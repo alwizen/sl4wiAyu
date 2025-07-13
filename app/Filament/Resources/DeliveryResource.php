@@ -154,7 +154,6 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                     ->copyable(),
                 Tables\Columns\TextColumn::make('delivery_date')
                     ->date()
-                    ->sortable()
                     ->label('Tanggal'),
                 Tables\Columns\TextColumn::make('car.car_number')
                     ->searchable()
@@ -164,11 +163,13 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                     ->label('Supir'),
 
                 Tables\Columns\TextColumn::make('recipient.name')
-                    ->sortable()
+                    ->searchable()
                     ->label('Penerima'),
                 Tables\Columns\TextColumn::make('qty')
                     ->label('Jml')
-                    ->summarize(Sum::make())
+                    ->summarize(Sum::make()
+                        ->label('Total')
+                        ->suffix('Box'))
                     ->suffix(' Box'),
 
                 Tables\Columns\TextColumn::make('received_qty')

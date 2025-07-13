@@ -4,6 +4,8 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CashTransactionResource\Pages;
 use App\Filament\Resources\CashTransactionResource\RelationManagers;
+use App\Filament\Resources\CashTransactionResource\Widgets\TransactionStat;
+use App\Filament\Widgets\CashTransactionStats;
 use App\Models\CashCategory;
 use App\Models\CashTransaction;
 use App\Models\PurchaseOrder;
@@ -40,7 +42,7 @@ class CashTransactionResource extends Resource
                     ->schema([
                         Forms\Components\TextInput::make('transaction_code')
                             ->label('Kode Transaksi')
-                            ->default(fn() => 'Trx-' . str_pad(random_int(0, 99999), 3, '0', STR_PAD_LEFT))
+                            ->default(fn() => 'trx-' . str_pad(random_int(0, 99999), 3, '0', STR_PAD_LEFT))
                             ->disabled()
                             ->dehydrated()
                             ->required(),
@@ -151,10 +153,9 @@ class CashTransactionResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('category.name')
                     ->numeric()
-                    ->label('Nama Kategori')
-                    ->sortable(),
+                    ->label('Kategori'),
                 Tables\Columns\TextColumn::make('category.type')
-                    ->label('Tipe Kategori')
+                    ->label('Jenis')
                     ->badge()
                     ->color(fn($state) => match ($state) {
                         'income' => 'success',
@@ -173,7 +174,8 @@ class CashTransactionResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('methode')
                     ->label('Pembayaran')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -183,18 +185,18 @@ class CashTransactionResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->groups([
-                Tables\Grouping\Group::make('category.type')
-                    ->label('Tipe Kategori')
-                    ->collapsible()
-                    ->titlePrefixedWithLabel(false)
-                    ->getTitleFromRecordUsing(fn($record) => match ($record->category->type) {
-                        'income' => 'Pemasukan',
-                        'expense' => 'Pengeluaran',
-                        default => $record->category->type
-                    }),
-            ])
-            ->defaultGroup('category.type')
+            // ->groups([
+            //     Tables\Grouping\Group::make('category.type')
+            //         ->label('Tipe Kategori')
+            //         ->collapsible()
+            //         ->titlePrefixedWithLabel(false)
+            //         ->getTitleFromRecordUsing(fn($record) => match ($record->category->type) {
+            //             'income' => 'Pemasukan',
+            //             'expense' => 'Pengeluaran',
+            //             default => $record->category->type
+            //         }),
+            // ])
+            // ->defaultGroup('category.type')
             ->groupedBulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
                 ExportBulkAction::make(),
@@ -242,6 +244,7 @@ class CashTransactionResource extends Resource
                         return $indicators;
                     }),
             ])
+
             ->actions([
                 ActionGroup::make([
                     Tables\Actions\EditAction::make(),
@@ -254,6 +257,13 @@ class CashTransactionResource extends Resource
                     ExportBulkAction::make()
                 ]),
             ]);
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            TransactionStat::class,
+        ];
     }
 
     public static function getPages(): array

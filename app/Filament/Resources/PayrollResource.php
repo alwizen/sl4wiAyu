@@ -179,7 +179,7 @@ class PayrollResource extends Resource
                     ->required()
                     ->reactive()
                     ->afterStateUpdated(fn($state, callable $set, callable $get) => self::hitungTHP($get, $set)),
-                    
+
                 Forms\Components\TextInput::make('off_day')
                     ->label('Jumlah Libur')
                     ->numeric()
@@ -268,7 +268,9 @@ class PayrollResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total_thp')
                     ->label('Total THP')
-                    ->summarize(Sum::make())
+                    ->summarize(Sum::make()
+                        ->label('Total')
+                        ->prefix('Rp'))
                     ->money('IDR')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')

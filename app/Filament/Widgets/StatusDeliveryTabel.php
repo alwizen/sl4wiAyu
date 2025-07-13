@@ -14,6 +14,8 @@ class StatusDeliveryTabel extends BaseWidget
 {
     use HasWidgetShield;
 
+    protected static bool $isLazy = false;
+
     protected static ?string $heading = 'Informasi Pengiriman Hari Ini';
 
     protected static ?int $sort = 3;

@@ -11,10 +11,14 @@ use App\Filament\Widgets\GreetingWidget;
 use App\Filament\Widgets\StatusDeliveryTabel;
 use App\Filament\Widgets\TodayStockIssue;
 use App\Filament\Widgets\TodayStockReceiving;
+use App\Filament\Widgets\WarehouseCategoryChart;
+use App\Filament\Widgets\WarehouseDryChart;
+use App\Filament\Widgets\WarehouseWetChart;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Filament\Widgets\AccountWidget;
 
 class Dashboard extends BaseDashboard
 {
@@ -49,12 +53,15 @@ class Dashboard extends BaseDashboard
         return [
             // GreetingWidget::class,
             // DeliveryStats::class,
+            // AccountWidget::class,
             CashTransactionStats::class,
             CashTransactionChart::class,
+            WarehouseWetChart::class,
+            WarehouseDryChart::class,
+            TodayStockReceiving::class,
+            TodayStockIssue::class,
             WidgetsDeliveryStats::class,
             StatusDeliveryTabel::class,
-            TodayStockReceiving::class,
-            TodayStockIssue::class
         ];
     }
 

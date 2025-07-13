@@ -218,7 +218,9 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                 Tables\Columns\TextColumn::make('total_amount')
                     ->label('Total Amount')
                     ->money('IDR', locale: 'id_ID')
-                    ->summarize(Sum::make()->label('Total Seluruh')),
+                    ->summarize(Sum::make()
+                        ->label('Total Seluruh')
+                        ->prefix('Rp. ')),
             ])
             ->filters([
                 Filter::make('order_date_range')

@@ -16,7 +16,7 @@ class StockReceivingItemsRelationManager extends RelationManager
 {
     protected static string $relationship = 'stockReceivingItems';
 
-    protected static ?string $title = ''; 
+    protected static ?string $title = '';
 
     public function form(Form $form): Form
     {
@@ -43,7 +43,8 @@ class StockReceivingItemsRelationManager extends RelationManager
 
                 TextColumn::make('received_quantity')
                     ->label('Jumlah Masuk')
-                    ->summarize(Sum::make()),
+                    ->summarize(Sum::make()
+                        ->label('Total')),
 
                 TextColumn::make('updated_at')
                     ->label('Diupdate')

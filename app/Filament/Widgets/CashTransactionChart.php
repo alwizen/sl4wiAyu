@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\DB;
 class CashTransactionChart extends ChartWidget
 {
     use HasWidgetShield;
+
+    protected static bool $isLazy = false;
+
     protected static ?string $heading = 'Grafik Transaksi Kas';
 
     protected static ?int $sort = 2;
@@ -99,7 +102,7 @@ class CashTransactionChart extends ChartWidget
 
         $initialBalance = $totalIncomeBeforePeriod - $totalExpenseBeforePeriod;
 
-        // Buat array label dan data
+        // array label dan data
         $labels = [];
         $incomeData = [];
         $expenseData = [];
@@ -179,7 +182,7 @@ class CashTransactionChart extends ChartWidget
             'scales' => [
                 'y' => [
                     'type' => 'linear',
-                    'display' => true,
+                    'display' => false,
                     'position' => 'left',
                     'beginAtZero' => true,
                     'title' => [

@@ -47,17 +47,17 @@ class CashTransactionStats extends BaseWidget
         $balance = $totalIncomeAll - $totalExpenseAll;
 
         return [
-            BaseWidget\Card::make('Pemasukan Hari Ini', 'Rp ' . number_format($totalIncomeToday, 0, ',', '.'))
+            Stat::make('Pemasukan Hari Ini', 'Rp ' . number_format($totalIncomeToday, 0, ',', '.'))
                 ->description('Total pemasukan hari ini')
                 ->descriptionIcon('heroicon-o-arrow-trending-up')
                 ->color('success'),
 
-            BaseWidget\Card::make('Pengeluaran Hari Ini', 'Rp ' . number_format($totalExpenseToday, 0, ',', '.'))
+            Stat::make('Pengeluaran Hari Ini', 'Rp ' . number_format($totalExpenseToday, 0, ',', '.'))
                 ->description('Total pengeluaran hari ini')
                 ->descriptionIcon('heroicon-o-arrow-trending-down')
                 ->color('danger'),
 
-            BaseWidget\Card::make('Saldo Hari Ini', 'Rp ' . number_format($balance, 0, ',', '.'))
+            Stat::make('Saldo Hari Ini', 'Rp ' . number_format($balance, 0, ',', '.'))
                 ->description('Total saldo hingga hari ini')
                 ->descriptionIcon('heroicon-o-banknotes')
                 ->color($balance >= 0 ? 'primary' : 'danger'),

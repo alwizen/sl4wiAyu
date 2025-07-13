@@ -117,8 +117,8 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                DeliveryStatusTable::class,
-                CashTransactionStats::class
+                // DeliveryStatusTable::class,
+                // CashTransactionStats::class,
                 // Widgets\AccountWidget::class,
                 // Widgets\FilamentInfoWidget::class,
             ])
@@ -152,9 +152,13 @@ class AdminPanelProvider extends PanelProvider
         $plugins = [
             EasyFooterPlugin::make()
                 // ->withFooterPosition('sidebar.footer')
-                ->withSentence('Made with ❤️ in Tegal | RBJ Corp. All Rights Reserved.')
+                ->withSentence('RBJ Corp. All Rights Reserved.  |  Made with ❤️ in Tegal')
+                // ->withLogo(
+                //     'https://rbjcorp.id/assets/img/hero1.png', 
+                //     'https://laravel.com'                        
+                // )
                 ->withBorder()
-                ->withLoadTime('page loaded in'),
+                ->withLoadTime(),
             QuickCreatePlugin::make()
                 ->rounded(false)
                 ->label('Buat')

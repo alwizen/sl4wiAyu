@@ -3,12 +3,16 @@
 namespace App\Filament\Resources\CashTransactionResource\Pages;
 
 use App\Filament\Resources\CashTransactionResource;
+use App\Filament\Resources\CashTransactionResource\Widgets\TransactionStat;
 use Filament\Actions;
 use Filament\Actions\Action;
+use Filament\Pages\Concerns\ExposesTableToWidgets;
 use Filament\Resources\Pages\ManageRecords;
 
 class ManageCashTransactions extends ManageRecords
 {
+    use ExposesTableToWidgets;
+
     protected static string $resource = CashTransactionResource::class;
 
     protected function getHeaderActions(): array
@@ -23,7 +27,13 @@ class ManageCashTransactions extends ManageRecords
                 ->label('Buat Transaksi Kas')
                 ->icon('heroicon-o-plus')
                 ->color('primary'),
+        ];
+    }
 
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            TransactionStat::class
         ];
     }
 }
