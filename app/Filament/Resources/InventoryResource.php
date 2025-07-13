@@ -100,26 +100,22 @@ class InventoryResource extends Resource
                     ->label('Nama Barang')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('stock_init')
-                    ->label('Jumlah Awal')
-                    ->sortable(),
+                    ->label('Jumlah Awal'),
                 Tables\Columns\TextColumn::make('addition')
                     ->label('Tambahan')
                     ->badge()
                     ->color('success')
-                    ->numeric()
-                    ->sortable(),
+                    ->numeric(),
                 Tables\Columns\TextColumn::make('damaged')
                     ->label('Rusak')
                     ->badge()
                     ->color('warning')
-                    ->numeric()
-                    ->sortable(),
+                    ->numeric(),
                 Tables\Columns\TextColumn::make('missing')
                     ->label('Hilang')
                     ->badge()
                     ->color('danger')
-                    ->numeric()
-                    ->sortable(),
+                    ->numeric(),
                 Tables\Columns\TextColumn::make('stock_end')
                     ->numeric()
                     ->label('Jumlah Akhir')
@@ -158,7 +154,7 @@ class InventoryResource extends Resource
                     ->size(ActionSize::Small)
                     ->color('primary')
                     ->button(),
-                
+
                 ActionGroup::make([
                     Tables\Actions\Action::make('inputAddition')
                         ->label('Input Tambahan')

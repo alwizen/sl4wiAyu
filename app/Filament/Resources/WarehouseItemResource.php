@@ -99,16 +99,11 @@ class WarehouseItemResource extends Resource
             ->columns([
                 TextColumn::make('name')
                     ->label('Nama Item')
-                    ->searchable()
-                    ->sortable(),
+                    ->searchable(),
 
                 TextColumn::make('category.name')
                     ->label('Kategori')
-                    ->sortable()
                     ->searchable(),
-
-                // TextColumn::make('unit')
-                //     ->label('Satuan'),
 
                 TextColumn::make('stock')
                     ->label('Stok')
@@ -118,9 +113,7 @@ class WarehouseItemResource extends Resource
 
                 TextColumn::make('updated_at')
                     ->label('Stok Diperbarui pada')
-                    //                    ->dateTime('d M Y')
                     ->sortable(),
-                //                    ->toggleable(isToggledHiddenByDefault: true)
             ])
             ->defaultSort('name')
             ->filters([
