@@ -257,7 +257,7 @@ class DeliveryToday extends Page implements HasTable
                                 ->send();
                         }),
                 ])
-                    ->label('Aksi')
+                    ->label('Tindakan')
                     ->icon('heroicon-m-paper-clip')
                     ->color('primary')
                     ->button(),

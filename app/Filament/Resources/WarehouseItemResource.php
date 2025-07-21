@@ -61,11 +61,7 @@ class WarehouseItemResource extends Resource
                     Select::make('warehouse_category_id')
                         ->relationship('category', 'name')
                         ->label('Kategori')
-                        ->required()
-                        ->columnSpan(1)
-                        ->createOptionForm([
-                            TextInput::make('name')->label('Nama Kategori')->required(),
-                        ]),
+                        ->required(),
 
                     TextInput::make('name')
                         ->label('Nama Barang')
@@ -125,52 +121,6 @@ class WarehouseItemResource extends Resource
                     ])
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                DeleteAction::make()
-                    ->before(function (DeleteAction $action, WarehouseItem $record) {
-                        // Cek apakah item masih digunakan
-                        $relatedCount = DB::table('purchase_order_items')
-                            ->where('item_id', $record->id)
-                            ->count();
-
-                        if ($relatedCount > 0) {
-                            // Batalkan action dan tampilkan notifikasi
-                            Notification::make()
-                                ->title('Tidak dapat menghapus item')
-                                ->body("Item '{$record->name}' masih terkait dengan {$relatedCount} purchase order. Hapus purchase order terkait terlebih dahulu.")
-                                ->danger()
-                                ->duration(8000)
-                                ->send();
-
-                            // Batalkan action
-                            $action->cancel();
-                        }
-                    })
-                    ->action(function (WarehouseItem $record) {
-                        try {
-                            $record->delete();
-
-                            Notification::make()
-                                ->title('Item berhasil dihapus')
-                                ->success()
-                                ->send();
-                        } catch (QueryException $e) {
-                            if ($e->getCode() == 23000) {
-                                Notification::make()
-                                    ->title('Tidak dapat menghapus item')
-                                    ->body('Item masih terkait dengan data lain dan tidak dapat dihapus.')
-                                    ->danger()
-                                    ->duration(8000)
-                                    ->send();
-                            } else {
-                                Notification::make()
-                                    ->title('Terjadi kesalahan')
-                                    ->body('Gagal menghapus item. Silakan coba lagi.')
-                                    ->danger()
-                                    ->send();
-                            }
-                        }
-                    }),
                 ActionGroup::make([
                     RelationManagerAction::make('stockIssueItemsHistory')
                         ->label('Pengeluaran Stok')
@@ -182,9 +132,56 @@ class WarehouseItemResource extends Resource
                         ->color('success')
                         ->icon('heroicon-o-arrow-up-tray')
                         ->relationManager(StockReceivingItemsRelationManager::make()),
+                    Tables\Actions\EditAction::make()
+                        ->label('Ubah'),
+                    DeleteAction::make()
+                        ->before(function (DeleteAction $action, WarehouseItem $record) {
+                            // Cek apakah item masih digunakan
+                            $relatedCount = DB::table('purchase_order_items')
+                                ->where('item_id', $record->id)
+                                ->count();
+
+                            if ($relatedCount > 0) {
+                                // Batalkan action dan tampilkan notifikasi
+                                Notification::make()
+                                    ->title('Tidak dapat menghapus item')
+                                    ->body("Item '{$record->name}' masih terkait dengan {$relatedCount} purchase order. Hapus purchase order terkait terlebih dahulu.")
+                                    ->danger()
+                                    ->duration(8000)
+                                    ->send();
+
+                                // Batalkan action
+                                $action->cancel();
+                            }
+                        })
+                        ->action(function (WarehouseItem $record) {
+                            try {
+                                $record->delete();
+
+                                Notification::make()
+                                    ->title('Item berhasil dihapus')
+                                    ->success()
+                                    ->send();
+                            } catch (QueryException $e) {
+                                if ($e->getCode() == 23000) {
+                                    Notification::make()
+                                        ->title('Tidak dapat menghapus item')
+                                        ->body('Item masih terkait dengan data lain dan tidak dapat dihapus.')
+                                        ->danger()
+                                        ->duration(8000)
+                                        ->send();
+                                } else {
+                                    Notification::make()
+                                        ->title('Terjadi kesalahan')
+                                        ->body('Gagal menghapus item. Silakan coba lagi.')
+                                        ->danger()
+                                        ->send();
+                                }
+                            }
+                        }),
                 ])
-                    ->label('Riwayat Stok')
-                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->label('Tindakan')
+                    ->icon('heroicon-m-paper-clip')
                     ->size(ActionSize::Small)
                     ->color('primary')
                     ->button(),
@@ -223,13 +220,13 @@ class WarehouseItemResource extends Resource
     }
 
 
-    public static function getRelations(): array
-    {
-        return [
-            RelationManagers\StockReceivingItemsRelationManager::class,
-            RelationManagers\StockIssueItemsRelationManager::class,
-        ];
-    }
+    // public static function getRelations(): array
+    // {
+    //     return [
+    //         RelationManagers\StockReceivingItemsRelationManager::class,
+    //         RelationManagers\StockIssueItemsRelationManager::class,
+    //     ];
+    // }
 
     public static function getPages(): array
     {

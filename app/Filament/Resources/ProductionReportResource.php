@@ -114,7 +114,7 @@ class ProductionReportResource extends Resource
                                 ->label('Menu')
                                 ->options(function (Forms\Get $get, ?string $state = null) {
                                     $dailyMenuId = $get('../../daily_menu_id');
-                                    
+
                                     // Jika tidak ada daily_menu_id tapi ada state (ID item yang sudah ada)
                                     if (!$dailyMenuId && $state) {
                                         // Cari daily_menu_item langsung berdasarkan ID
@@ -124,7 +124,7 @@ class ProductionReportResource extends Resource
                                             $dailyMenuId = $dailyMenuItem->daily_menu_id;
                                         }
                                     }
-                                    
+
                                     if (!$dailyMenuId) {
                                         return [];
                                     }
@@ -211,7 +211,7 @@ class ProductionReportResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->defaultPaginationPageOption(50)
+            ->defaultPaginationPageOption(25)
             ->columns([
                 Tables\Columns\TextColumn::make('production_date')
                     ->date()

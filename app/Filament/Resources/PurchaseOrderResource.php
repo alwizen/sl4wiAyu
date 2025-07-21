@@ -426,7 +426,7 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                     // Tables\Actions\DeleteAction::make()
                 ])
                     ->button()
-                    ->label('Aksi')
+                    ->label('Tindakan')
                     ->icon('heroicon-o-bars-3-bottom-left')
             ])
             ->bulkActions([

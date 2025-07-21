@@ -24,9 +24,11 @@ class Dashboard extends BaseDashboard
 {
     // use HasPageShield;
 
-    protected static ?string $navigationGroup = 'Overview';
+    protected static ?string $navigationGroup = 'Ringkasan';
 
-    protected static ?string $navigationIcon = 'heroicon-o-chart-bar-square';
+    protected static ?string $navigationLabel = 'Beranda';
+
+    protected static ?string $navigationIcon = 'heroicon-m-chart-pie';
 
     public function getTitle(): string
     {

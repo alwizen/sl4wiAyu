@@ -106,7 +106,7 @@ class AdminPanelProvider extends PanelProvider
                 //                Pages\Dashboard::class,
             ])
             ->navigationGroups([
-                'Overview',
+                'Ringkasan',
                 'Ahli Gizi',
                 'Produksi & Pengiriman',
                 'Pengadaan & Permintaan',

@@ -420,7 +420,8 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                         ])),
 
                 ])->button()
-                    ->label('Aksi')
+                    ->label('Tindakan')
+                    ->icon('heroicon-o-paper-clip')
                     ->size(ActionSize::Small)
                     ->outlined(),
 

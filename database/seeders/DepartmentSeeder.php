@@ -15,12 +15,12 @@ class DepartmentSeeder extends Seeder
     public function run(): void
     {
         $now = Carbon::now();
-        
+
         $departments = [
             [
                 'name' => 'SPV Dapur',
-                'salary' => 300000,
-                'allowance' => 500000,
+                'salary' => 800000,
+                'allowance' => 350000,
                 'bonus' => 0,
                 'absence_deduction' => 0,
                 'created_at' => $now,
@@ -28,8 +28,8 @@ class DepartmentSeeder extends Seeder
             ],
             [
                 'name' => 'Ahli Gizi',
-                'salary' => 2500000,
-                'allowance' => 500000,
+                'salary' => 75000,
+                'allowance' => 35000,
                 'bonus' => 0,
                 'absence_deduction' => 0,
                 'created_at' => $now,
