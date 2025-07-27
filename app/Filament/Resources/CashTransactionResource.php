@@ -74,7 +74,6 @@ class CashTransactionResource extends Resource
                                 return CashCategory::where('type', $type)
                                     ->pluck('name', 'id');
                             })
-                            ->searchable()
                             ->preload()
                             ->reactive()
                             ->required(),
@@ -82,29 +81,26 @@ class CashTransactionResource extends Resource
                         Forms\Components\Select::make('purchase_order_id')
                             ->label('Nomor Purchase Order')
                             ->options(function () {
-                                return PurchaseOrder::where('payment_status', 'paid')
+                                $usedPoIds = \App\Models\CashTransaction::whereHas('category', function ($query) {
+                                    $query->where('slug', 'pembayaran-po');
+                                })
+                                    ->whereNotNull('purchase_order_id')
+                                    ->pluck('purchase_order_id')
+                                    ->toArray();
+
+                                return \App\Models\PurchaseOrder::where('payment_status', 'paid')
+                                    ->whereNotIn('id', $usedPoIds)
                                     ->orderBy('order_date', 'desc')
                                     ->get()
                                     ->mapWithKeys(fn($po) => [
                                         $po->id => "{$po->order_number} - {$po->order_date->format('d M Y')}"
                                     ]);
                             })
-                            ->searchable()
+                            // ->searchable()
                             ->preload()
                             ->reactive()
-                            ->hidden(function (callable $get) {
-                                $type = $get('category_type');
-                                $categoryId = $get('category_id');
-
-                                if ($type !== 'expense' || !$categoryId) {
-                                    return true;
-                                }
-
-                                $category = CashCategory::find($categoryId);
-                                return $category?->slug !== 'pembayaran-po';
-                            })
                             ->afterStateUpdated(function (callable $set, $state) {
-                                $po = PurchaseOrder::find($state);
+                                $po = \App\Models\PurchaseOrder::find($state);
                                 if ($po) {
                                     $set('amount', $po->total_amount);
                                 }
@@ -114,7 +110,9 @@ class CashTransactionResource extends Resource
                             ->label('Jumlah')
                             ->required()
                             ->prefix('Rp')
-                            ->numeric(),
+                            ->numeric()
+                            ->reactive(),
+
                     ])
                     ->columns(3),
 
@@ -160,16 +158,20 @@ class CashTransactionResource extends Resource
                     ->color(fn($state) => match ($state) {
                         'income' => 'success',
                         'expense' => 'danger',
+                    })
+                    ->formatStateUsing(fn($state) => match ($state) {
+                        'income' => 'Debit',
+                        'expense' => 'Kredit',
+                        default => $state,
                     }),
+
                 Tables\Columns\TextColumn::make('amount')
                     ->label('Jumlah')
                     ->numeric()
-                    ->prefix('Rp')
                     ->summarize([
                         Sum::make()
                             ->label('Total')
                             ->numeric()
-                            ->prefix('Rp')
                     ])
                     ->sortable(),
                 Tables\Columns\TextColumn::make('methode')

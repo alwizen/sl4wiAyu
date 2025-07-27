@@ -15,6 +15,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Carbon;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
 class PayrollResource extends Resource
 {
@@ -271,8 +272,9 @@ class PayrollResource extends Resource
                     ->label('Total THP')
                     ->summarize(Sum::make()
                         ->label('Total')
-                        ->prefix('Rp'))
-                    ->money('IDR')
+                        ->prefix('Rp. '))
+                    // ->money('Rp. ')
+                    ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -325,6 +327,7 @@ class PayrollResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    ExportBulkAction::make(),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);

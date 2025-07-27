@@ -50,7 +50,7 @@ class EmployeeResource extends Resource
                     ->label('NIK')
                     ->default(0)
                     ->required()
-                    ->unique()
+                    // ->unique()
                     ->maxLength(255),
 
                 Forms\Components\TextInput::make('name')
@@ -100,10 +100,11 @@ class EmployeeResource extends Resource
                 Tables\Columns\TextColumn::make('nip')
                     ->label('NIP')
                     ->searchable()
-                    ->copyable(),
+                    ->copyable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('rfid_uid')
-                    ->label('RFID')
+                    ->label('Kartu RFID (Absen)')
                     ->copyable()
                     ->searchable(),
 
@@ -113,8 +114,7 @@ class EmployeeResource extends Resource
 
                 Tables\Columns\TextColumn::make('nik')
                     ->label('NIK')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->searchable(),
 
                 Tables\Columns\TextColumn::make('department.name')
                     ->label('Posisi')
