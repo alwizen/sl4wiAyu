@@ -62,26 +62,22 @@ class InventoryResource extends Resource
                 Forms\Components\TextInput::make('stock_init')
                     ->label('Jumlah Awal')
                     ->required()
-                    ->numeric()
-                    ->label('Initial Stock'),
+                    ->numeric(),
                 Forms\Components\TextInput::make('addition')
                     ->label('Tambahan')
                     ->numeric()
                     ->disabled()
-                    ->default(0)
-                    ->label('Addition'),
+                    ->default(0),
                 Forms\Components\TextInput::make('damaged')
                     ->label('Rusak')
                     ->numeric()
                     ->disabled()
-                    ->default(0)
-                    ->label('Damaged'),
+                    ->default(0),
                 Forms\Components\TextInput::make('missing')
                     ->label('Hilang')
                     ->numeric()
                     ->disabled()
-                    ->default(0)
-                    ->label('Missing'),
+                    ->default(0),
             ]);
     }
 

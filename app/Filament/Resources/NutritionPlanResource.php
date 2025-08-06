@@ -20,6 +20,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Hidden;
+use Filament\Support\Enums\ActionSize;
 use Filament\Tables\Actions\ExportBulkAction;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Illuminate\Database\Eloquent\Builder;
@@ -141,6 +142,7 @@ class NutritionPlanResource extends Resource
                                 TextInput::make('netto')
                                     ->label('Netto "gr"')
                                     ->numeric()
+                                    ->default(0)
                                     ->extraAttributes(['style' => 'width: 90px'])
                                     // ->suffix('gr')
                                     ->required(),
@@ -217,55 +219,55 @@ class NutritionPlanResource extends Resource
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.energy')
                     ->label('Energi (kkal)')
                     ->listWithLineBreaks()
-                    ->summarize([
-                        \Filament\Tables\Columns\Summarizers\Sum::make()
-                            ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " kkal")
-                    ])
+                    // ->summarize([
+                    //     \Filament\Tables\Columns\Summarizers\Sum::make()
+                    //         ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " kkal")
+                    // ])
                     ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " kkal"),
 
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.protein')
                     ->label('Protein (gr)')
                     ->listWithLineBreaks()
-                    ->summarize([
-                        \Filament\Tables\Columns\Summarizers\Sum::make()
-                            ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
-                    ])
+                    // ->summarize([
+                    //     \Filament\Tables\Columns\Summarizers\Sum::make()
+                    //         ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
+                    // ])
                     ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
 
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.fat')
                     ->label('Lemak (gr)')
                     ->listWithLineBreaks()
-                    ->summarize([
-                        \Filament\Tables\Columns\Summarizers\Sum::make()
-                            ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
-                    ])
+                    // ->summarize([
+                    //     \Filament\Tables\Columns\Summarizers\Sum::make()
+                    //         ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
+                    // ])
                     ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
 
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.carb')
                     ->label('Karbo (gr)')
                     ->listWithLineBreaks()
-                    ->summarize([
-                        \Filament\Tables\Columns\Summarizers\Sum::make()
-                            ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
-                    ])
+                    // ->summarize([
+                    //     \Filament\Tables\Columns\Summarizers\Sum::make()
+                    //         ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
+                    // ])
                     ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
 
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.serat')
                     ->label('Serat (gr)')
                     ->listWithLineBreaks()
-                    ->summarize([
-                        \Filament\Tables\Columns\Summarizers\Sum::make()
-                            ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
-                    ])
+                    // ->summarize([
+                    //     \Filament\Tables\Columns\Summarizers\Sum::make()
+                    //         ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
+                    // ])
                     ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
 
                 \Filament\Tables\Columns\TextColumn::make('nutritionPlanItems.netto')
                     ->label('Netto (gr)')
                     ->listWithLineBreaks()
-                    ->summarize([
-                        \Filament\Tables\Columns\Summarizers\Sum::make()
-                            ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
-                    ])
+                    // ->summarize([
+                    //     \Filament\Tables\Columns\Summarizers\Sum::make()
+                    //         ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr")
+                    // ])
                     ->formatStateUsing(fn(string $state): string => number_format((float)$state, 2, ',', '.') . " gr"),
 
                 \Filament\Tables\Columns\TextColumn::make('created_at')
@@ -308,7 +310,12 @@ class NutritionPlanResource extends Resource
                         ->openUrlInNewTab(),
                     \Filament\Tables\Actions\EditAction::make(),
                     \Filament\Tables\Actions\DeleteAction::make(),
-                ]),
+                ])
+                    ->button()
+                    ->label('Aksi')
+                    ->icon('heroicon-o-paper-clip')
+                    ->color('warning')
+                    ->size(ActionSize::Small)
             ])
             // ->headerActions([
             //     Action::make('Ekspor Semua Item Rencana Nutrisi')

@@ -13,6 +13,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\ActionSize;
 use Filament\Tables;
 use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Table;
@@ -106,7 +107,11 @@ class FoodInspactionResource extends Resource
                         ->openUrlInNewTab(),
                     \Filament\Tables\Actions\EditAction::make(),
                     \Filament\Tables\Actions\DeleteAction::make(),
-                ]),
+                ])
+                    ->button()
+                    ->label('Aksi')
+                    ->icon('heroicon-o-paper-clip')
+                    ->size(ActionSize::Small),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

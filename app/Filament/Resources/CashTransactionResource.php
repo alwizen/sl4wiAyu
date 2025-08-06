@@ -140,6 +140,7 @@ class CashTransactionResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            ->defaultPaginationPageOption(25)
             ->columns([
                 Tables\Columns\TextColumn::make('transaction_code')
                     ->searchable()
@@ -168,11 +169,11 @@ class CashTransactionResource extends Resource
                 Tables\Columns\TextColumn::make('amount')
                     ->label('Jumlah')
                     ->numeric()
-                    ->summarize([
-                        Sum::make()
-                            ->label('Total')
-                            ->numeric()
-                    ])
+                    // ->summarize([
+                    //     Sum::make()
+                    //         ->label('Total')
+                    //         ->numeric()
+                    // ])
                     ->sortable(),
                 Tables\Columns\TextColumn::make('methode')
                     ->label('Pembayaran')
