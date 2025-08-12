@@ -22,6 +22,8 @@ class CashCategoryResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
+    protected static ?string $navigationLabel = 'Kategori Kas';
+
     protected static ?string $navigationGroup = 'Master Data';
 
     public static function form(Form $form): Form
