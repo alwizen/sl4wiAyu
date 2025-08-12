@@ -50,7 +50,7 @@ class EmployeeResource extends Resource
                     ->label('NIK')
                     ->default(0)
                     ->required()
-                    // ->unique()
+                    ->unique(ignoreRecord: true)
                     ->maxLength(255),
 
                 Forms\Components\TextInput::make('name')
@@ -68,7 +68,7 @@ class EmployeeResource extends Resource
                 Forms\Components\TextInput::make('rfid_uid')
                     ->label('RFID')
                     ->helperText('Kartu ID Untuk Absesi Relawan')
-                    ->unique()
+                    ->unique(ignoreRecord: true)
                     ->required()
                     ->maxLength(255),
 
