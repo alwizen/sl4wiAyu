@@ -24,12 +24,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Carbon\Carbon;
-use Filament\Forms\Components\Card;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Section as ComponentsSection;
 use Filament\Infolists\Components\RepeatableEntry;
-use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Actions\BulkAction;
@@ -41,6 +40,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Collection;
 use Maatwebsite\Excel\Facades\Excel;
 use Filament\Notifications\Notification;
+use Icetalker\FilamentTableRepeater\Forms\Components\TableRepeater;
 
 class PurchaseOrderResource extends Resource implements HasShieldPermissions
 {
@@ -61,7 +61,7 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                     ->default(auth()->id())
                     ->dehydrated(),
 
-                Card::make('Informasi Umum')
+                Section::make('Informasi Umum')
                     ->collapsible()
                     ->schema([
                         TextInput::make('order_number')
@@ -82,7 +82,7 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                             ->required()
                             ->label('Supplier')
                             ->relationship('supplier', 'name')
-                            ->searchable()
+                            // ->searchable()
                             ->preload()
                             ->createOptionForm([
                                 TextInput::make('name')->label('Nama Supplier')->required(),
@@ -103,16 +103,16 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                     ])
                     ->columns(4),
 
-                Card::make('Daftar Item Pembelian')
+                Section::make('Daftar Item Pembelian')
                     ->collapsible()
                     ->schema([
-                        Repeater::make('items')
+                        TableRepeater::make('items')
                             ->relationship()
                             ->schema([
                                 Select::make('item_id')
                                     ->label('Item')
                                     ->options(WarehouseItem::all()->pluck('name', 'id'))
-                                    ->searchable()
+                                    // ->searchable()
                                     ->required(),
 
                                 TextInput::make('quantity')
@@ -141,7 +141,7 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                             }),
                     ]),
 
-                Card::make('Informasi Pembayaran')
+                Section::make('Informasi Pembayaran')
                     ->collapsible()
                     ->columns(2)
                     ->schema([
