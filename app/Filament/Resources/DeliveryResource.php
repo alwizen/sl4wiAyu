@@ -26,7 +26,7 @@ use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Enums\ActionsPosition;
 use Illuminate\Database\Eloquent\Model;
-
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
 class DeliveryResource extends Resource implements HasShieldPermissions
 {
@@ -429,6 +429,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
 
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    ExportBulkAction::make(),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
