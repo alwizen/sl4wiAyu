@@ -7,12 +7,8 @@ use App\Filament\Resources\PurchaseOrderResource\Pages;
 use App\Filament\Resources\PurchaseOrderResource\RelationManagers;
 use App\Filament\Resources\PurchaseOrderResource\RelationManagers\ReceivingsRelationManager;
 use App\Models\PurchaseOrder;
-use App\Models\Supplier;
 use App\Models\WarehouseItem;
-use App\Models\User;
-use App\Notifications\PurchaseOrderApproved;
 use Filament\Forms;
-use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -21,26 +17,22 @@ use Filament\Tables;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Carbon\Carbon;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
-use Filament\Forms\Components\Section as ComponentsSection;
-use Filament\Infolists\Components\RepeatableEntry;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Actions\BulkAction;
 use Guava\FilamentModalRelationManagers\Actions\Table\RelationManagerAction;
-use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
-use Filament\Tables\Filters\DateRangeFilter;
 use Filament\Tables\Filters\Filter;
-use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Collection;
 use Maatwebsite\Excel\Facades\Excel;
 use Filament\Notifications\Notification;
 use Icetalker\FilamentTableRepeater\Forms\Components\TableRepeater;
+use Filament\Infolists\Components\Section as InfoSection;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\RepeatableEntry;
 
 class PurchaseOrderResource extends Resource implements HasShieldPermissions
 {
@@ -277,27 +269,20 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                     ->tooltip('Lihat Detail')
                     ->icon('heroicon-o-eye')
                     ->infolist([
-                        Section::make('Informasi Umum')
+                        InfoSection::make('Informasi Umum')
                             ->schema([
-                                TextEntry::make('order_number')
-                                    ->label('Nomor Order'),
-                                TextEntry::make('creator.name')
-                                    ->label('Dibuat Oleh'),
-                                TextEntry::make('total_amount')
-                                    ->label('Total')
-                                    ->money('IDR', true),
+                                TextEntry::make('order_number')->label('Nomor Order'),
+                                TextEntry::make('creator.name')->label('Dibuat Oleh'),
+                                TextEntry::make('total_amount')->label('Total')->money('IDR'),
                             ]),
-
-                        Section::make('Daftar Item Pembelian')
+                        InfoSection::make('Daftar Item Pembelian')
                             ->schema([
                                 RepeatableEntry::make('items')
                                     ->label('Item')
                                     ->schema([
                                         TextEntry::make('item.name')->label('Nama Item'),
                                         TextEntry::make('quantity')->label('Jumlah'),
-                                        TextEntry::make('unit_price')
-                                            ->label('Harga Satuan')
-                                            ->money('IDR', true),
+                                        TextEntry::make('unit_price')->label('Harga Satuan')->money('IDR'),
                                     ])
                                     ->columns(3),
                             ]),
