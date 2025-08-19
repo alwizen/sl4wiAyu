@@ -13,6 +13,7 @@ use App\Filament\Widgets\TodayStockIssue;
 use App\Filament\Widgets\TodayStockReceiving;
 use App\Filament\Widgets\WarehouseCategoryChart;
 use App\Filament\Widgets\WarehouseDryChart;
+use App\Filament\Widgets\WarehouseStockChart;
 use App\Filament\Widgets\WarehouseWetChart;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Pages\Dashboard as BaseDashboard;
@@ -58,8 +59,9 @@ class Dashboard extends BaseDashboard
             // AccountWidget::class,
             CashTransactionStats::class,
             CashTransactionChart::class,
-            WarehouseWetChart::class,
-            WarehouseDryChart::class,
+            WarehouseStockChart::class,
+            // WarehouseWetChart::class,
+            // WarehouseDryChart::class,
             TodayStockReceiving::class,
             TodayStockIssue::class,
             WidgetsDeliveryStats::class,
