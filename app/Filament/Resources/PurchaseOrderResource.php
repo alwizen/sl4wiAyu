@@ -28,8 +28,6 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Section as ComponentsSection;
-use Filament\Infolists\Components\RepeatableEntry;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Actions\BulkAction;
 use Guava\FilamentModalRelationManagers\Actions\Table\RelationManagerAction;
@@ -41,6 +39,10 @@ use Illuminate\Database\Eloquent\Collection;
 use Maatwebsite\Excel\Facades\Excel;
 use Filament\Notifications\Notification;
 use Icetalker\FilamentTableRepeater\Forms\Components\TableRepeater;
+use Filament\Infolists\Components\Section as InfoSection;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\RepeatableEntry;
+
 
 class PurchaseOrderResource extends Resource implements HasShieldPermissions
 {
@@ -283,32 +285,58 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
                     ->tooltip('Lihat Detail')
                     ->icon('heroicon-o-eye')
                     ->infolist([
-                        Section::make('Informasi Umum')
+                        InfoSection::make('Informasi Umum')
                             ->schema([
-                                TextEntry::make('order_number')
-                                    ->label('Nomor Order'),
-                                TextEntry::make('creator.name')
-                                    ->label('Dibuat Oleh'),
-                                TextEntry::make('total_amount')
-                                    ->label('Total')
-                                    ->money('IDR', true),
-                            ]),
+                                TextEntry::make('order_number')->label('Nomor Order'),
+                                TextEntry::make('creator.name')->label('Dibuat Oleh'),
+                                TextEntry::make('order_date')->label('Tanggal')->date('d-m-Y'),
+                                TextEntry::make('payment_status')->label('Status Pembayaran'),
+                            ])
+                            ->columns(2),
 
-                        Section::make('Daftar Item Pembelian')
+                        InfoSection::make('Daftar Item Pembelian')
                             ->schema([
-                                RepeatableEntry::make('items')
+                                RepeatableEntry::make('items') // relasi items
                                     ->label('Item')
                                     ->schema([
                                         TextEntry::make('item.name')->label('Nama Item'),
-                                        TextEntry::make('quantity')->label('Jumlah'),
+                                        TextEntry::make('quantity')
+                                            ->label('Jumlah')
+                                            ->formatStateUsing(fn($state) => number_format((float) $state, 2, ',', '.')),
                                         TextEntry::make('unit_price')
                                             ->label('Harga Satuan')
                                             ->money('IDR', true),
+
+                                        // ✅ subtotal dihitung dari model PurchaseOrderItem
+                                        TextEntry::make('subtotal')
+                                            ->label('Subtotal')
+                                            ->state(fn($record) => (float) $record->quantity * (float) $record->unit_price)
+                                            ->money('IDR', true)
+                                            ->weight('bold'),
                                     ])
-                                    ->columns(3),
+                                    ->columns(4),
                             ]),
+
+                        InfoSection::make('Ringkasan Total')
+                            ->schema([
+                                TextEntry::make('items_computed_total')
+                                    ->label('Total dari Item (Grand Total)')
+                                    ->state(
+                                        fn($record) =>
+                                        $record->items->sum(fn($i) => (float) $i->quantity * (float) $i->unit_price)
+                                    )
+                                    ->money('IDR', true)
+                                    ->weight('bold'),
+
+                                // TextEntry::make('total_amount')
+                                //     ->label('Total (tersimpan)')
+                                //     ->money('IDR', true)
+                                //     ->weight('bold'),
+                            ])
+                            ->columns(2),
                     ])
                     ->slideOver(),
+
                 ActionGroup::make([
                     RelationManagerAction::make('stockReceivingItemsHistory')
                         ->label('Riwayat Penerimaan Stok')
