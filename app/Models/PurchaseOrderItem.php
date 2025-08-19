@@ -10,17 +10,18 @@ class PurchaseOrderItem extends Model
     protected $fillable = ['purchase_order_id', 'item_id', 'quantity', 'unit_price'];
 
     protected $casts = [
-        'quantity' => 'integer',
+        // 'quantity' => 'integer',
+        'quantity'   => 'decimal:2',
         'unit_price' => 'decimal:2',
         // atau 'unit_price' => 'float',
     ];
 
-    public function purchaseOrder():BelongsTo
+    public function purchaseOrder(): BelongsTo
     {
         return $this->belongsTo(PurchaseOrder::class);
     }
 
-    public function item():BelongsTo
+    public function item(): BelongsTo
     {
         return $this->belongsTo(WarehouseItem::class);
     }

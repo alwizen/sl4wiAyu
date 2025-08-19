@@ -20,6 +20,7 @@
         "coolsam/flatpickr": "^4.1",
         "dedoc/scramble": "^0.12.10",
         "devonab/filament-easy-footer": "^2.0",
+        "doctrine/dbal": "^4.3",
         "dutchcodingcompany/filament-socialite": "^2.3",
         "filament/filament": "^3.2",
         "filament/spatie-laravel-media-library-plugin": "^3.2",

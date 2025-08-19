@@ -32,8 +32,10 @@ class PurchaseOrder extends Model
     }
 
     protected $casts = [
-        'order_date' => 'date',
+        'order_date'   => 'date',
+        'total_amount' => 'decimal:2',
     ];
+
 
     protected static function boot()
     {
