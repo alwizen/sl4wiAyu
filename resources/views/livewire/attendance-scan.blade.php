@@ -1,5 +1,19 @@
 <div>
     <style>
+        /* Input tetap fokus & bisa diketik, tapi tak terlihat */
+        .stealth-input {
+            position: absolute !important;
+            left: -9999px !important;
+            /* geser jauh dari layar */
+            width: 1px !important;
+            height: 1px !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            border: 0 !important;
+            padding: 0 !important;
+        }
+
+
         .rfid-container {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
@@ -37,8 +51,13 @@
         }
 
         @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
         }
 
         .rfid-icon {
@@ -55,13 +74,16 @@
         }
 
         @keyframes pulse {
-            0%, 100% { 
-                transform: scale(1); 
-                box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3); 
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
             }
-            50% { 
-                transform: scale(1.05); 
-                box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4); 
+
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
             }
         }
 
@@ -121,6 +143,7 @@
                 opacity: 0;
                 transform: translateY(-20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -167,8 +190,15 @@
         }
 
         @keyframes statusPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
         }
 
         .instructions {
@@ -187,11 +217,11 @@
                 padding: 30px 20px;
                 margin: 10px;
             }
-            
+
             .scanner-title {
                 font-size: 24px;
             }
-            
+
             .rfid-icon {
                 width: 70px;
                 height: 70px;
@@ -250,50 +280,68 @@
     <div class="rfid-container">
         <div class="scanner-card">
             <div class="status-indicator"></div>
-            
-            <div class="rfid-icon">
+
+            {{-- <div class="rfid-icon">
                 <svg fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                    <path
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
                 </svg>
-            </div>
+            </div> --}}
 
             <h2 class="scanner-title">Scan Kartu RFID</h2>
             <p class="scanner-subtitle">Tempelkan kartu RFID Anda ke reader</p>
 
             <!-- Alert menggunakan Livewire property -->
             @if ($showAlert && $alertMessage)
-                <div class="alert-modern 
-                    @if($alertType === 'success') success 
+                <div
+                    class="alert-modern 
+                    @if ($alertType === 'success') success 
                     @elseif($alertType === 'error') error 
                     @else warning @endif">
-                    
-                    @if($alertType === 'success')
+
+                    @if ($alertType === 'success')
                         <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clip-rule="evenodd" />
                         </svg>
                     @elseif($alertType === 'error')
                         <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                            <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                clip-rule="evenodd" />
                         </svg>
                     @else
                         <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                            <path fill-rule="evenodd"
+                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                clip-rule="evenodd" />
                         </svg>
                     @endif
-                    
+
                     <span>{{ $alertMessage }}</span>
                 </div>
             @endif
+            {{-- 
+            <input type="text" id="rfid-input" placeholder="Tempelkan Kartu RFID..." class="rfid-input-modern"
+                autocomplete="off" wire:model.defer="rfid_uid" wire:keydown.enter="submitRfid" /> --}}
 
-            <input 
-                type="text"
-                wire:model.live="rfid_uid"
-                wire:key="rfid-input-{{ now()->timestamp }}"
-                id="rfid-input"
-                placeholder="Tempelkan Kartu RFID..."
-                class="rfid-input-modern" 
-                autocomplete="off"
-            />
+            <!-- Input tersembunyi: tetap menerima ketikan dari reader -->
+            <input type="text" id="rfid-input" class="stealth-input" autocomplete="off" autocapitalize="off"
+                spellcheck="false" inputmode="none" tabindex="0" wire:model.defer="rfid_uid"
+                wire:keydown.enter="submitRfid" wire:change="submitRfid" />
+
+            <div class="instructions" style="text-align:center; font-size:16px;">
+                <strong style="color:#667eea; display:block; font-size:18px; margin-bottom:6px;">
+                    Sistem Siap
+                </strong>
+                <span style="color:#4a5568;">
+                    Mohon tap kartu RFID (absensi) Anda...
+                </span>
+            </div>
+
+
+
 
             <div class="instructions">
                 <strong style="color: #667eea;">📋 Instruksi Penggunaan:</strong><br>

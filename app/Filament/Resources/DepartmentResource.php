@@ -73,7 +73,7 @@ class DepartmentResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('allowance')
                     ->numeric()
-                    ->label('Tunjangan')
+                    ->label('Tunjangan Kesehatan')
                     ->prefix('Rp. ')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('absence_deduction')

@@ -4,15 +4,16 @@ namespace App\Livewire;
 
 use App\Models\Attendance;
 use App\Models\Employee;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Illuminate\Support\Carbon;
 
 class AttendanceScan extends Component
 {
     use WithPagination;
 
-    public $rfid_uid;
+    public $rfid_uid = '';
     public $search = '';
     public $filterDate;
 
@@ -20,21 +21,26 @@ class AttendanceScan extends Component
     public $alertType = '';
     public $showAlert = false;
 
-    // Konfigurasi jam kerja minimum (dalam jam)
-    protected $minimumWorkHours = 3;
-
+    protected $minimumWorkHours = 0.0833333; // jam
     protected $paginationTheme = 'bootstrap';
 
-    public function mount()
+    public function mount(): void
     {
         $this->filterDate = now()->toDateString();
     }
 
-    public function updatedRfidUid($value)
+    public function submitRfid(): void
     {
+        $value = trim((string) $this->rfid_uid);
+
+        if ($value === '') {
+            $this->dispatch('focusInput');
+            return;
+        }
+
         $employee = Employee::where('rfid_uid', $value)->first();
 
-        if (!$employee) {
+        if (! $employee) {
             $this->showAlert('Kartu tidak dikenali.', 'error');
             $this->reset('rfid_uid');
             $this->dispatch('focusInput');
@@ -42,162 +48,87 @@ class AttendanceScan extends Component
         }
 
         $today = now()->toDateString();
-        $now = now();
+        $now   = now();
 
-        $attendance = Attendance::firstOrCreate(
-            ['employee_id' => $employee->id, 'date' => $today],
-            ['status' => 'masuk'] // Status default jika baru dibuat
-        );
+        DB::transaction(function () use ($employee, $today, $now) {
+            // kunci baris attendance hari ini untuk karyawan tsb
+            $attendance = Attendance::where('employee_id', $employee->id)
+                ->whereDate('date', $today)
+                ->lockForUpdate()
+                ->first();
 
-        // Jika belum check-in (absen masuk)
-        if (!$attendance->check_in) {
-            $attendance->check_in = $now;
-            $attendance->status = 'masuk';
-            $attendance->save();
+            // belum ada record → check-in
+            if (! $attendance) {
+                Attendance::create([
+                    'employee_id' => $employee->id,
+                    'date'        => $today,
+                    'check_in'    => $now,
+                    'status'      => 'masuk',
+                    'status_in'   => 'on_time', // opsional
+                ]);
 
-            $this->showAlert(
-                "✅ {$employee->name} berhasil absen masuk pada " . $now->format('H:i'), 
-                'success'
-            );
-        } 
-        // Jika sudah check-in tapi belum check-out (absen pulang)
-        elseif (!$attendance->check_out) {
-            
-            // Cek durasi kerja
-            $checkInTime = Carbon::parse($attendance->check_in);
-            $workDuration = $checkInTime->diffInHours($now);
-            
-            // Jika belum mencapai jam kerja minimum
-            if ($workDuration < $this->minimumWorkHours) {
-                $remainingHours = $this->minimumWorkHours - $workDuration;
-                $remainingMinutes = ($remainingHours - floor($remainingHours)) * 60;
-                
-                $timeRemaining = floor($remainingHours) . ' jam';
-                if ($remainingMinutes > 0) {
-                    $timeRemaining .= ' ' . round($remainingMinutes) . ' menit';
-                }
-                
-                $this->showAlert(
-                    "⏰ {$employee->name}, Anda belum bisa check-out. Waktu kerja minimal {$this->minimumWorkHours} jam. Sisa waktu: {$timeRemaining}", 
-                    'warning'
-                );
-            } else {
-                // Jika sudah mencapai jam kerja minimum, boleh check-out
-                $attendance->check_out = $now;
+                $this->showAlert("✅ {$employee->name} berhasil absen masuk pada " . $now->format('H:i'), 'success');
+                return;
+            }
+
+            // safety: ada row tapi belum check_in
+            if (! $attendance->check_in) {
+                $attendance->check_in  = $now;
+                $attendance->status    = 'masuk';
+                $attendance->status_in = 'on_time';
                 $attendance->save();
 
-                // Hitung total jam kerja
-                $totalWorkHours = $checkInTime->diffInHours($now);
-                $totalWorkMinutes = $checkInTime->diffInMinutes($now) % 60;
-                
-                $workTimeDisplay = $totalWorkHours . ' jam';
-                if ($totalWorkMinutes > 0) {
-                    $workTimeDisplay .= ' ' . $totalWorkMinutes . ' menit';
+                $this->showAlert("✅ {$employee->name} berhasil absen masuk pada " . $now->format('H:i'), 'success');
+                return;
+            }
+
+            // sudah check-in, belum check-out → coba checkout
+            if (! $attendance->check_out) {
+                $workedMinutes = Carbon::parse($attendance->check_in)->diffInMinutes($now);
+                $minMinutes    = $this->minimumWorkHours * 60; // atau pakai $this->minimumWorkMinutes jika pakai menit
+
+                if ($workedMinutes < $minMinutes) {
+                    $remaining = $minMinutes - $workedMinutes;
+                    $this->showAlert(
+                        "⏰ {$employee->name}, belum bisa check-out. Minimal {$this->minimumWorkHours} jam. Sisa: " .
+                            $this->formatWorkDuration($remaining),
+                        'warning'
+                    );
+                    return;
                 }
 
+                // ✅ simpan jam pulang saja
+                $attendance->check_out  = $now;
+                // $attendance->status  = 'pulang';   // ❌ HAPUS / JANGAN SET
+                $attendance->status_out = 'normal';   // opsional
+                $attendance->save();
+
                 $this->showAlert(
-                    "✅ {$employee->name} berhasil check-out pada " . $now->format('H:i') . 
-                    ". Total jam kerja: {$workTimeDisplay}", 
+                    "✅ {$employee->name} check-out " . $now->format('H:i') .
+                        ". Durasi: " . $this->formatWorkDuration($workedMinutes),
                     'success'
                 );
+                return;
             }
-        } 
-        // Jika sudah absen penuh (check-in dan check-out)
-        else {
-            $checkInTime = Carbon::parse($attendance->check_in)->format('H:i');
-            $checkOutTime = Carbon::parse($attendance->check_out)->format('H:i');
-            
-            $this->showAlert(
-                "ℹ️ {$employee->name} sudah absen penuh hari ini. Masuk: {$checkInTime}, Pulang: {$checkOutTime}", 
-                'warning'
-            );
-        }
+
+
+            // sudah penuh (masuk & pulang)
+            $in  = Carbon::parse($attendance->check_in)->format('H:i');
+            $out = Carbon::parse($attendance->check_out)->format('H:i');
+            $this->showAlert("ℹ️ {$employee->name} sudah absen penuh. Masuk: {$in}, Pulang: {$out}", 'warning');
+        });
 
         $this->reset('rfid_uid');
         $this->resetPage();
         $this->dispatch('focusInput');
     }
 
-    /**
-     * Mendapatkan jam kerja minimum yang diperlukan
-     */
-    public function getMinimumWorkHours()
-    {
-        return $this->minimumWorkHours;
-    }
-
-    /**
-     * Mengatur jam kerja minimum (untuk konfigurasi dinamis jika diperlukan)
-     */
-    public function setMinimumWorkHours($hours)
-    {
-        $this->minimumWorkHours = max(1, $hours); // Minimal 1 jam
-    }
-
-    /**
-     * Helper function untuk menghitung sisa waktu kerja
-     */
-    private function calculateRemainingWorkTime($checkInTime, $currentTime)
-    {
-        $checkIn = Carbon::parse($checkInTime);
-        $current = Carbon::parse($currentTime);
-        $workedHours = $checkIn->diffInHours($current);
-        
-        if ($workedHours >= $this->minimumWorkHours) {
-            return null; // Sudah memenuhi jam kerja minimum
-        }
-        
-        $remainingMinutes = ($this->minimumWorkHours * 60) - $checkIn->diffInMinutes($current);
-        
-        return [
-            'hours' => floor($remainingMinutes / 60),
-            'minutes' => $remainingMinutes % 60,
-            'total_minutes' => $remainingMinutes
-        ];
-    }
-
-    /**
-     * Helper function untuk format waktu yang lebih readable
-     */
-    private function formatWorkDuration($minutes)
-    {
-        $hours = floor($minutes / 60);
-        $mins = $minutes % 60;
-        
-        $result = '';
-        if ($hours > 0) {
-            $result .= $hours . ' jam';
-        }
-        if ($mins > 0) {
-            if ($hours > 0) $result .= ' ';
-            $result .= $mins . ' menit';
-        }
-        
-        return $result ?: '0 menit';
-    }
-
-    private function showAlert($message, $type)
-    {
-        $this->alertMessage = $message;
-        $this->alertType = $type;
-        $this->showAlert = true;
-        $this->dispatch('autoHideAlert');
-    }
-
-    public function hideAlert()
-    {
-        $this->showAlert = false;
-        $this->alertMessage = '';
-        $this->alertType = '';
-        $this->dispatch('focusInput');
-    }
-
-    public function updatedSearch()
+    public function updatedSearch(): void
     {
         $this->resetPage();
     }
 
-    public function updatedFilterDate()
+    public function updatedFilterDate(): void
     {
         $this->resetPage();
     }
@@ -219,5 +150,39 @@ class AttendanceScan extends Component
 
         return view('livewire.attendance-scan', compact('attendances'))
             ->layout('components.layouts.app');
+    }
+
+    /* =======================
+     * Helpers (alerts & waktu)
+     * ======================= */
+
+    private function showAlert(string $message, string $type = 'info'): void
+    {
+        $this->alertMessage = $message;
+        $this->alertType    = $type;
+        $this->showAlert    = true;
+
+        // auto-hide di frontend
+        $this->dispatch('autoHideAlert');
+    }
+
+    public function hideAlert(): void
+    {
+        $this->showAlert    = false;
+        $this->alertMessage = '';
+        $this->alertType    = '';
+        $this->dispatch('focusInput');
+    }
+
+    private function formatWorkDuration(int $minutes): string
+    {
+        $hours = intdiv($minutes, 60);
+        $mins  = $minutes % 60;
+
+        $parts = [];
+        if ($hours > 0) $parts[] = $hours . ' jam';
+        if ($mins  > 0) $parts[] = $mins . ' menit';
+
+        return $parts ? implode(' ', $parts) : '0 menit';
     }
 }
