@@ -15,6 +15,11 @@ class WarehouseItem extends Model
         'stock',
     ];
 
+    protected $casts = [
+        'stock' => 'decimal:2',
+    ];
+
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(WarehouseCategory::class, 'warehouse_category_id');
@@ -35,7 +40,7 @@ class WarehouseItem extends Model
     {
         return $this->hasMany(PurchaseOrderItem::class, 'item_id');
     }
-    
+
     public function stockIssueItems(): HasMany
     {
         return $this->hasMany(StockIssueItem::class);

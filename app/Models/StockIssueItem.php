@@ -14,6 +14,11 @@ class StockIssueItem extends Model
         'issued_quantity',
     ];
 
+    protected $casts = [
+        'requested_quantity' => 'decimal:2',
+        'issued_quantity'    => 'decimal:2',
+    ];
+
     public function stockIssue(): BelongsTo
     {
         return $this->belongsTo(StockIssue::class);

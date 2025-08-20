@@ -16,6 +16,15 @@ class StockReceivingItem extends Model
         'is_quantity_matched',
     ];
 
+    protected $casts = [
+        'expected_quantity' => 'decimal:2',
+        'received_quantity' => 'decimal:2',
+        'good_quantity'     => 'decimal:2',
+        'damaged_quantity'  => 'decimal:2',
+        'is_quantity_matched' => 'boolean',
+    ];
+
+
     public function stockReceiving()
     {
         return $this->belongsTo(StockReceiving::class);
@@ -35,19 +44,19 @@ class StockReceivingItem extends Model
                 $item->warehouseItem->save();
             }
         });
-        
+
         static::updated(function (StockReceivingItem $item) {
             // Jika quantity berubah, perbarui stok sesuai dengan perubahan
             if ($item->isDirty('received_quantity') && $item->warehouseItem) {
                 $originalQuantity = $item->getOriginal('received_quantity');
                 $newQuantity = $item->received_quantity;
                 $difference = $newQuantity - $originalQuantity;
-                
+
                 $item->warehouseItem->stock += $difference;
                 $item->warehouseItem->save();
             }
         });
-        
+
         static::deleted(function (StockReceivingItem $item) {
             // Jika item dihapus, kurangi stok
             if ($item->warehouseItem) {

@@ -103,8 +103,10 @@ class WarehouseItemResource extends Resource
 
                 TextColumn::make('stock')
                     ->label('Stok')
-                    ->numeric()
-                    ->formatStateUsing(fn($state, $record) => number_format($state, 0, ',', '.') . ' ' . $record->unit)
+                    ->formatStateUsing(
+                        fn($state, $record) =>
+                        number_format((float) $state, 2, ',', '.') . ' ' . $record->unit
+                    )
                     ->sortable(),
 
                 TextColumn::make('updated_at')
