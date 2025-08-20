@@ -152,7 +152,7 @@ class AdminPanelProvider extends PanelProvider
         $plugins = [
             EasyFooterPlugin::make()
                 // ->withFooterPosition('sidebar.footer')
-                ->withSentence('RBJ Corp. All Rights Reserved. [ Made with ❤️ in Tegal ]')
+                ->withSentence('RBJ Corp. All Rights Reserved.')
                 // ->withLogo(
                 //     'https://rbjcorp.id/assets/img/hero1.png', 
                 //     'https://laravel.com'                        
