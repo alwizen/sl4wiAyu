@@ -141,7 +141,7 @@ class StockReceivingResource extends Resource
                                 ->step('0.01')
                                 ->minValue(0)
                                 ->required()
-                                ->live(debounce: 200)
+                                ->live(onBlur: true)
                                 ->suffix(fn(callable $get) => $get('unit') ?? '')
                                 ->afterStateUpdated(function ($state, callable $get, callable $set) {
                                     $damaged = (float) ($get('damaged_quantity') ?? 0);
@@ -161,7 +161,7 @@ class StockReceivingResource extends Resource
                                 ->default(0)
                                 ->step('0.01')
                                 ->minValue(0)
-                                ->live(debounce: 200)
+                                ->live(onBlur: true)
                                 ->suffix(fn(callable $get) => $get('unit') ?? '')
                                 ->afterStateUpdated(function ($state, callable $get, callable $set) {
                                     $good = (float) ($get('good_quantity') ?? 0);
@@ -181,7 +181,7 @@ class StockReceivingResource extends Resource
                                 ->step('0.01')
                                 ->minValue(0)
                                 ->required()
-                                ->live(debounce: 200)
+                                ->live(onBlur: true)
                                 ->suffix(fn(callable $get) => $get('unit') ?? '')
                                 ->afterStateUpdated(function ($state, callable $get, callable $set) {
                                     $expected = (float) ($get('expected_quantity') ?? 0);

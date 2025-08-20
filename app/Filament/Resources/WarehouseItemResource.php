@@ -73,7 +73,17 @@ class WarehouseItemResource extends Resource
                 ->description('Informasi satuan dan stok barang')
                 ->columns(2)
                 ->schema([
-                    TextInput::make('unit')
+                    Select::make('unit')
+                        ->options([
+                            'Kg' => 'Kg',
+                            'Liter' => 'Liter',
+                            'Pcs' => 'Pcs',
+                            'Pouch' => 'Pouch',
+                            'Ons' => 'Ons',
+                            'Ikat' => 'Ikat',
+                            'Batang' => 'Batang',
+                            'Papan' => 'Papan'
+                        ])
                         ->label('Satuan (kg, liter, pcs)')
                         ->required()
                         ->columnSpan(1),

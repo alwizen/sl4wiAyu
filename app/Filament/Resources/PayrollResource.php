@@ -176,7 +176,8 @@ class PayrollResource extends Resource
                 Forms\Components\TextInput::make('work_days')
                     ->label('Jumlah Hari Masuk')
                     ->numeric()
-                    ->debounce(500)
+                    ->live(onBlur: true)
+                    // ->debounce(500)
                     ->required()
                     ->reactive()
                     ->afterStateUpdated(fn($state, callable $set, callable $get) => self::hitungTHP($get, $set)),
@@ -195,7 +196,8 @@ class PayrollResource extends Resource
                 Forms\Components\TextInput::make('absences')
                     ->label('Jumlah Absen')
                     ->numeric()
-                    ->debounce(500)
+                    // ->debounce(500)
+                    ->live(onBlur: true)
                     ->required()
                     ->reactive()
                     ->afterStateUpdated(fn($state, callable $set, callable $get) => self::hitungTHP($get, $set)),

@@ -34,7 +34,8 @@ class CashCategoryResource extends Resource
                     ->label('Nama Kategori')
                     ->required()
                     ->reactive()
-                    ->debounce(500)
+                    ->live(onBlur: true)
+                    // ->debounce(500)
                     ->afterStateUpdated(function (callable $set, $state) {
                         $set('slug', Str::slug($state));
                     }),
