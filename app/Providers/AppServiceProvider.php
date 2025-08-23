@@ -2,11 +2,13 @@
 
 namespace App\Providers;
 
+use App\Filament\Resources\SppgPurchaseOrderResource\Api\SppgPurchaseOrderApiService;
 use App\Models\StockReceiving;
 use App\Models\User;
 use App\Observers\StockReceivingObserver;
 use App\Policies\ActivityPolicy;
 use Filament\Support\Facades\FilamentView;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -46,5 +48,24 @@ class AppServiceProvider extends ServiceProvider
         require_once app_path('Helpers/setting.php');
         Gate::policy(Activity::class, ActivityPolicy::class);
         StockReceiving::observe(StockReceivingObserver::class);
+
+        // $this->registerSppgApiRoutes();
     }
+
+    // private function registerSppgApiRoutes()
+    // {
+    //     Route::prefix('api')
+    //         ->middleware(['api'])
+    //         ->group(function () {
+    //             // Standard CRUD routes
+    //             Route::apiResource('sppg-purchase-orders', \App\Http\Controllers\Api\SppgPurchaseOrderController::class);
+
+    //             // Custom actions
+    //             Route::post('sppg-purchase-orders/{sppg_purchase_order}/submit', [\App\Http\Controllers\Api\SppgPurchaseOrderController::class, 'submit']);
+    //             Route::post('sppg-purchase-orders/{sppg_purchase_order}/reopen', [\App\Http\Controllers\Api\SppgPurchaseOrderController::class, 'reopen']);
+
+    //             // Stats endpoint
+    //             Route::get('sppg-purchase-orders-stats', [\App\Http\Controllers\Api\SppgPurchaseOrderController::class, 'stats']);
+    //         });
+    // }
 }
