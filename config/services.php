@@ -39,5 +39,10 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI')
     ],
+    'hub' => [
+        'base_url'  => env('HUB_BASE_URL'),
+        'api_key'   => env('HUB_API_KEY'),
+        'sppg_code' => env('SPPG_CODE'),
+    ],
 
 ];

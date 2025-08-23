@@ -22,6 +22,7 @@ class SppgPurchaseOrder extends Model
     protected $casts = [
         'requested_at' => 'date',
         'delivery_time' => 'datetime:H:i',
+        'hub_synced_at' => 'datetime',
     ];
 
     public function items(): HasMany
