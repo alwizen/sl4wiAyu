@@ -13,7 +13,9 @@ class ListSppgPurchaseOrders extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+            ->label('Buat PO')
+            ->icon('heroicon-o-plus'),
         ];
     }
 }

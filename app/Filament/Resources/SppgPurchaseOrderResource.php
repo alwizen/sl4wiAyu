@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SppgPurchaseOrderResource\Pages;
-use App\Jobs\PushPoToHubJob;
 use App\Models\SppgPurchaseOrder;
 use App\Models\WarehouseItem;
 use App\Services\HubClient;
@@ -12,8 +11,6 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -28,6 +25,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Infolists\Components as Info;
 use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
+use Icetalker\FilamentTableRepeater\Forms\Components\TableRepeater;
 
 class SppgPurchaseOrderResource extends Resource
 {
@@ -37,103 +35,99 @@ class SppgPurchaseOrderResource extends Resource
 
     protected static ?string $navigationGroup = 'Pengadaan & Permintaan';
 
-    protected static ?string $navigationLabel = 'PO Dapur (SPPG)';
+    protected static ?string $navigationLabel = 'PO Dapur (v2)';
+
+    protected static ?string $label = 'PO Dapur';
 
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Grid::make()->columns(12)->schema([
-                TextInput::make('po_number')
-                    ->label('Nomor PO')
-                    ->default(fn() => SppgPurchaseOrder::generateNumber())
-                    ->disabled()
-                    ->dehydrated() // tetap simpan nilai default
-                    ->required()
-                    ->columnSpan(4),
+            Grid::make()
+                ->columns(12)
+                ->schema([
+                    TextInput::make('po_number')
+                        ->label('Nomor PO')
+                        ->default(fn() => SppgPurchaseOrder::generateNumber())
+                        ->disabled()
+                        ->dehydrated() // tetap simpan nilai default
+                        ->required()
+                        ->columnSpan(4),
 
-                DatePicker::make('requested_at')
-                    ->label('Tanggal')
-                    ->default(now())
-                    ->required()
-                    ->columnSpan(3),
+                    DatePicker::make('requested_at')
+                        ->label('Tanggal')
+                        ->default(now())
+                        ->required()
+                        ->columnSpan(3),
 
-                TimePicker::make('delivery_time')
-                    ->label('Jam Pengiriman')
-                    ->seconds(false)
-                    ->required()
-                    ->columnSpan(3),
+                    TimePicker::make('delivery_time')
+                        ->label('Jam Pengiriman')
+                        ->seconds(false)
+                        ->required()
+                        ->columnSpan(3),
 
-                TextInput::make('status')
-                    ->label('Status')
-                    ->disabled()
-                    ->dehydrated()
-                    ->default('Draft')
-                    ->columnSpan(2),
+                    TextInput::make('status')
+                        ->label('Status')
+                        ->disabled()
+                        ->dehydrated()
+                        ->default('Draft')
+                        ->columnSpan(2),
 
-                Textarea::make('notes')
-                    ->label('Catatan')
-                    ->rows(2)
-                    ->columnSpan(12),
+                    Textarea::make('notes')
+                        ->label('Catatan')
+                        ->rows(2)
+                        ->columnSpan(12),
 
-                Forms\Components\Hidden::make('created_by')
-                    ->default(fn() => auth()->id())
-                    ->dehydrated(),
-            ]),
+                    Forms\Components\Hidden::make('created_by')
+                        ->default(fn() => auth()->id())
+                        ->dehydrated(),
+                ]),
 
-            Repeater::make('items')
+            TableRepeater::make('items')
                 ->relationship('items')
                 ->label('Daftar Item')
-                ->minItems(1)
-                // ->collapsed()
-                // ->grid(12)
+                ->cloneable()
                 ->schema([
-                    Section::make()->columns(12)->schema([
-                        Toggle::make('manual_entry')
-                            ->label('Ketik Manual')
-                            ->default(false)
-                            ->live()
-                            ->columnSpan(2),
+                    Select::make('warehouse_item_id')
+                        ->label('Barang (Master)')
+                        ->options(fn() => WarehouseItem::query()
+                            ->orderBy('name')
+                            ->pluck('name', 'id'))
+                        ->searchable()
+                        ->preload()
+                        ->visible(fn($get) => !$get('manual_entry'))
+                        ->required(fn($get) => !$get('manual_entry'))
+                        ->reactive()
+                        ->afterStateUpdated(function ($state, callable $set) {
+                            if (!$state) return;
+                            $unit = optional(WarehouseItem::find($state))->unit;
+                            if ($unit) $set('unit', $unit);
+                        }),
 
-                        Select::make('warehouse_item_id')
-                            ->label('Barang (Master)')
-                            ->options(fn() => WarehouseItem::query()
-                                ->orderBy('name')
-                                ->pluck('name', 'id'))
-                            ->searchable()
-                            ->preload()
-                            ->visible(fn($get) => !$get('manual_entry'))
-                            ->required(fn($get) => !$get('manual_entry'))
-                            ->columnSpan(5)
-                            ->reactive()
-                            ->afterStateUpdated(function ($state, callable $set) {
-                                if (!$state) return;
-                                $unit = optional(WarehouseItem::find($state))->unit;
-                                if ($unit) $set('unit', $unit);
-                            }),
+                    TextInput::make('item_name')
+                        ->label('Nama Barang (Manual)')
+                        ->placeholder('Tulis nama barang…')
+                        ->visible(fn($get) => (bool) $get('manual_entry'))
+                        ->required(fn($get) => (bool) $get('manual_entry')),
 
-                        TextInput::make('item_name')
-                            ->label('Nama Barang (Manual)')
-                            ->placeholder('Tulis nama barang…')
-                            ->visible(fn($get) => (bool) $get('manual_entry'))
-                            ->required(fn($get) => (bool) $get('manual_entry'))
-                            ->columnSpan(7),
+                    TextInput::make('qty')
+                        ->label('Jumlah')
+                        ->numeric()
+                        ->step('0.01')
+                        ->required(),
 
-                        TextInput::make('qty')
-                            ->label('Jumlah')
-                            ->numeric()
-                            ->step('0.01')
-                            ->required()
-                            ->columnSpan(3),
+                    TextInput::make('unit')
+                        ->label('Satuan')
+                        ->placeholder('kg / liter / pack'),
 
-                        TextInput::make('unit')
-                            ->label('Satuan')
-                            ->placeholder('kg / liter / pack')
-                            ->columnSpan(3),
-                    ]),
+                    Toggle::make('manual_entry')
+                        ->label('Manual')
+                        ->default(false)
+                        ->live(),
                 ])
-                ->columns(3)
+
                 ->addActionLabel('Tambah Item')
                 ->reorderable()
+                ->columns(4)
         ])->columns(1);
     }
 
@@ -155,8 +149,7 @@ class SppgPurchaseOrderResource extends Resource
 
                 Tables\Columns\TextColumn::make('delivery_time')
                     ->label('Jam')
-                    // ->time('H:i')
-                    ->sortable(),
+                    ->time('H:i'),
 
                 Tables\Columns\TextColumn::make('creator.name')
                     ->label('Pembuat')
@@ -167,8 +160,7 @@ class SppgPurchaseOrderResource extends Resource
                     ->colors([
                         'gray' => 'Draft',
                         'success' => 'Submitted',
-                    ])
-                    ->sortable(),
+                    ]),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat')
@@ -198,40 +190,6 @@ class SppgPurchaseOrderResource extends Resource
 
                 Tables\Actions\EditAction::make()
                     ->visible(fn($record) => $record->status === 'Draft'),
-
-                // Action::make('submit')
-                //     ->label('Submit')
-                //     ->icon('heroicon-o-paper-airplane')
-                //     ->color('success')
-                //     ->requiresConfirmation()
-                //     ->visible(fn($record) => $record->status === 'Draft')
-                //     ->action(function (SppgPurchaseOrder $record) {
-                //         // (opsional) merge item duplikat di sini
-                //         $record->update(['status' => 'Submitted']);
-                //     }),
-                // Action::make('submit')
-                //     ->label('Submit ke Hub')
-                //     ->color('primary')
-                //     ->icon('heroicon-o-paper-airplane')
-                //     ->requiresConfirmation()
-                //     ->visible(fn($record) => $record->status === 'Draft')
-                //     ->action(function (\App\Models\SppgPurchaseOrder $record) {
-                //         // ganti status lokal
-                //         $record->status = 'Submitted';
-                //         $record->save();
-
-                //         // kirim ke Hub via Job (non-blocking)
-                //         // dispatch(new PushPoToHubJob($record->id));
-
-                //         // kalau mau langsung tanpa queue:
-                //         // (new \App\Services\HubClient)::submitIntake(...susun payload...);
-
-                //         \Filament\Notifications\Notification::make()
-                //             ->title('PO disubmit')
-                //             ->body('Sedang dikirim ke Hub...')
-                //             ->success()
-                //             ->send();
-                //     }),
                 Action::make('submitToHub')
                     ->label('Submit ke Hub')
                     ->icon('heroicon-o-paper-airplane')
@@ -252,7 +210,6 @@ class SppgPurchaseOrderResource extends Resource
                             }
                         }
 
-                        // susun payload sesuai controller Hub kita
                         $payload = [
                             'po_number'     => $record->po_number,
                             'requested_at'  => optional($record->requested_at)->toDateString(),
@@ -314,19 +271,16 @@ class SppgPurchaseOrderResource extends Resource
                                 ->body(mb_strimwidth($e->getMessage(), 0, 300, '…'))
                                 ->danger()
                                 ->send();
-
-                            // OPTIONAL: kalau mau revert status ke Draft saat gagal:
-                            // $record->update(['status' => 'Draft']);
                         }
                     }),
 
-                Action::make('reopen')
-                    ->label('Reopen')
-                    ->icon('heroicon-o-arrow-uturn-left')
-                    ->color('warning')
-                    ->requiresConfirmation()
-                    ->visible(fn($record) => $record->status === 'Submitted')
-                    ->action(fn(SppgPurchaseOrder $record) => $record->update(['status' => 'Draft'])),
+                // Action::make('reopen')
+                //     ->label('Reopen')
+                //     ->icon('heroicon-o-arrow-uturn-left')
+                //     ->color('warning')
+                //     ->requiresConfirmation()
+                //     ->visible(fn($record) => $record->status === 'Submitted')
+                //     ->action(fn(SppgPurchaseOrder $record) => $record->update(['status' => 'Draft'])),
             ])
             ->bulkActions([]);
     }
@@ -340,7 +294,7 @@ class SppgPurchaseOrderResource extends Resource
                 Info\TextEntry::make('delivery_time')->label('Jam')->dateTime('H:i'),
                 Info\TextEntry::make('status')->badge(),
                 Info\TextEntry::make('creator.name')->label('Pembuat'),
-                Info\TextEntry::make('notes')->label('Catatan')->columnSpanFull(),
+                Info\TextEntry::make('notes')->label('Catatan'),
             ]),
             Info\Section::make('Daftar Item')->schema([
                 Info\RepeatableEntry::make('items')->label('Items')->schema([
@@ -351,17 +305,14 @@ class SppgPurchaseOrderResource extends Resource
                         ->formatStateUsing(fn($state) => number_format((float) $state, 2, ',')),
 
                     Info\TextEntry::make('unit')->label('Satuan'),
-                    Info\TextEntry::make('note')->label('Catatan'),
-                ])->columns(5),
+                ])->columns(4),
             ]),
         ]);
     }
 
     public static function getRelations(): array
     {
-        return [
-            // Tambah RelationManager items jika ingin edit item dari detail.
-        ];
+        return [];
     }
 
     public static function getPages(): array
