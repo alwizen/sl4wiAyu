@@ -131,7 +131,7 @@ class SppgPurchaseOrderResource extends Resource
                             ->columnSpan(3),
                     ]),
                 ])
-                ->columns(12)
+                ->columns(3)
                 ->addActionLabel('Tambah Item')
                 ->reorderable()
         ])->columns(1);
