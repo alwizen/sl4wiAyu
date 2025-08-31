@@ -16,6 +16,7 @@ class SppgPurchaseOrderItem extends Model
         'qty',
         'unit',
         'note',
+        'delivery_time_item'
     ];
 
     protected $casts = ['qty' => 'decimal:3'];
