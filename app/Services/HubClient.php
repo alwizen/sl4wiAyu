@@ -46,4 +46,24 @@ class HubClient
 
         return $data;
     }
+
+    public static function submitReceipt(array $payload): array
+    {
+        $base = rtrim(config('services.hub.base_url'), '/');
+        $code = config('services.hub.sppg_code');
+        $url  = "{$base}/api/v1/sppgs/{$code}/receipts";
+
+        $resp = \Illuminate\Support\Facades\Http::timeout(15)
+            ->retry(2, 1000)
+            ->acceptJson()
+            ->asJson()
+            ->withToken(config('services.hub.api_key'))
+            ->withHeaders([
+                'X-Idempotency-Key' => $payload['reference'] ?? \Illuminate\Support\Str::uuid(),
+            ])
+            ->post($url, $payload);
+
+        $resp->throw();
+        return $resp->json() ?: ['ok' => true];
+    }
 }
