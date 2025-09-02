@@ -66,4 +66,43 @@ class HubClient
         $resp->throw();
         return $resp->json() ?: ['ok' => true];
     }
+
+    public static function fetchOpenReceiptItems(?string $poNumber = null, bool $onlyUnverified = true): array
+    {
+        $base = rtrim(config('services.hub.base_url'), '/');
+        $code = config('services.hub.sppg_code');
+        $url  = "{$base}/api/v1/sppgs/{$code}/receipts/open";
+
+        $resp = \Illuminate\Support\Facades\Http::timeout(15)
+            ->retry(2, 1000)
+            ->acceptJson()
+            ->withToken(config('services.hub.api_key'))
+            ->get($url, [
+                'po_number' => $poNumber,
+                'only_unverified' => $onlyUnverified ? 1 : 0,
+            ]);
+
+        $resp->throw();
+        return $resp->json();
+    }
+
+    // public static function submitReceipt(array $payload): array
+    // {
+    //     $base = rtrim(config('services.hub.base_url'), '/');
+    //     $code = config('services.hub.sppg_code');
+    //     $url  = "{$base}/api/v1/sppgs/{$code}/receipts";
+
+    //     $resp = \Illuminate\Support\Facades\Http::timeout(15)
+    //         ->retry(2, 1000)
+    //         ->acceptJson()
+    //         ->asJson()
+    //         ->withToken(config('services.hub.api_key'))
+    //         ->withHeaders([
+    //             'X-Idempotency-Key' => $payload['reference'] ?? (string) \Illuminate\Support\Str::uuid(),
+    //         ])
+    //         ->post($url, $payload);
+
+    //     $resp->throw();
+    //     return $resp->json() ?: ['ok' => true];
+    // }
 }
