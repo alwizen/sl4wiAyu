@@ -14,13 +14,26 @@ class VerifyReceipts extends Page
     protected static ?string $navigationGroup = 'SPPG';
     protected static ?string $navigationLabel = 'Verifikasi Timbangan';
 
+    // Form properties
     public string $po_number = '';
     public bool $only_unverified = true;
     public array $rows = [];
 
+    // Modal properties
+    public bool $showModal = false;
+    public int $selectedIndex = 0;
+    public string $inputQty = '';
+    public string $inputNote = '';
+
     public function mount(): void
     {
+        $this->po_number = '';
+        $this->only_unverified = true;
         $this->rows = [];
+        $this->showModal = false;
+        $this->selectedIndex = 0;
+        $this->inputQty = '';
+        $this->inputNote = '';
     }
 
     public function search(): void
@@ -38,6 +51,39 @@ class VerifyReceipts extends Page
 
         Notification::make()
             ->title("Ditemukan " . count($this->rows) . " item")
+            ->success()
+            ->send();
+    }
+
+    public function openModal(int $index): void
+    {
+        $this->selectedIndex = $index;
+        $this->inputQty = $this->rows[$index]['verified_qty'] ?? '';
+        $this->inputNote = $this->rows[$index]['note'] ?? '';
+        $this->showModal = true;
+    }
+
+    public function closeModal(): void
+    {
+        $this->showModal = false;
+        $this->inputQty = '';
+        $this->inputNote = '';
+    }
+
+    public function saveQty(): void
+    {
+        $this->validate([
+            'inputQty' => 'required|numeric|min:0',
+            'inputNote' => 'nullable|string|max:300',
+        ]);
+
+        $this->rows[$this->selectedIndex]['verified_qty'] = $this->inputQty;
+        $this->rows[$this->selectedIndex]['note'] = $this->inputNote;
+
+        $this->closeModal();
+
+        Notification::make()
+            ->title('Data berhasil disimpan')
             ->success()
             ->send();
     }
