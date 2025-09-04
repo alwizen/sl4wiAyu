@@ -3,127 +3,160 @@
 namespace App\Filament\Pages;
 
 use App\Services\HubClient;
+use Filament\Forms\Form;
+use Filament\Forms;
 use Filament\Pages\Page;
+use Filament\Actions;
 use Filament\Notifications\Notification;
+use Icetalker\FilamentTableRepeater\Forms\Components\TableRepeater;
 use Illuminate\Support\Arr;
 
 class VerifyReceipts extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-scale';
-    protected static string $view = 'filament.pages.verify-receipts';
     protected static ?string $navigationGroup = 'SPPG';
     protected static ?string $navigationLabel = 'Verifikasi Timbangan';
+    protected static string $view = 'filament.pages.verify-receipts';
 
-    // Form properties
-    public string $po_number = '';
-    public bool $only_unverified = true;
-    public array $rows = [];
+    // state filter (ditampilkan di form atas)
+    public ?array $filter = [
+        'po_number' => null,
+        'only_unverified' => true,
+    ];
 
-    // Modal properties
-    public bool $showModal = false;
-    public int $selectedIndex = 0;
-    public string $inputQty = '';
-    public string $inputNote = '';
-
-    public function mount(): void
+    public function form(Form $form): Form
     {
-        $this->po_number = '';
-        $this->only_unverified = true;
-        $this->rows = [];
-        $this->showModal = false;
-        $this->selectedIndex = 0;
-        $this->inputQty = '';
-        $this->inputNote = '';
+        return $form
+            ->schema([
+                Forms\Components\TextInput::make('filter.po_number')
+                    ->label('PO Number (opsional)')
+                    ->placeholder('SPPG-SLAWI/2025-08-23/00001'),
+
+                Forms\Components\Toggle::make('filter.only_unverified')
+                    ->label('Hanya yang belum diverifikasi')
+                    ->default(true),
+
+                Forms\Components\Actions::make([
+                    Forms\Components\Actions\Action::make('preview')
+                        ->label('Lihat jumlah item siap verifikasi')
+                        ->icon('heroicon-o-magnifying-glass')
+                        ->action(function () {
+                            $res = HubClient::fetchOpenReceiptItems(
+                                $this->filter['po_number'] ?? null,
+                                (bool) ($this->filter['only_unverified'] ?? true),
+                            );
+                            $count = (int) ($res['count'] ?? 0);
+                            Notification::make()
+                                ->title("Ditemukan {$count} item untuk diverifikasi")
+                                ->success()
+                                ->send();
+                        }),
+                ])->columnSpanFull(),
+            ]);
     }
 
-    public function search(): void
+    protected function getHeaderActions(): array
     {
-        $this->validate([
-            'po_number' => 'nullable|string|max:255',
-        ]);
+        return [
+            Actions\Action::make('verifyAndSend')
+                ->label('Muat & Verifikasi → Kirim ke Hub')
+                ->icon('heroicon-o-paper-airplane')
+                ->color('primary')
+                ->modalSubmitActionLabel('Kirim ke Hub')
+                ->form(function () {
+                    // ambil data langsung saat modal dibuka
+                    $res = HubClient::fetchOpenReceiptItems(
+                        $this->filter['po_number'] ?? null,
+                        (bool) ($this->filter['only_unverified'] ?? true),
+                    );
 
-        $res = HubClient::fetchOpenReceiptItems(
-            $this->po_number ?: null,
-            $this->only_unverified
-        );
+                    $rows = collect($res['data'] ?? [])->map(function ($r) {
+                        return [
+                            'supplier_order_item_id' => $r['supplier_order_item_id'],
+                            'po_number'   => $r['po_number'] ?? '-',
+                            'supplier'    => $r['supplier'] ?? '-',
+                            'item_name'   => $r['item_name'] ?? '-',
+                            'unit'        => $r['unit'] ?? '-',
+                            'qty_allocated' => $r['qty_allocated'] ?? null,
+                            'qty_real'      => $r['qty_real'] ?? null,
+                            'price'         => $r['price'] ?? null,
 
-        $this->rows = $res['data'] ?? [];
+                            // input:
+                            'verified_qty'   => $r['verified_qty'] ?? null,
+                            'note'           => null,
+                        ];
+                    })->values()->all();
 
-        Notification::make()
-            ->title("Ditemukan " . count($this->rows) . " item")
-            ->success()
-            ->send();
-    }
+                    if (empty($rows)) {
+                        return [
+                            Forms\Components\Placeholder::make('info')
+                                ->content('Tidak ada item untuk diverifikasi dengan filter saat ini.')
+                                ->columnSpanFull(),
+                        ];
+                    }
 
-    public function openModal(int $index): void
-    {
-        $this->selectedIndex = $index;
-        $this->inputQty = $this->rows[$index]['verified_qty'] ?? '';
-        $this->inputNote = $this->rows[$index]['note'] ?? '';
-        $this->showModal = true;
-    }
+                    return [
+                        TableRepeater::make('rows')
+                            ->label('Item untuk Diverifikasi')
+                            ->default($rows)
+                            // ->minItems(1)
+                            // ->columns(8)
+                            ->schema([
+                                Forms\Components\Hidden::make('supplier_order_item_id'),
 
-    public function closeModal(): void
-    {
-        $this->showModal = false;
-        $this->inputQty = '';
-        $this->inputNote = '';
-    }
+                                Forms\Components\TextInput::make('po_number')->label('PO')
+                                    ->disabled()->dehydrated(false),
+                                // Forms\Components\TextInput::make('supplier')->label('Supplier')
+                                //     ->disabled()->dehydrated(false),
+                                Forms\Components\TextInput::make('item_name')->label('Item')
+                                    ->disabled()->dehydrated(false),
+                                Forms\Components\TextInput::make('unit')->label('Sat')
+                                    ->disabled()->dehydrated(false)->extraInputAttributes(['style' => 'width:70px']),
 
-    public function saveQty(): void
-    {
-        $this->validate([
-            'inputQty' => 'required|numeric|min:0',
-            'inputNote' => 'nullable|string|max:300',
-        ]);
+                                // Forms\Components\TextInput::make('qty_allocated')->label('Dialokasikan')
+                                //     ->disabled()->dehydrated(false),
+                                Forms\Components\TextInput::make('qty_real')->label('Qty Real')
+                                    ->disabled()->dehydrated(false),
+                                // Forms\Components\TextInput::make('price')->label('Harga')
+                                // ->disabled()->dehydrated(false),
+                                Forms\Components\TextInput::make('verified_qty')
+                                    ->label('Verified Qty')
+                                    ->numeric()->minValue(0)->step('0.001')
+                                    ->required(),
 
-        $this->rows[$this->selectedIndex]['verified_qty'] = $this->inputQty;
-        $this->rows[$this->selectedIndex]['note'] = $this->inputNote;
+                                Forms\Components\TextInput::make('note')
+                                    ->label('Catatan')->columnSpanFull(),
+                            ])
+                            ->grid(1),
+                    ];
+                })
+                ->action(function (array $data, Actions\Action $action) {
+                    $items = collect($data['rows'] ?? [])
+                        ->filter(fn($r) => filled($r['supplier_order_item_id']) && filled($r['verified_qty']))
+                        ->map(fn($r) => [
+                            'supplier_order_item_id' => $r['supplier_order_item_id'],
+                            'verified_qty' => (string) $r['verified_qty'],
+                            'note'         => $r['note'] ?? null,
+                        ])
+                        ->values()
+                        ->all();
 
-        $this->closeModal();
+                    if (empty($items)) {
+                        $action->failureNotificationTitle('Isi minimal satu Verified Qty.');
+                        $action->failure();
+                        return;
+                    }
 
-        Notification::make()
-            ->title('Data berhasil disimpan')
-            ->success()
-            ->send();
-    }
+                    HubClient::submitReceipt([
+                        'reference'    => 'GRN-' . now()->format('Ymd-His'),
+                        'delivered_at' => now()->toIso8601String(),
+                        'items'        => $items,
+                        'external'     => ['weigher_name' => auth()->user()->name ?? 'SPPG'],
+                    ]);
 
-    public function submitVerification(): void
-    {
-        $items = [];
-        foreach ($this->rows as $row) {
-            $vid = Arr::get($row, 'supplier_order_item_id');
-            $vqty = Arr::get($row, 'verified_qty');
-            if ($vid && $vqty !== null && $vqty !== '') {
-                $items[] = [
-                    'supplier_order_item_id' => $vid,
-                    'verified_qty' => (string)$vqty,
-                    'note' => Arr::get($row, 'note'),
-                ];
-            }
-        }
-
-        if (empty($items)) {
-            Notification::make()
-                ->title('Isi dulu Verified Qty.')
-                ->danger()
-                ->send();
-            return;
-        }
-
-        HubClient::submitReceipt([
-            'reference' => 'GRN-' . now()->format('Ymd-His'),
-            'delivered_at' => now()->toIso8601String(),
-            'items' => $items,
-            'external' => ['weigher_name' => auth()->user()->name ?? 'SPPG'],
-        ]);
-
-        Notification::make()
-            ->title('Verifikasi terkirim.')
-            ->success()
-            ->send();
-
-        $this->rows = [];
-        $this->po_number = '';
+                    $action->successNotificationTitle('Verifikasi terkirim ke Hub.');
+                    $action->success();
+                }),
+        ];
     }
 }
