@@ -34,7 +34,7 @@ class SppgPurchaseOrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
 
-    protected static ?string $navigationGroup = 'Pengadaan & Permintaan';
+    protected static ?string $navigationGroup = 'SPPG';
 
     protected static ?string $navigationLabel = 'PO Dapur (v2)';
 

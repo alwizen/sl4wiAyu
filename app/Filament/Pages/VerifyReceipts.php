@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Services\HubClient;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Forms\Form;
 use Filament\Forms;
 use Filament\Pages\Page;
@@ -13,6 +14,7 @@ use Illuminate\Support\Arr;
 
 class VerifyReceipts extends Page
 {
+    use HasPageShield;
     protected static ?string $navigationIcon = 'heroicon-o-scale';
     protected static ?string $navigationGroup = 'SPPG';
     protected static ?string $navigationLabel = 'Verifikasi Timbangan';
@@ -79,7 +81,7 @@ class VerifyReceipts extends Page
                             'unit'        => $r['unit'] ?? '-',
                             'qty_allocated' => $r['qty_allocated'] ?? null,
                             'qty_real'      => $r['qty_real'] ?? null,
-                            'price'         => $r['price'] ?? null,
+                            'kitchen_unit_price' => $r['kitchen_unit_price'] ?? null,
 
                             // input:
                             'verified_qty'   => $r['verified_qty'] ?? null,
@@ -117,8 +119,8 @@ class VerifyReceipts extends Page
                                 //     ->disabled()->dehydrated(false),
                                 Forms\Components\TextInput::make('qty_real')->label('Qty Real')
                                     ->disabled()->dehydrated(false),
-                                // Forms\Components\TextInput::make('price')->label('Harga')
-                                // ->disabled()->dehydrated(false),
+                                // Forms\Components\TextInput::make('kitchen_unit_price')->label('Harga')
+                                //     ->disabled()->dehydrated(false),
                                 Forms\Components\TextInput::make('verified_qty')
                                     ->label('Verified Qty')
                                     ->numeric()->minValue(0)->step('0.001')

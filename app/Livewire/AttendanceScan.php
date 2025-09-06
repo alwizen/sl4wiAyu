@@ -67,7 +67,14 @@ class AttendanceScan extends Component
                     'status_in'   => 'on_time', // opsional
                 ]);
 
-                $this->showAlert("✅ {$employee->name} berhasil absen masuk pada " . $now->format('H:i'), 'success');
+                $alertMessage = "✅ {$employee->name} berhasil absen masuk pada " . $now->format('H:i');
+                $this->showAlert($alertMessage, 'success');
+
+                // Dispatch TTS event untuk check-in
+                $this->dispatch('playTTS', [
+                    'text' => "Selamat datang {$employee->name}",
+                    'type' => 'checkin'
+                ]);
                 return;
             }
 
@@ -78,7 +85,14 @@ class AttendanceScan extends Component
                 $attendance->status_in = 'on_time';
                 $attendance->save();
 
-                $this->showAlert("✅ {$employee->name} berhasil absen masuk pada " . $now->format('H:i'), 'success');
+                $alertMessage = "✅ {$employee->name} berhasil absen masuk pada " . $now->format('H:i');
+                $this->showAlert($alertMessage, 'success');
+
+                // Dispatch TTS event untuk check-in
+                $this->dispatch('playTTS', [
+                    'text' => "Selamat datang {$employee->name}",
+                    'type' => 'checkin'
+                ]);
                 return;
             }
 
@@ -103,19 +117,29 @@ class AttendanceScan extends Component
                 $attendance->status_out = 'normal';   // opsional
                 $attendance->save();
 
-                $this->showAlert(
-                    "✅ {$employee->name} check-out " . $now->format('H:i') .
-                        ". Durasi: " . $this->formatWorkDuration($workedMinutes),
-                    'success'
-                );
+                $alertMessage = "✅ {$employee->name} check-out " . $now->format('H:i') .
+                    ". Durasi: " . $this->formatWorkDuration($workedMinutes);
+                $this->showAlert($alertMessage, 'success');
+
+                // Dispatch TTS event untuk check-out
+                $this->dispatch('playTTS', [
+                    'text' => "Terima kasih {$employee->name}, hati-hati di jalan",
+                    'type' => 'checkout'
+                ]);
                 return;
             }
-
 
             // sudah penuh (masuk & pulang)
             $in  = Carbon::parse($attendance->check_in)->format('H:i');
             $out = Carbon::parse($attendance->check_out)->format('H:i');
-            $this->showAlert("ℹ️ {$employee->name} sudah absen penuh. Masuk: {$in}, Pulang: {$out}", 'warning');
+            $alertMessage = "ℹ️ {$employee->name} sudah absen penuh. Masuk: {$in}, Pulang: {$out}";
+            $this->showAlert($alertMessage, 'warning');
+
+            // Dispatch TTS event untuk sudah absen penuh
+            $this->dispatch('playTTS', [
+                'text' => "Sudah melakukan absen penuh {$employee->name}",
+                'type' => 'complete'
+            ]);
         });
 
         $this->reset('rfid_uid');
