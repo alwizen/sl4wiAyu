@@ -13,7 +13,7 @@
         }
 
         .rfid-container {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0d0d0e 0%, #4ba26f 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -63,7 +63,8 @@
             font-weight: 700;
             color: #2d3748;
             margin-bottom: 8px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: #141413;
+            /* linear-gradient(135deg, #667eea, #764ba2); */
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -111,7 +112,8 @@
         }
 
         .mode-button.active {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            /* background: linear-gradient(135deg, #57775e 0%, #4ba26f 100%); */
+            background: #D1B06C !important;
             color: white;
             box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
             transform: translateY(-1px);
@@ -498,7 +500,7 @@
                     autoBtn.classList.remove('active');
 
                     // Update instructions for manual mode
-                    if (modeIndicator) modeIndicator.innerHTML = '⌨️ Manual';
+                    if (modeIndicator) modeIndicator.innerHTML = 'Manual';
                     if (modeInstruction) {
                         modeInstruction.innerHTML = `
                             Ketik UID kartu RFID secara manual...<br>
@@ -522,7 +524,7 @@
                     manualBtn.classList.remove('active');
 
                     // Update instructions for auto mode
-                    if (modeIndicator) modeIndicator.innerHTML = '🤖 Auto';
+                    if (modeIndicator) modeIndicator.innerHTML = 'Auto';
                     if (modeInstruction) {
                         modeInstruction.innerHTML = `
                             Mohon tap kartu RFID (absensi) Anda...<br>
@@ -645,7 +647,7 @@
             <h2 class="scanner-title">
                 Scan Kartu RFID
                 <span class="mode-indicator" id="mode-indicator">
-                    🤖 Auto
+                    Auto
                 </span>
             </h2>
             <p class="scanner-subtitle">Tempelkan kartu RFID atau input manual</p>
@@ -653,10 +655,10 @@
             <!-- Mode Toggle - INI YANG PENTING! -->
             <div class="mode-toggle">
                 <button type="button" class="mode-button active" id="auto-mode-btn" onclick="toggleInputMode('auto')">
-                    🤖 Mode Otomatis
+                 Mode Otomatis
                 </button>
                 <button type="button" class="mode-button" id="manual-mode-btn" onclick="toggleInputMode('manual')">
-                    ⌨️ Input Manual
+                     Input Manual
                 </button>
             </div>
 
