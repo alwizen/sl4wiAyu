@@ -122,6 +122,10 @@ class SppgPurchaseOrderResource extends Resource
 
                     TimePicker::make('delivery_time_item')
                         ->label('Jam Pengiriman')
+                        ->native(false)
+                        ->displayFormat('H:i')
+                        ->default('now')
+                        ->timezone('Asia/Jakarta')
                         ->seconds(false)
                         ->required()
                         ->columnSpan(3),
