@@ -17,6 +17,9 @@ class Payroll extends Model
         'off_day',
         'absences',
         'total_thp',
+        'other',
+        'bonus',
+        'note'
     ];
 
     public function employee(): BelongsTo
@@ -24,4 +27,8 @@ class Payroll extends Model
         return $this->belongsTo(Employee::class);
     }
 
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
 }

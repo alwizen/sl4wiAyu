@@ -2,22 +2,22 @@
 <html lang="id">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Slip Gaji - {{ $employee->name }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            color: #000000;
+            color: #000;
             font-size: 10px;
         }
 
         .container {
             border: 1px solid #0a0a0a;
             padding: 15px;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 0 5px rgba(0, 0, 0, .05);
             box-sizing: border-box;
         }
 
@@ -97,6 +97,14 @@
             white-space: nowrap;
         }
 
+        .text-danger {
+            color: #dc2626;
+        }
+
+        .text-success {
+            color: #059669;
+        }
+
         .total-row td {
             font-weight: bold;
             border-top: 1px solid #ccc;
@@ -110,7 +118,6 @@
             margin-top: 20px;
         }
 
-        /* Print specific styles */
         @media print {
             body {
                 margin: 0;
@@ -125,6 +132,7 @@
                 padding: 0;
                 box-sizing: border-box;
             }
+
             .logo {
                 height: 25px;
             }
@@ -133,14 +141,27 @@
 </head>
 
 <body>
+    @php
+        // Siapkan angka agar konsisten di tabel
+        $gajiHarian = (int) ($department->salary ?? 0) * (int) ($payroll->work_days ?? 0);
+        $insentif = (int) ($department->allowance ?? 0);
+        $bonus = (int) ($department->bonus ?? 0);
+        $potAbs = (int) ($department->absence_deduction ?? 0) * (int) ($payroll->absences ?? 0);
+        $other = (int) ($payroll->other ?? 0); // bisa positif (tambahan) atau negatif (potongan)
+    @endphp
+
     <div class="container">
         <div class="header">
             <img src="{{ public_path('images/bgn.png') }}" alt="Logo" class="logo">
             <div class="header-content">
-                <h3>MBG</h3>
+                {{-- <h3>MBG</h3> --}}
                 <p>SLIP GAJI KARYAWAN</p>
-                <p>Periode: {{ \Carbon\Carbon::parse($payroll->start_date)->translatedFormat('d F Y') }} -
-                    {{ \Carbon\Carbon::parse($payroll->end_date)->translatedFormat('d F Y') }}</p>
+                <p>
+                    Periode:
+                    {{ \Carbon\Carbon::parse($payroll->start_date)->translatedFormat('d F Y') }}
+                    -
+                    {{ \Carbon\Carbon::parse($payroll->end_date)->translatedFormat('d F Y') }}
+                </p>
             </div>
         </div>
 
@@ -161,10 +182,16 @@
                 <span class="info-label">Absen</span>
                 <span class="info-value">: {{ $payroll->absences }} hari</span>
             </div>
-            @if ($payroll->permit > 0)
+            @if (($payroll->permit ?? 0) > 0)
                 <div class="info-row">
                     <span class="info-label">Izin</span>
                     <span class="info-value">: {{ $payroll->permit }} hari</span>
+                </div>
+            @endif
+            @if (($payroll->off_day ?? 0) > 0)
+                <div class="info-row">
+                    <span class="info-label">Libur</span>
+                    <span class="info-value">: {{ $payroll->off_day }} hari</span>
                 </div>
             @endif
         </div>
@@ -173,7 +200,7 @@
             <table class="calc-table">
                 <thead>
                     <tr>
-                        <th>KOMPONEN</th>
+                        <th>RINCIAN</th>
                         <th class="amount">NOMINAL</th>
                     </tr>
                 </thead>
@@ -181,34 +208,65 @@
                     <tr>
                         <td>Gaji Harian ({{ number_format($department->salary, 0, ',', '.') }} ×
                             {{ $payroll->work_days }} hari)</td>
-                        <td class="amount">Rp
-                            {{ number_format($department->salary * $payroll->work_days, 0, ',', '.') }}</td>
+                        <td class="amount">Rp {{ number_format($gajiHarian, 0, ',', '.') }}</td>
                     </tr>
                     <tr>
                         <td>Insentif Bulanan</td>
-                        <td class="amount">Rp {{ number_format($department->allowance, 0, ',', '.') }}</td>
+                        <td class="amount">Rp {{ number_format($insentif, 0, ',', '.') }}</td>
                     </tr>
-                    @if ($department->bonus > 0)
+                    @if ($bonus > 0)
                         <tr>
                             <td>Bonus</td>
-                            <td class="amount">Rp {{ number_format($department->bonus, 0, ',', '.') }}</td>
+                            <td class="amount">Rp {{ number_format($bonus, 0, ',', '.') }}</td>
                         </tr>
                     @endif
+
+                    {{-- Other / PJ (bisa positif = tambahan, negatif = potongan) --}}
+                    @if ($other !== 0)
+                        <tr>
+                            <td>
+                                Other / PJ
+                                @if ($other < 0)
+                                    <span class="text-danger">(Potongan)</span>
+                                @else
+                                    <span class="text-success">(Tambahan)</span>
+                                @endif
+                            </td>
+                            <td class="amount {{ $other < 0 ? 'text-danger' : '' }}">
+                                @if ($other < 0)
+                                    -
+                                @endif
+                                Rp {{ number_format(abs($other), 0, ',', '.') }}
+                            </td>
+                        </tr>
+                    @endif
+
                     <tr>
-                        <td style="color: #dc2626;">Potongan Absen
-                            ({{ number_format($department->absence_deduction, 0, ',', '.') }} ×
-                            {{ $payroll->absences }} hari)</td>
-                        <td class="amount" style="color: #dc2626;">- Rp
-                            {{ number_format($department->absence_deduction * $payroll->absences, 0, ',', '.') }}</td>
+                        <td class="text-danger">
+                            Potongan Absen ({{ number_format($department->absence_deduction, 0, ',', '.') }} ×
+                            {{ $payroll->absences }} hari)
+                        </td>
+                        <td class="amount text-danger">- Rp {{ number_format($potAbs, 0, ',', '.') }}</td>
                     </tr>
+
                     <tr class="total-row">
                         <td><strong>TOTAL TAKE HOME PAY</strong></td>
-                        <td class="amount" style="color: #059669;"><strong>Rp
-                                {{ number_format($payroll->total_thp, 0, ',', '.') }}</strong></td>
+                        <td class="amount text-success">
+                            <strong>Rp {{ number_format($payroll->total_thp, 0, ',', '.') }}</strong>
+                        </td>
                     </tr>
                 </tbody>
             </table>
         </div>
+
+        @if (!empty($payroll->note))
+            <div class="info-section">
+                <div class="info-row">
+                    <span class="info-label">Catatan</span>
+                    <span class="info-value">: {{ $payroll->note }}</span>
+                </div>
+            </div>
+        @endif
 
         <div class="note">
             Slip ini dicetak otomatis pada {{ $tanggal_cetak }}. Harap hubungi Admin jika ada pertanyaan.

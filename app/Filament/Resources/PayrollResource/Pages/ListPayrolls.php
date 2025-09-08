@@ -4,9 +4,9 @@ namespace App\Filament\Resources\PayrollResource\Pages;
 
 use App\Filament\Resources\PayrollResource;
 use Filament\Actions;
-use Filament\Resources\Pages\ManageRecords;
+use Filament\Resources\Pages\ListRecords;
 
-class ManagePayrolls extends ManageRecords
+class ListPayrolls extends ListRecords
 {
     protected static string $resource = PayrollResource::class;
 
@@ -15,8 +15,7 @@ class ManagePayrolls extends ManageRecords
         return [
             Actions\CreateAction::make()
                 ->label('Buat Data Penggajian')
-                ->icon('heroicon-o-plus')
-                ->color('primary'),
+                ->icon('heroicon-o-plus'),
         ];
     }
 }
