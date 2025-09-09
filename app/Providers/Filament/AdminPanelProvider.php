@@ -107,9 +107,9 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->navigationGroups([
                 'Ringkasan',
+                'SPPG (PO)',
                 'Ahli Gizi',
                 'Produksi & Pengiriman',
-                'Pengadaan & Permintaan',
                 'Keuangan',
                 'Gudang',
                 'Relawan',

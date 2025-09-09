@@ -54,6 +54,8 @@ class PurchaseOrderResource extends Resource implements HasShieldPermissions
 
     protected static ?string $navigationLabel = 'Pemesanan Supplier (PO)';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function form(Form $form): Form
     {
         return $form

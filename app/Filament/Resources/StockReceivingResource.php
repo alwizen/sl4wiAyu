@@ -38,6 +38,7 @@ class StockReceivingResource extends Resource
     protected static ?string $label = 'Penerimaan Stok';
     protected static ?string $navigationLabel = 'Penerimaan Stok';
     protected static ?string $pluralLabel = 'Penerimaan Stok';
+    protected static bool $shouldRegisterNavigation = false;
 
     public static function form(Form $form): Form
     {

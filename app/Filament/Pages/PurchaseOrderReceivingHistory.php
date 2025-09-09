@@ -18,6 +18,7 @@ class PurchaseOrderReceivingHistory extends Page implements Tables\Contracts\Has
     protected static ?string $navigationGroup = 'Pengadaan & Permintaan';
     protected static ?string $navigationIcon = 'heroicon-o-clock';
     protected static ?string $title = 'Histori Penerimaan PO';
+    protected static bool $shouldRegisterNavigation = false;
 
     protected function getTableQuery(): Builder
     {

@@ -57,15 +57,15 @@ class Dashboard extends BaseDashboard
             // GreetingWidget::class,
             // DeliveryStats::class,
             // AccountWidget::class,
-            CashTransactionStats::class,
-            CashTransactionChart::class,
-            WarehouseStockChart::class,
+            // WarehouseStockChart::class,
             // WarehouseWetChart::class,
             // WarehouseDryChart::class,
-            TodayStockReceiving::class,
-            TodayStockIssue::class,
+            // TodayStockReceiving::class,
+            // TodayStockIssue::class,
             WidgetsDeliveryStats::class,
             StatusDeliveryTabel::class,
+            CashTransactionStats::class,
+            CashTransactionChart::class,
         ];
     }
 

@@ -16,9 +16,10 @@ class VerifyReceipts extends Page
 {
     use HasPageShield;
     protected static ?string $navigationIcon = 'heroicon-o-scale';
-    protected static ?string $navigationGroup = 'SPPG';
+    protected static ?string $navigationGroup = 'SPPG (PO)';
     protected static ?string $navigationLabel = 'Verifikasi Timbangan';
     protected static string $view = 'filament.pages.verify-receipts';
+    protected static ?int $navigationSort = 1;
 
     // state filter (ditampilkan di form atas)
     public ?array $filter = [
