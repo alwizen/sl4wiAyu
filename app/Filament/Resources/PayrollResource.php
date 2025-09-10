@@ -211,7 +211,7 @@ class PayrollResource extends Resource
 
                     Forms\Components\TextInput::make('total_thp')
                         ->label('Total THP (Otomatis)')
-                        ->readOnly()
+                        // ->readOnly()
                         ->dehydrated(true)
                         ->numeric()
                         ->prefix('Rp'),
