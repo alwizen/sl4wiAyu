@@ -148,6 +148,7 @@
         $bonus = (int) ($department->bonus ?? 0);
         $potAbs = (int) ($department->absence_deduction ?? 0) * (int) ($payroll->absences ?? 0);
         $other = (int) ($payroll->other ?? 0); // bisa positif (tambahan) atau negatif (potongan)
+        $permitPay = (int) (($department->salary ?? 0) * ($payroll->permit ?? 0) * 0.5);
     @endphp
 
     <div class="container">
@@ -204,16 +205,32 @@
                         <th class="amount">NOMINAL</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     <tr>
-                        <td>Gaji Harian ({{ number_format($department->salary, 0, ',', '.') }} ×
-                            {{ $payroll->work_days }} hari)</td>
+                        <td>
+                            Gaji Harian ({{ number_format($department->salary, 0, ',', '.') }} ×
+                            {{ $payroll->work_days }} hari)
+                        </td>
                         <td class="amount">Rp {{ number_format($gajiHarian, 0, ',', '.') }}</td>
                     </tr>
+
+                    @if (($payroll->permit ?? 0) > 0)
+                        <tr>
+                            <td>
+                                Gaji Izin (50%)
+                                ({{ number_format($department->salary, 0, ',', '.') }} ×
+                                {{ $payroll->permit }} hari × 50%)
+                            </td>
+                            <td class="amount">Rp {{ number_format($permitPay, 0, ',', '.') }}</td>
+                        </tr>
+                    @endif
+
                     <tr>
-                        <td>Tunj. Kesehatan</td>
+                        <td>Tunjangan Kesehatan</td>
                         <td class="amount">Rp {{ number_format($insentif, 0, ',', '.') }}</td>
                     </tr>
+
                     @if ($bonus > 0)
                         <tr>
                             <td>Bonus</td>
@@ -223,14 +240,7 @@
 
                     @if ($other !== 0)
                         <tr>
-                            <td>
-                                PJ
-                                @if ($other < 0)
-                                    <span class="text-danger"></span>
-                                @else
-                                    <span class="text-success"></span>
-                                @endif
-                            </td>
+                            <td>PJ</td>
                             <td class="amount {{ $other < 0 ? 'text-danger' : '' }}">
                                 @if ($other < 0)
                                     -

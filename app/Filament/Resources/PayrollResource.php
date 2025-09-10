@@ -15,23 +15,69 @@ use Filament\Tables\Columns\Summarizers\Sum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
-
-// form action button
-use Filament\Forms\Components\Actions as FormActions;
-use Filament\Forms\Components\Actions\Action as FormAction;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 
 class PayrollResource extends Resource
 {
+    protected const PERMIT_RATE = 0.5; // 50% dibayar untuk hari izin
     protected static ?string $model = Payroll::class;
-
     protected static ?string $navigationIcon = 'heroicon-o-calculator';
     protected static ?string $navigationGroup = 'Relawan';
     protected static ?string $navigationLabel = 'Penggajian';
     protected static ?string $label = 'Penggajian';
 
+    /**
+     * Hitung work_days/permit/off_day/absences HANYA dari status explicit.
+     * Hari tanpa record TIDAK dihitung sebagai absen.
+     */
+    protected static function fillAttendanceFromRange(Set $set, Get $get): void
+    {
+        $employeeId = $get('employee_id');
+        $startDate  = $get('start_date');
+        $endDate    = $get('end_date');
+
+        if (!($employeeId && $startDate && $endDate)) {
+            return;
+        }
+
+        $start = \Illuminate\Support\Carbon::parse($startDate)->startOfDay();
+        $end   = \Illuminate\Support\Carbon::parse($endDate)->endOfDay();
+
+        $rows = \App\Models\Attendance::query()
+            ->select(['date', 'status'])
+            ->where('employee_id', $employeeId)
+            ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
+            ->get();
+
+        $totalDays = $start->copy()->startOfDay()->diffInDays($end->copy()->startOfDay()) + 1;
+
+        // Sesuaikan istilah status yang kamu pakai
+        $present = ['present', 'masuk', 'hadir'];
+        $permit  = ['permit', 'izin'];
+        $off     = ['off', 'libur'];
+        $absent  = ['absent', 'alpa', 'tidakhadir'];
+
+        // Normalisasi & unik per tanggal
+        $byDate = $rows->map(function ($a) {
+            $a->status = $a->status ? mb_strtolower(trim($a->status)) : null;
+            return $a;
+        })->unique('date');
+
+        // HANYA dari status explicit
+        $workDays = $byDate->filter(fn($a) => in_array($a->status, $present, true))->count();
+        $permitCt = $byDate->filter(fn($a) => in_array($a->status, $permit, true))->count();
+        $offDay   = $byDate->filter(fn($a) => in_array($a->status, $off, true))->count();
+        $absences = $byDate->filter(fn($a) => in_array($a->status, $absent, true))->count();
+
+        // set ke form
+        $set('total_day', $totalDays);
+        $set('work_days', $workDays);
+        $set('permit', $permitCt);
+        $set('off_day', $offDay);
+        $set('absences', $absences);
+    }
 
     public static function form(Form $form): Form
     {
@@ -53,13 +99,17 @@ class PayrollResource extends Resource
                                     $set('salary_per_day', $employee->department->salary ?? 0);
                                     $set('allowance', $employee->department->allowance ?? 0);
                                     $set('absence_deduction', $employee->department->absence_deduction ?? 0);
-
-                                    // Recalculate total THP
-                                    static::calculateTotalTHP($set, $get);
                                 }
                             }
+
+                            // >> Auto ambil attendance saat ganti karyawan
+                            static::fillAttendanceFromRange($set, $get);
+
+                            // Recalculate THP
+                            static::calculateTotalTHP($set, $get);
                         })
-                        ->live(),
+                        ->live(onBlur: true),
+
 
                     // Field tambahan buat tampilkan departemen
                     Forms\Components\TextInput::make('department_name')
@@ -83,16 +133,11 @@ class PayrollResource extends Resource
                         ->label('Tanggal Mulai')
                         ->required()
                         ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
-                            $startDate = $state;
-                            $endDate = $get('end_date');
+                            static::calculateTotalDays($set, $get);
 
-                            if ($startDate && $endDate) {
-                                $start = \Carbon\Carbon::parse($startDate);
-                                $end = \Carbon\Carbon::parse($endDate);
-                                $totalDays = $start->diffInDays($end) + 1; // +1 untuk include kedua tanggal
-
-                                $set('total_day', $totalDays);
-                            }
+                            // >> Auto ambil attendance saat tanggal berubah
+                            static::fillAttendanceFromRange($set, $get);
+                            static::calculateTotalTHP($set, $get);
                         })
                         ->live(onBlur: true),
 
@@ -101,16 +146,11 @@ class PayrollResource extends Resource
                         ->required()
                         ->default(now())
                         ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
-                            $endDate = $state;
-                            $startDate = $get('start_date');
+                            static::calculateTotalDays($set, $get);
 
-                            if ($startDate && $endDate) {
-                                $start = \Carbon\Carbon::parse($startDate);
-                                $end = \Carbon\Carbon::parse($endDate);
-                                $totalDays = $start->diffInDays($end) + 1; // +1 untuk include kedua tanggal
-
-                                $set('total_day', $totalDays);
-                            }
+                            // >> Auto ambil attendance saat tanggal berubah
+                            static::fillAttendanceFromRange($set, $get);
+                            static::calculateTotalTHP($set, $get);
                         })
                         ->live(onBlur: true),
                 ]),
@@ -131,7 +171,7 @@ class PayrollResource extends Resource
                         ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
                             static::calculateTotalTHP($set, $get);
                         })
-                        ->live(),
+                        ->live(onBlur: true),
 
                     Forms\Components\TextInput::make('off_day')
                         ->label('Jumlah Libur')
@@ -144,7 +184,7 @@ class PayrollResource extends Resource
                         ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
                             static::calculateTotalTHP($set, $get);
                         })
-                        ->live(),
+                        ->live(onBlur: true),
 
                     Forms\Components\TextInput::make('absences')
                         ->label('Jumlah Absen')
@@ -153,7 +193,7 @@ class PayrollResource extends Resource
                         ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
                             static::calculateTotalTHP($set, $get);
                         })
-                        ->live(),
+                        ->live(onBlur: true),
                 ]),
 
             Forms\Components\Section::make('Info Gaji')
@@ -167,7 +207,7 @@ class PayrollResource extends Resource
                         ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
                             static::calculateTotalTHP($set, $get);
                         })
-                        ->live(),
+                        ->live(onBlur: true),
 
                     Forms\Components\TextInput::make('total_thp')
                         ->label('Total THP (Otomatis)')
@@ -214,26 +254,31 @@ class PayrollResource extends Resource
      */
     protected static function calculateTotalTHP(Set $set, Get $get): void
     {
-        $workDays = (float) ($get('work_days') ?? 0);
-        $salaryPerDay = (float) ($get('salary_per_day') ?? 0);
-        $allowance = (float) ($get('allowance') ?? 0);
-        $other = (float) ($get('other') ?? 0);
-        $absences = (float) ($get('absences') ?? 0);
+        $workDays         = (float) ($get('work_days') ?? 0);
+        $permitDays       = (float) ($get('permit') ?? 0);
+        $salaryPerDay     = (float) ($get('salary_per_day') ?? 0);
+        $allowance        = (float) ($get('allowance') ?? 0);
+        $other            = (float) ($get('other') ?? 0);
+        $absences         = (float) ($get('absences') ?? 0);
         $absenceDeduction = (float) ($get('absence_deduction') ?? 0);
 
-        // Calculate total THP
-        $basicSalary = $workDays * $salaryPerDay;
-        $totalDeduction = $absences * $absenceDeduction;
-        $totalTHP = $basicSalary + $allowance + $other - $totalDeduction;
+        // Gaji pokok berdasarkan hadir & izin
+        $presentPay = $workDays * $salaryPerDay;
+        $permitPay  = $permitDays * $salaryPerDay * (static::PERMIT_RATE ?? 0.5);
 
-        // Set the calculated value
-        $set('total_thp', max(0, $totalTHP)); // Ensure THP is not negative
+        // Potongan absen
+        $totalDeduction = $absences * $absenceDeduction;
+
+        $totalTHP = $presentPay + $permitPay + $allowance + $other - $totalDeduction;
+
+        $set('total_thp', max(0, $totalTHP)); // jaga-jaga tidak negatif
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->defaultPaginationPageOption(25)
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('employee.name')
                     ->label('Nama')
