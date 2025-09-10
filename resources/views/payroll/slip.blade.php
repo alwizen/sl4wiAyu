@@ -211,7 +211,7 @@
                         <td class="amount">Rp {{ number_format($gajiHarian, 0, ',', '.') }}</td>
                     </tr>
                     <tr>
-                        <td>Insentif Bulanan</td>
+                        <td>Tunj. Kesehatan</td>
                         <td class="amount">Rp {{ number_format($insentif, 0, ',', '.') }}</td>
                     </tr>
                     @if ($bonus > 0)
@@ -221,15 +221,14 @@
                         </tr>
                     @endif
 
-                    {{-- Other / PJ (bisa positif = tambahan, negatif = potongan) --}}
                     @if ($other !== 0)
                         <tr>
                             <td>
-                                Other / PJ
+                                PJ
                                 @if ($other < 0)
-                                    <span class="text-danger">(Potongan)</span>
+                                    <span class="text-danger"></span>
                                 @else
-                                    <span class="text-success">(Tambahan)</span>
+                                    <span class="text-success"></span>
                                 @endif
                             </td>
                             <td class="amount {{ $other < 0 ? 'text-danger' : '' }}">
