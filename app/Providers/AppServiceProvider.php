@@ -50,7 +50,7 @@ class AppServiceProvider extends ServiceProvider
         require_once app_path('Helpers/setting.php');
         Gate::policy(Activity::class, ActivityPolicy::class);
         StockReceiving::observe(StockReceivingObserver::class);
-        Payroll::observe(PayrollObserver::class);
+        // Payroll::observe(PayrollObserver::class);
 
         // $this->registerSppgApiRoutes();
     }

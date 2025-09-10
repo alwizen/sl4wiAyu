@@ -19,6 +19,7 @@ class Payroll extends Model
         'total_thp',
         'other',
         'bonus',
+        'is_manual_thp',
         'note'
     ];
 

@@ -105,11 +105,12 @@ class PayrollResource extends Resource
                             // >> Auto ambil attendance saat ganti karyawan
                             static::fillAttendanceFromRange($set, $get);
 
-                            // Recalculate THP
-                            static::calculateTotalTHP($set, $get);
+                            // Recalculate THP hanya jika tidak manual
+                            if (!$get('is_manual_thp')) {
+                                static::calculateTotalTHP($set, $get);
+                            }
                         })
                         ->live(onBlur: true),
-
 
                     // Field tambahan buat tampilkan departemen
                     Forms\Components\TextInput::make('department_name')
@@ -118,6 +119,7 @@ class PayrollResource extends Resource
                         ->dehydrated(false)
                         ->default('-'),
                 ]),
+
             Section::make('Info Range Tanggal')
                 ->columns(3)
                 ->schema([
@@ -137,7 +139,11 @@ class PayrollResource extends Resource
 
                             // >> Auto ambil attendance saat tanggal berubah
                             static::fillAttendanceFromRange($set, $get);
-                            static::calculateTotalTHP($set, $get);
+
+                            // Recalculate THP hanya jika tidak manual
+                            if (!$get('is_manual_thp')) {
+                                static::calculateTotalTHP($set, $get);
+                            }
                         })
                         ->live(onBlur: true),
 
@@ -150,7 +156,11 @@ class PayrollResource extends Resource
 
                             // >> Auto ambil attendance saat tanggal berubah
                             static::fillAttendanceFromRange($set, $get);
-                            static::calculateTotalTHP($set, $get);
+
+                            // Recalculate THP hanya jika tidak manual
+                            if (!$get('is_manual_thp')) {
+                                static::calculateTotalTHP($set, $get);
+                            }
                         })
                         ->live(onBlur: true),
                 ]),
@@ -169,7 +179,10 @@ class PayrollResource extends Resource
                         ->numeric()
                         ->required()
                         ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
-                            static::calculateTotalTHP($set, $get);
+                            // Recalculate THP hanya jika tidak manual
+                            if (!$get('is_manual_thp')) {
+                                static::calculateTotalTHP($set, $get);
+                            }
                         })
                         ->live(onBlur: true),
 
@@ -182,7 +195,10 @@ class PayrollResource extends Resource
                         ->label('Jumlah Izin')
                         ->numeric()
                         ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
-                            static::calculateTotalTHP($set, $get);
+                            // Recalculate THP hanya jika tidak manual
+                            if (!$get('is_manual_thp')) {
+                                static::calculateTotalTHP($set, $get);
+                            }
                         })
                         ->live(onBlur: true),
 
@@ -191,7 +207,10 @@ class PayrollResource extends Resource
                         ->numeric()
                         ->required()
                         ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
-                            static::calculateTotalTHP($set, $get);
+                            // Recalculate THP hanya jika tidak manual
+                            if (!$get('is_manual_thp')) {
+                                static::calculateTotalTHP($set, $get);
+                            }
                         })
                         ->live(onBlur: true),
                 ]),
@@ -205,16 +224,42 @@ class PayrollResource extends Resource
                         ->prefix('Rp')
                         ->default(0)
                         ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
-                            static::calculateTotalTHP($set, $get);
+                            // Recalculate THP hanya jika tidak manual
+                            if (!$get('is_manual_thp')) {
+                                static::calculateTotalTHP($set, $get);
+                            }
                         })
                         ->live(onBlur: true),
 
+                    // Toggle untuk memilih manual atau otomatis
+                    Forms\Components\Toggle::make('is_manual_thp')
+                        ->label('Input THP Manual')
+                        ->default(false)
+                        ->afterStateUpdated(function (Set $set, Get $get, bool $state) {
+                            if (!$state) {
+                                // Jika diubah ke otomatis, recalculate THP
+                                static::calculateTotalTHP($set, $get);
+                            }
+                        })
+                        ->live()
+                        ->columnSpanFull(),
+
                     Forms\Components\TextInput::make('total_thp')
-                        ->label('Total THP (Otomatis)')
-                        // ->readOnly()
+                        ->label(function (Get $get) {
+                            return $get('is_manual_thp') ? 'Total THP (Manual)' : 'Total THP (Otomatis)';
+                        })
+                        ->readOnly(function (Get $get) {
+                            return !$get('is_manual_thp');
+                        })
                         ->dehydrated(true)
                         ->numeric()
-                        ->prefix('Rp'),
+                        ->prefix('Rp')
+                        ->helperText(function (Get $get) {
+                            if ($get('is_manual_thp')) {
+                                return 'Anda dapat menginput nilai THP secara manual.';
+                            }
+                            return 'THP dihitung otomatis berdasarkan data absensi dan gaji.';
+                        }),
 
                     Forms\Components\TextInput::make('note')
                         ->label('Catatan')
@@ -325,6 +370,13 @@ class PayrollResource extends Resource
                     ->numeric()
                     ->prefix('Rp. ')
                     ->toggleable(),
+
+                // Tambahkan kolom indicator untuk manual THP
+                Tables\Columns\IconColumn::make('is_manual_thp')
+                    ->label('Manual')
+                    ->boolean()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 Tables\Columns\TextColumn::make('total_thp')
                     ->label('Total THP')
                     ->summarize(Sum::make()
@@ -365,6 +417,13 @@ class PayrollResource extends Resource
                             ->whereYear('month', $monthDate->year)
                             ->whereMonth('month', $monthDate->month);
                     }),
+
+                // Filter untuk melihat yang manual vs otomatis
+                Tables\Filters\TernaryFilter::make('is_manual_thp')
+                    ->label('Mode THP')
+                    ->placeholder('Semua')
+                    ->trueLabel('Manual')
+                    ->falseLabel('Otomatis'),
             ])
             ->actions([
                 ActionGroup::make([
