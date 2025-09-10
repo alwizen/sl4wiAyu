@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Filament\Resources\SppgPurchaseOrderResource\Api\SppgPurchaseOrderApiService;
+use App\Models\Payroll;
 use App\Models\StockReceiving;
 use App\Models\User;
+use App\Observers\PayrollObserver;
 use App\Observers\StockReceivingObserver;
 use App\Policies\ActivityPolicy;
 use Filament\Support\Facades\FilamentView;
@@ -48,6 +50,7 @@ class AppServiceProvider extends ServiceProvider
         require_once app_path('Helpers/setting.php');
         Gate::policy(Activity::class, ActivityPolicy::class);
         StockReceiving::observe(StockReceivingObserver::class);
+        Payroll::observe(PayrollObserver::class);
 
         // $this->registerSppgApiRoutes();
     }

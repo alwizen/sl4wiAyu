@@ -86,6 +86,9 @@ class PayrollResource extends Resource
         $set('absences', $alpa);
         $set('permit', $izin);
         $set('off_day', $libur);
+
+        // AUTO-TRIGGER THP calculation setelah kehadiran dihitung
+        static::hitungTHP($get, $set);
     }
 
     /* === Util: Hitung THP (tanpa query, pakai state hidden) === */
@@ -110,6 +113,20 @@ class PayrollResource extends Resource
         $total          = $gajiHarian + $insentif + $other - $potonganAbsen;
 
         $set('total_thp', max($total, 0));
+
+        // Debug log untuk troubleshooting
+        \Log::info('THP Calculation Debug:', [
+            'employee_id' => $employeeId,
+            'salary_per_day' => $salaryPerDay,
+            'work_days' => $workDays,
+            'allowance' => $insentif,
+            'other' => $other,
+            'absences' => $absences,
+            'absence_deduction' => $potonganPerHari,
+            'gaji_harian' => $gajiHarian,
+            'potongan_absen' => $potonganAbsen,
+            'total_thp' => max($total, 0)
+        ]);
     }
 
     public static function form(Form $form): Form
@@ -190,7 +207,9 @@ class PayrollResource extends Resource
                     Forms\Components\TextInput::make('work_days')
                         ->label('Jumlah Hari Masuk')
                         ->numeric()
-                        ->required(),
+                        ->required()
+                        ->reactive()
+                        ->afterStateUpdated(fn($state, callable $set, callable $get) => static::hitungTHP($get, $set)),
 
                     Forms\Components\TextInput::make('off_day')
                         ->label('Jumlah Libur')
@@ -204,7 +223,9 @@ class PayrollResource extends Resource
                     Forms\Components\TextInput::make('absences')
                         ->label('Jumlah Absen')
                         ->numeric()
-                        ->required(),
+                        ->required()
+                        ->reactive()
+                        ->afterStateUpdated(fn($state, callable $set, callable $get) => static::hitungTHP($get, $set)),
                 ]),
 
             Forms\Components\Section::make('Info Gaji')
@@ -214,7 +235,9 @@ class PayrollResource extends Resource
                         ->label('Other / PJ')
                         ->numeric()
                         ->prefix('Rp')
-                        ->default(0),
+                        ->default(0)
+                        ->reactive() // TAMBAHAN: buat reactive
+                        ->afterStateUpdated(fn($state, callable $set, callable $get) => static::hitungTHP($get, $set)), // AUTO-UPDATE THP
 
                     Forms\Components\TextInput::make('total_thp')
                         ->label('Total THP (Otomatis)')
@@ -232,8 +255,11 @@ class PayrollResource extends Resource
                             $salaryPerDay    = number_format((int) ($get('salary_per_day') ?? 0), 0, ',', '.');
                             $insentif        = number_format((int) ($get('allowance') ?? 0), 0, ',', '.');
                             $potonganPerHari = number_format((int) ($get('absence_deduction') ?? 0), 0, ',', '.');
+                            $workDays        = (int) ($get('work_days') ?? 0);
+                            $absences        = (int) ($get('absences') ?? 0);
+                            $other           = number_format((int) ($get('other') ?? 0), 0, ',', '.');
 
-                            return "Gaji/hari: Rp {$salaryPerDay} | Insentif: Rp {$insentif} | Potongan absen/hari: Rp {$potonganPerHari}";
+                            return "Gaji/hari: Rp {$salaryPerDay} × {$workDays} hari | Insentif: Rp {$insentif} | PJ/Other: Rp {$other} | Potongan: {$absences} × Rp {$potonganPerHari}";
                         }),
 
                     Forms\Components\TextInput::make('note')

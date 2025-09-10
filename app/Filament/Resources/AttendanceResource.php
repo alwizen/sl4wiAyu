@@ -43,7 +43,7 @@ class AttendanceResource extends Resource
                 Forms\Components\Select::make('status')
                     ->options([
                         'masuk' => 'Masuk',
-                        'libur' =>'Libur',
+                        'libur' => 'Libur',
                         'izin' => 'Izin',
                         'alpa' => 'Alpa'
                     ])
@@ -69,11 +69,11 @@ class AttendanceResource extends Resource
 
                 Tables\Columns\TextColumn::make('check_in')
                     ->label('Jam Masuk')
-                    ->sortable(),
+                    ->date('H:i'),
 
                 Tables\Columns\TextColumn::make('check_out')
                     ->label('Jam Keluar')
-                    ->sortable(),
+                    ->date('H:i'),
 
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')

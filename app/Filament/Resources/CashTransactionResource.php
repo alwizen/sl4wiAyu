@@ -78,33 +78,33 @@ class CashTransactionResource extends Resource
                             ->reactive()
                             ->required(),
 
-                        Forms\Components\Select::make('purchase_order_id')
-                            ->label('Nomor Purchase Order')
-                            ->options(function () {
-                                $usedPoIds = \App\Models\CashTransaction::whereHas('category', function ($query) {
-                                    $query->where('slug', 'pembayaran-po');
-                                })
-                                    ->whereNotNull('purchase_order_id')
-                                    ->pluck('purchase_order_id')
-                                    ->toArray();
+                        // Forms\Components\Select::make('purchase_order_id')
+                        //     ->label('Nomor Purchase Order')
+                        //     ->options(function () {
+                        //         $usedPoIds = \App\Models\CashTransaction::whereHas('category', function ($query) {
+                        //             $query->where('slug', 'pembayaran-po');
+                        //         })
+                        //             ->whereNotNull('purchase_order_id')
+                        //             ->pluck('purchase_order_id')
+                        //             ->toArray();
 
-                                return \App\Models\PurchaseOrder::where('payment_status', 'paid')
-                                    ->whereNotIn('id', $usedPoIds)
-                                    ->orderBy('order_date', 'desc')
-                                    ->get()
-                                    ->mapWithKeys(fn($po) => [
-                                        $po->id => "{$po->order_number} - {$po->order_date->format('d M Y')}"
-                                    ]);
-                            })
-                            // ->searchable()
-                            ->preload()
-                            ->reactive()
-                            ->afterStateUpdated(function (callable $set, $state) {
-                                $po = \App\Models\PurchaseOrder::find($state);
-                                if ($po) {
-                                    $set('amount', $po->total_amount);
-                                }
-                            }),
+                        //         return \App\Models\PurchaseOrder::where('payment_status', 'paid')
+                        //             ->whereNotIn('id', $usedPoIds)
+                        //             ->orderBy('order_date', 'desc')
+                        //             ->get()
+                        //             ->mapWithKeys(fn($po) => [
+                        //                 $po->id => "{$po->order_number} - {$po->order_date->format('d M Y')}"
+                        //             ]);
+                        //     })
+                        //     // ->searchable()
+                        //     ->preload()
+                        //     ->reactive()
+                        //     ->afterStateUpdated(function (callable $set, $state) {
+                        //         $po = \App\Models\PurchaseOrder::find($state);
+                        //         if ($po) {
+                        //             $set('amount', $po->total_amount);
+                        //         }
+                        //     }),
 
                         Forms\Components\TextInput::make('amount')
                             ->label('Jumlah')
