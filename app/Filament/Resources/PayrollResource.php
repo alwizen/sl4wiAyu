@@ -19,6 +19,8 @@ use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Illuminate\Support\Facades\Redirect;
+use Illuminate\Database\Eloquent\Collection;
 
 class PayrollResource extends Resource
 {
@@ -247,8 +249,20 @@ class PayrollResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    ExportBulkAction::make(),
+                    \pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction::make(),
                     Tables\Actions\DeleteBulkAction::make(),
+
+                    Tables\Actions\BulkAction::make('cetak_slip_massal')
+                        ->label('Cetak Slip (Massal)')
+                        ->icon('heroicon-o-printer')
+                        ->action(function (Collection $records) {
+                            $ids = $records->pluck('id')->implode(',');
+                            return Redirect::to(route('payroll.slip.bulk', ['ids' => $ids]));
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('Cetak Slip (Massal)')
+                        ->modalSubheading('Semua slip yang dipilih akan digabung dalam satu PDF (satu halaman per karyawan).')
+                        ->modalButton('Cetak'),
                 ]),
             ]);
     }

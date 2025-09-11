@@ -54,6 +54,9 @@ Route::get('food-inspaction/{record}/print', [FoodInspactionController::class, '
 Route::get('/delivery/{record}/print', [DeliveryController::class, 'print'])
     ->name('delivery.print');
 
+Route::get('/payroll/slips/bulk', [\App\Http\Controllers\PayrollController::class, 'cetakSlipBulk'])
+    ->name('payroll.slip.bulk');
+
 
 //absen
 Route::get('/absen', AttendanceScan::class)->name('attendance.scan');
