@@ -5,6 +5,7 @@ namespace App\Filament\Resources\PayrollResource\Pages;
 use App\Filament\Resources\PayrollResource;
 use App\Models\Employee;
 use App\Models\Payroll;
+use App\Models\Attendance;
 use Carbon\Carbon;
 use Filament\Actions;
 use Filament\Forms\Get;
@@ -12,14 +13,13 @@ use Filament\Forms\Set;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 
 class ListPayrolls extends ListRecords
 {
-    protected const PERMIT_RATE = 0.5;
+    // protected const PERMIT_RATE = 0.5; // ← TIDAK DIPAKAI LAGI (izin = nominal tetap)
 
     protected static string $resource = PayrollResource::class;
 
@@ -29,6 +29,7 @@ class ListPayrolls extends ListRecords
             Actions\CreateAction::make()
                 ->label('Buat Data Penggajian')
                 ->icon('heroicon-o-plus'),
+
             Actions\Action::make('bulk_create')
                 ->label('Buat Penggajian Masal')
                 ->icon('heroicon-o-plus-circle')
@@ -39,7 +40,6 @@ class ListPayrolls extends ListRecords
                         ->multiple()
                         ->options(\App\Models\Department::pluck('name', 'id')->toArray())
                         ->placeholder('Pilih departemen (kosongkan untuk semua)')
-                        // ->preload()
                         ->live()
                         ->afterStateUpdated(fn(Set $set) => $set('employee_ids', [])),
 
@@ -63,7 +63,6 @@ class ListPayrolls extends ListRecords
                         ->required()
                         ->live(),
 
-
                     \Coolsam\Flatpickr\Forms\Components\Flatpickr::make('month')
                         ->required()
                         ->label('Bulan')
@@ -84,8 +83,6 @@ class ListPayrolls extends ListRecords
                         ->default(now()->endOfMonth())
                         ->live(),
 
-
-
                     Toggle::make('auto_calculate_attendance')
                         ->label('Otomatis Hitung Absensi')
                         ->helperText('Sistem akan mengambil data absensi dari database')
@@ -95,17 +92,16 @@ class ListPayrolls extends ListRecords
                         ->label('Lewati yang Sudah Ada')
                         ->helperText('Tidak akan membuat payroll jika sudah ada untuk periode yang sama')
                         ->default(true),
-
                 ])
                 ->action(function (array $data) {
                     $employeeIds = $data['employee_ids'];
-                    $month = $data['month'];
-                    $startDate = Carbon::parse($data['start_date']);
-                    $endDate = Carbon::parse($data['end_date']);
+                    $month       = $data['month'];
+                    $startDate   = Carbon::parse($data['start_date']);
+                    $endDate     = Carbon::parse($data['end_date']);
 
                     $created = 0;
                     $skipped = 0;
-                    $errors = [];
+                    $errors  = [];
 
                     foreach ($employeeIds as $employeeId) {
                         try {
@@ -116,8 +112,8 @@ class ListPayrolls extends ListRecords
                                 continue;
                             }
 
-                            // Check if payroll already exists
-                            if ($data['skip_existing']) {
+                            // Skip jika sudah ada payroll untuk periode & karyawan yang sama
+                            if (!empty($data['skip_existing'])) {
                                 $exists = Payroll::where('employee_id', $employeeId)
                                     ->where('month', $month)
                                     ->exists();
@@ -128,46 +124,47 @@ class ListPayrolls extends ListRecords
                                 }
                             }
 
-                            // Calculate attendance if enabled
+                            // Siapkan data absensi
                             $attendanceData = [
                                 'total_day' => $startDate->diffInDays($endDate) + 1,
                                 'work_days' => 0,
-                                'permit' => 0,
-                                'off_day' => 0,
-                                'absences' => 0,
+                                'permit'    => 0,
+                                'off_day'   => 0,
+                                'absences'  => 0,
                             ];
 
-                            if ($data['auto_calculate_attendance']) {
+                            if (!empty($data['auto_calculate_attendance'])) {
                                 $attendanceData = static::calculateAttendanceForEmployee($employeeId, $startDate, $endDate);
                             }
 
-                            // Calculate THP
+                            // Hitung THP otomatis (mode manual = false untuk bulk ini)
                             $totalThp = static::calculateTHPForEmployee($employee, $attendanceData);
 
-                            // Create payroll
+                            // Buat payroll
                             Payroll::create([
-                                'employee_id' => $employeeId,
-                                'month' => $month,
-                                'start_date' => $startDate,
-                                'end_date' => $endDate,
-                                'total_day' => $attendanceData['total_day'],
-                                'work_days' => $attendanceData['work_days'],
-                                'permit' => $attendanceData['permit'],
-                                'off_day' => $attendanceData['off_day'],
-                                'absences' => $attendanceData['absences'],
-                                'other' => 0,
-                                'total_thp' => $totalThp,
+                                'employee_id'   => $employeeId,
+                                'month'         => $month,
+                                'start_date'    => $startDate,
+                                'end_date'      => $endDate,
+                                'total_day'     => $attendanceData['total_day'],
+                                'work_days'     => $attendanceData['work_days'],
+                                'permit'        => $attendanceData['permit'],
+                                'off_day'       => $attendanceData['off_day'],
+                                'absences'      => $attendanceData['absences'],
+                                'other'         => 0,           // cashbon belum dipakai
+                                'total_thp'     => $totalThp,   // hasil kalkulasi auto
                                 'is_manual_thp' => false,
-                                'note' => 'Generated via bulk create',
+                                'note'          => 'Generated via bulk create',
                             ]);
 
                             $created++;
-                        } catch (\Exception $e) {
-                            $errors[] = "Error untuk {$employee->name}: " . $e->getMessage();
+                        } catch (\Throwable $e) {
+                            $name = isset($employee) && $employee ? $employee->name : "ID {$employeeId}";
+                            $errors[] = "Error untuk {$name}: " . $e->getMessage();
                         }
                     }
 
-                    // Show notification
+                    // Notifikasi ringkas
                     $message = "Berhasil membuat {$created} payroll";
                     if ($skipped > 0) {
                         $message .= ", {$skipped} dilewati (sudah ada)";
@@ -187,25 +184,25 @@ class ListPayrolls extends ListRecords
     }
 
     /**
-     * Calculate attendance data for specific employee and date range
+     * Hitung data absensi per karyawan & rentang tanggal.
+     * Mendukung status: masuk/hadir/present, izin/permit, libur/off, alpa/absent/tidakhadir.
      */
-    protected static function calculateAttendanceForEmployee($employeeId, $startDate, $endDate): array
+    protected static function calculateAttendanceForEmployee($employeeId, Carbon $startDate, Carbon $endDate): array
     {
-        $rows = \App\Models\Attendance::query()
+        $rows = Attendance::query()
             ->select(['date', 'status'])
             ->where('employee_id', $employeeId)
             ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
             ->get();
 
-        $totalDays = $startDate->copy()->diffInDays($endDate->copy()) + 1;
+        $totalDays = $startDate->diffInDays($endDate) + 1;
 
-        // Status categories
         $present = ['present', 'masuk', 'hadir'];
         $permit  = ['permit', 'izin'];
         $off     = ['off', 'libur'];
         $absent  = ['absent', 'alpa', 'tidakhadir'];
 
-        // Normalize and count unique by date
+        // Normalisasi status & 1 record per tanggal
         $byDate = $rows->map(function ($a) {
             $a->status = $a->status ? mb_strtolower(trim($a->status)) : null;
             return $a;
@@ -219,41 +216,48 @@ class ListPayrolls extends ListRecords
         return [
             'total_day' => $totalDays,
             'work_days' => $workDays,
-            'permit' => $permitCt,
-            'off_day' => $offDay,
-            'absences' => $absences,
+            'permit'    => $permitCt,
+            'off_day'   => $offDay,
+            'absences'  => $absences,
         ];
     }
 
     /**
-     * Calculate THP for employee with attendance data
+     * Hitung THP otomatis sesuai kebijakan terbaru:
+     *   THP = (work_days × salary_per_day)
+     *       + (permit × permit_amount)        // izin nominal tetap per hari
+     *       + allowance                        // insentif kesehatan (flat)
+     *       + bonus                            // PJ / bonus departemen (jika ada)
+     *       − (absences × absence_deduction)
      */
-    protected static function calculateTHPForEmployee($employee, $attendanceData): float
+    protected static function calculateTHPForEmployee(Employee $employee, array $attendanceData): float|int
     {
-        if (!$employee->department) {
+        $dept = $employee->department;
+        if (!$dept) {
             return 0;
         }
 
-        $workDays = $attendanceData['work_days'];
-        $permitDays = $attendanceData['permit'];
-        $absences = $attendanceData['absences'];
+        $workDays    = (int) ($attendanceData['work_days']   ?? 0);
+        $permitDays  = (int) ($attendanceData['permit']      ?? 0);
+        $absences    = (int) ($attendanceData['absences']    ?? 0);
 
-        $salaryPerDay = $employee->department->salary ?? 0;
-        $allowance = $employee->department->allowance ?? 0;
-        $absenceDeduction = $employee->department->absence_deduction ?? 0;
+        $salaryPerDay      = (int) ($dept->salary             ?? 0);
+        $allowance         = (int) ($dept->allowance          ?? 0);
+        $absenceDeduction  = (int) ($dept->absence_deduction  ?? 0);
+        $permitAmount      = (int) ($dept->permit_amount      ?? 0); // ← FIXED
+        $deptBonus         = (int) ($dept->bonus              ?? 0); // ← PJ/bonus
 
-        // Calculate based on the same formula as manual input
-        $presentPay = $workDays * $salaryPerDay;
-        $permitPay = $permitDays * $salaryPerDay * (static::PERMIT_RATE ?? 0.5);
-        $totalDeduction = $absences * $absenceDeduction;
+        $presentPay   = $workDays   * $salaryPerDay;
+        $permitPay    = $permitDays * $permitAmount;
+        $deductions   = $absences   * $absenceDeduction;
 
-        $totalTHP = $presentPay + $permitPay + $allowance - $totalDeduction;
+        $totalTHP = $presentPay + $permitPay + $allowance + $deptBonus - $deductions;
 
-        return max(0, $totalTHP);
+        return max(0, (int) $totalTHP);
     }
 
     /**
-     * Bulk update THP for multiple payrolls
+     * Recalc THP massal (hanya untuk payroll auto).
      */
     public static function bulkRecalculateTHP(array $payrollIds): int
     {
@@ -265,9 +269,9 @@ class ListPayrolls extends ListRecords
 
                 if ($payroll && !$payroll->is_manual_thp) {
                     $attendanceData = [
-                        'work_days' => $payroll->work_days,
-                        'permit' => $payroll->permit,
-                        'absences' => $payroll->absences,
+                        'work_days' => (int) $payroll->work_days,
+                        'permit'    => (int) $payroll->permit,
+                        'absences'  => (int) $payroll->absences,
                     ];
 
                     $newTHP = static::calculateTHPForEmployee($payroll->employee, $attendanceData);
@@ -275,8 +279,7 @@ class ListPayrolls extends ListRecords
                     $payroll->update(['total_thp' => $newTHP]);
                     $updated++;
                 }
-            } catch (\Exception $e) {
-                // Log error but continue
+            } catch (\Throwable $e) {
                 \Log::error("Failed to recalculate THP for payroll {$payrollId}: " . $e->getMessage());
             }
         }

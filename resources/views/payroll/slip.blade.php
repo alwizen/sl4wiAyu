@@ -266,7 +266,7 @@
 
                     @if ($deptBonus > 0)
                         <tr>
-                            <td>PJ / Bonus</td>
+                            <td>PJ</td>
                             <td class="amount">Rp {{ number_format($deptBonus, 0, ',', '.') }}</td>
                         </tr>
                     @endif
