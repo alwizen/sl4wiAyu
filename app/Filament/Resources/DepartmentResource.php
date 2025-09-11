@@ -33,27 +33,40 @@ class DepartmentResource extends Resource
             ->schema([
                 Forms\Components\TextInput::make('name')
                     ->required()
+                    ->label('Nama Jabatan')
+                    ->unique(ignoreRecord: true)
                     ->maxLength(255),
                 Forms\Components\TextInput::make('salary')
                     ->label('Gaji Harian')
                     ->required()
+                    ->prefix('Rp.')
                     ->numeric()
                     ->suffix(' /Hari')
                     ->default(0),
                 Forms\Components\TextInput::make('allowance')
                     ->label('Tunjangan')
                     ->required()
+                    ->prefix('Rp.')
+                    ->numeric()
+                    ->default(0),
+                Forms\Components\TextInput::make('permit_amount')
+                    ->label('Gaji (izin)')
+                    ->required()
+                    ->prefix('Rp.')
                     ->numeric()
                     ->default(0),
                 Forms\Components\TextInput::make('absence_deduction')
                     ->required()
                     ->label('Denda Harian')
                     ->numeric()
+                    ->prefix('Rp.')
                     ->default(0)
                     ->helperText('Denda untuk setiap ketidakhadiran'),
-                // Forms\Components\TextInput::make('bonus')
-                //     ->numeric()
-                //     ->default(null),
+                Forms\Components\TextInput::make('bonus')
+                    ->label('PJ')
+                    ->numeric()
+                    ->prefix('Rp.')
+                    ->default(0),
             ]);
     }
 
@@ -69,22 +82,26 @@ class DepartmentResource extends Resource
                     ->label('Gaji Harian')
                     ->numeric()
                     ->suffix(' /Hari')
-                    ->prefix('Rp. ')
-                    ->sortable(),
+                    ->prefix('Rp. '),
                 Tables\Columns\TextColumn::make('allowance')
                     ->numeric()
                     ->label('Tunjangan Kesehatan')
-                    ->prefix('Rp. ')
-                    ->sortable(),
+                    ->prefix('Rp. '),
                 Tables\Columns\TextColumn::make('absence_deduction')
                     ->numeric()
                     ->label('Denda Ketidakhadiran')
                     ->suffix(' /Hari')
-                    ->prefix('Rp. ')
-                    ->sortable(),
-                // Tables\Columns\TextColumn::make('bonus')
-                //     ->numeric()
-                //     ->sortable(),
+                    ->prefix('Rp. '),
+                Tables\Columns\TextColumn::make('permit_amount')
+                    ->numeric()
+                    ->label('Gaji /Izin')
+                    ->suffix(' /Hari')
+                    ->prefix('Rp. '),
+
+                Tables\Columns\TextColumn::make('bonus')
+                    ->numeric()
+                    ->label('PJ')
+                    ->prefix('Rp. '),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\PayrollResource\Pages;
 use App\Models\Employee;
 use App\Models\Payroll;
+use App\Models\Attendance; // ← PENTING: tarik model Attendance
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -18,73 +19,20 @@ use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
-use Filament\Notifications\Notification;
-use Filament\Tables\Actions\Action;
 
 class PayrollResource extends Resource
 {
-    protected const PERMIT_RATE = 0.5; // 50% dibayar untuk hari izin
     protected static ?string $model = Payroll::class;
     protected static ?string $navigationIcon = 'heroicon-o-calculator';
     protected static ?string $navigationGroup = 'Relawan';
     protected static ?string $navigationLabel = 'Penggajian';
     protected static ?string $label = 'Penggajian';
 
-    /**
-     * Hitung work_days/permit/off_day/absences HANYA dari status explicit.
-     * Hari tanpa record TIDAK dihitung sebagai absen.
-     */
-    protected static function fillAttendanceFromRange(Set $set, Get $get): void
-    {
-        $employeeId = $get('employee_id');
-        $startDate  = $get('start_date');
-        $endDate    = $get('end_date');
-
-        if (!($employeeId && $startDate && $endDate)) {
-            return;
-        }
-
-        $start = \Illuminate\Support\Carbon::parse($startDate)->startOfDay();
-        $end   = \Illuminate\Support\Carbon::parse($endDate)->endOfDay();
-
-        $rows = \App\Models\Attendance::query()
-            ->select(['date', 'status'])
-            ->where('employee_id', $employeeId)
-            ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
-            ->get();
-
-        $totalDays = $start->copy()->startOfDay()->diffInDays($end->copy()->startOfDay()) + 1;
-
-        // Sesuaikan istilah status yang kamu pakai
-        $present = ['present', 'masuk', 'hadir'];
-        $permit  = ['permit', 'izin'];
-        $off     = ['off', 'libur'];
-        $absent  = ['absent', 'alpa', 'tidakhadir'];
-
-        // Normalisasi & unik per tanggal
-        $byDate = $rows->map(function ($a) {
-            $a->status = $a->status ? mb_strtolower(trim($a->status)) : null;
-            return $a;
-        })->unique('date');
-
-        // HANYA dari status explicit
-        $workDays = $byDate->filter(fn($a) => in_array($a->status, $present, true))->count();
-        $permitCt = $byDate->filter(fn($a) => in_array($a->status, $permit, true))->count();
-        $offDay   = $byDate->filter(fn($a) => in_array($a->status, $off, true))->count();
-        $absences = $byDate->filter(fn($a) => in_array($a->status, $absent, true))->count();
-
-        // set ke form
-        $set('total_day', $totalDays);
-        $set('work_days', $workDays);
-        $set('permit', $permitCt);
-        $set('off_day', $offDay);
-        $set('absences', $absences);
-    }
-
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\Section::make('Info Relawan')
+
+            Section::make('Info Relawan')
                 ->columns(2)
                 ->schema([
                     Forms\Components\Select::make('employee_id')
@@ -93,28 +41,18 @@ class PayrollResource extends Resource
                         ->required()
                         ->searchable()
                         ->preload()
-                        ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
-                            if ($state) {
-                                $employee = Employee::with('department')->find($state);
-                                if ($employee && $employee->department) {
-                                    $set('department_name', $employee->department->name);
-                                    $set('salary_per_day', $employee->department->salary ?? 0);
-                                    $set('allowance', $employee->department->allowance ?? 0);
-                                    $set('absence_deduction', $employee->department->absence_deduction ?? 0);
-                                }
+                        ->live()
+                        ->afterStateUpdated(function ($state, Get $get, Set $set) {
+                            if (!$state) {
+                                self::clearEmployeeDerived($set);
+                                return;
                             }
+                            self::loadEmployeeData($state, $set);
+                            self::recalcTotalDay($get, $set);
+                            self::pullAttendanceStats($get, $set);  // ← tarik status absensi
+                            self::recalcThp($get, $set);
+                        }),
 
-                            // >> Auto ambil attendance saat ganti karyawan
-                            static::fillAttendanceFromRange($set, $get);
-
-                            // Recalculate THP hanya jika tidak manual
-                            if (!$get('is_manual_thp')) {
-                                static::calculateTotalTHP($set, $get);
-                            }
-                        })
-                        ->live(onBlur: true),
-
-                    // Field tambahan buat tampilkan departemen
                     Forms\Components\TextInput::make('department_name')
                         ->label('Bagian/Posisi')
                         ->readOnly()
@@ -136,189 +74,112 @@ class PayrollResource extends Resource
                     Forms\Components\DatePicker::make('start_date')
                         ->label('Tanggal Mulai')
                         ->required()
-                        ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
-                            static::calculateTotalDays($set, $get);
-
-                            // >> Auto ambil attendance saat tanggal berubah
-                            static::fillAttendanceFromRange($set, $get);
-
-                            // Recalculate THP hanya jika tidak manual
-                            if (!$get('is_manual_thp')) {
-                                static::calculateTotalTHP($set, $get);
-                            }
-                        })
-                        ->live(onBlur: true),
+                        ->live()
+                        ->afterStateUpdated(function (Get $get, Set $set) {
+                            self::recalcTotalDay($get, $set);
+                            self::pullAttendanceStats($get, $set); // ← auto-ambil absensi
+                            self::recalcThp($get, $set);
+                        }),
 
                     Forms\Components\DatePicker::make('end_date')
                         ->label('Tanggal Akhir')
                         ->required()
                         ->default(now())
-                        ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
-                            static::calculateTotalDays($set, $get);
-
-                            // >> Auto ambil attendance saat tanggal berubah
-                            static::fillAttendanceFromRange($set, $get);
-
-                            // Recalculate THP hanya jika tidak manual
-                            if (!$get('is_manual_thp')) {
-                                static::calculateTotalTHP($set, $get);
-                            }
-                        })
-                        ->live(onBlur: true),
+                        ->live()
+                        ->afterStateUpdated(function (Get $get, Set $set) {
+                            self::recalcTotalDay($get, $set);
+                            self::pullAttendanceStats($get, $set); // ← auto-ambil absensi
+                            self::recalcThp($get, $set);
+                        }),
                 ]),
 
-            Forms\Components\Section::make('Absensi')
+            Section::make('Absensi')
                 ->columns(5)
                 ->schema([
                     Forms\Components\TextInput::make('total_day')
                         ->label('Jumlah Hari')
                         ->numeric()
                         ->readOnly()
-                        ->required(),
+                        ->dehydrated(false)
+                        ->default(0),
 
                     Forms\Components\TextInput::make('work_days')
                         ->label('Jumlah Hari Masuk')
                         ->numeric()
-                        ->required()
-                        ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
-                            // Recalculate THP hanya jika tidak manual
-                            if (!$get('is_manual_thp')) {
-                                static::calculateTotalTHP($set, $get);
-                            }
-                        })
-                        ->live(onBlur: true),
+                        ->minValue(0)
+                        ->default(0)
+                        ->live()
+                        ->afterStateUpdated(fn(Get $get, Set $set) => self::recalcThp($get, $set)),
 
                     Forms\Components\TextInput::make('off_day')
                         ->label('Jumlah Libur')
                         ->numeric()
-                        ->default(0),
+                        ->minValue(0)
+                        ->default(0)
+                        ->live()
+                        ->afterStateUpdated(fn(Get $get, Set $set) => self::recalcThp($get, $set)),
 
                     Forms\Components\TextInput::make('permit')
                         ->label('Jumlah Izin')
                         ->numeric()
-                        ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
-                            // Recalculate THP hanya jika tidak manual
-                            if (!$get('is_manual_thp')) {
-                                static::calculateTotalTHP($set, $get);
-                            }
-                        })
-                        ->live(onBlur: true),
+                        ->minValue(0)
+                        ->default(0)
+                        ->live()
+                        ->afterStateUpdated(fn(Get $get, Set $set) => self::recalcThp($get, $set)),
 
                     Forms\Components\TextInput::make('absences')
                         ->label('Jumlah Absen')
                         ->numeric()
-                        ->required()
-                        ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
-                            // Recalculate THP hanya jika tidak manual
-                            if (!$get('is_manual_thp')) {
-                                static::calculateTotalTHP($set, $get);
-                            }
-                        })
-                        ->live(onBlur: true),
+                        ->minValue(0)
+                        ->default(0)
+                        ->live()
+                        ->afterStateUpdated(fn(Get $get, Set $set) => self::recalcThp($get, $set)),
                 ]),
 
-            Forms\Components\Section::make('Info Gaji')
+            Section::make('Info Gaji')
                 ->columns(3)
                 ->schema([
                     Forms\Components\TextInput::make('other')
-                        ->label('Other / PJ')
+                        ->label('Other / Cashbon (belum dipakai)')
                         ->numeric()
+                        ->minValue(0)
                         ->prefix('Rp')
                         ->default(0)
-                        ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
-                            // Recalculate THP hanya jika tidak manual
-                            if (!$get('is_manual_thp')) {
-                                static::calculateTotalTHP($set, $get);
-                            }
-                        })
-                        ->live(onBlur: true),
+                        ->live(),
 
-                    // Toggle untuk memilih manual atau otomatis
                     Forms\Components\Toggle::make('is_manual_thp')
                         ->label('Input THP Manual')
                         ->default(false)
-                        ->afterStateUpdated(function (Set $set, Get $get, bool $state) {
+                        ->live()
+                        ->afterStateUpdated(function ($state, Get $get, Set $set) {
+                            // kalau manual dimatikan, trigger hitung otomatis
                             if (!$state) {
-                                // Jika diubah ke otomatis, recalculate THP
-                                static::calculateTotalTHP($set, $get);
+                                self::recalcThp($get, $set);
                             }
                         })
-                        ->live()
-                        ->columnSpanFull(),
+                        ->helperText('Jika aktif, total THP tidak dihitung otomatis.'),
 
                     Forms\Components\TextInput::make('total_thp')
-                        ->label(function (Get $get) {
-                            return $get('is_manual_thp') ? 'Total THP (Manual)' : 'Total THP (Otomatis)';
-                        })
-                        ->readOnly(function (Get $get) {
-                            return !$get('is_manual_thp');
-                        })
-                        ->dehydrated(true)
+                        ->label('Total THP')
                         ->numeric()
+                        ->minValue(0)
                         ->prefix('Rp')
-                        ->helperText(function (Get $get) {
-                            if ($get('is_manual_thp')) {
-                                return 'Anda dapat menginput nilai THP secara manual.';
-                            }
-                            return 'THP dihitung otomatis berdasarkan data absensi dan gaji.';
-                        }),
+                        ->default(0)
+                        ->live(),
 
                     Forms\Components\TextInput::make('note')
                         ->label('Catatan')
-                        ->placeholder('Jika ada catatan'),
+                        ->placeholder('Jika ada catatan')
+                        ->columnSpanFull(),
                 ]),
 
-            // Hidden fields untuk menyimpan data dari department
+            // Hidden derived (tidak disimpan)
             Forms\Components\TextInput::make('salary_per_day')->hidden()->dehydrated(false)->default(0),
             Forms\Components\TextInput::make('allowance')->hidden()->dehydrated(false)->default(0),
             Forms\Components\TextInput::make('absence_deduction')->hidden()->dehydrated(false)->default(0),
-
+            Forms\Components\TextInput::make('permit_amount')->hidden()->dehydrated(false)->default(0),
+            Forms\Components\TextInput::make('dept_bonus')->hidden()->dehydrated(false)->default(0),
         ]);
-    }
-
-    /**
-     * Calculate Total Days from date range
-     */
-    protected static function calculateTotalDays(Set $set, Get $get): void
-    {
-        $startDate = $get('start_date');
-        $endDate = $get('end_date');
-
-        if ($startDate && $endDate) {
-            $start = Carbon::parse($startDate);
-            $end = Carbon::parse($endDate);
-
-            // Calculate total days including both start and end date
-            $totalDays = $start->diffInDays($end) + 1;
-
-            $set('total_day', $totalDays);
-        }
-    }
-
-    /**
-     * Calculate Total THP automatically
-     * Formula: (work_days * salary_per_day) + allowance + other - (absences * absence_deduction)
-     */
-    protected static function calculateTotalTHP(Set $set, Get $get): void
-    {
-        $workDays         = (float) ($get('work_days') ?? 0);
-        $permitDays       = (float) ($get('permit') ?? 0);
-        $salaryPerDay     = (float) ($get('salary_per_day') ?? 0);
-        $allowance        = (float) ($get('allowance') ?? 0);
-        $other            = (float) ($get('other') ?? 0);
-        $absences         = (float) ($get('absences') ?? 0);
-        $absenceDeduction = (float) ($get('absence_deduction') ?? 0);
-
-        // Gaji pokok berdasarkan hadir & izin
-        $presentPay = $workDays * $salaryPerDay;
-        $permitPay  = $permitDays * $salaryPerDay * (static::PERMIT_RATE ?? 0.5);
-
-        // Potongan absen
-        $totalDeduction = $absences * $absenceDeduction;
-
-        $totalTHP = $presentPay + $permitPay + $allowance + $other - $totalDeduction;
-
-        $set('total_thp', max(0, $totalTHP)); // jaga-jaga tidak negatif
     }
 
     public static function table(Table $table): Table
@@ -327,79 +188,23 @@ class PayrollResource extends Resource
             ->defaultPaginationPageOption(25)
             ->defaultSort('created_at', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('employee.name')
-                    ->label('Nama')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('employee.department.name')
-                    ->label('Posisi')
-                    ->badge(),
-                Tables\Columns\TextColumn::make('month')
-                    ->label('Bulan')
-                    ->date('M Y'),
-                Tables\Columns\TextColumn::make('start_date')
-                    ->date('d M')
-                    ->label('Dari'),
-                Tables\Columns\TextColumn::make('end_date')
-                    ->label('Sampai')
-                    ->date('d M'),
-                Tables\Columns\TextColumn::make('work_days')
-                    ->label('Masuk')
-                    ->numeric()
-                    ->suffix(' Hari')
-                    ->toggleable(),
-                Tables\Columns\TextColumn::make('off_day')
-                    ->label('Libur')
-                    ->numeric()
-                    ->suffix(' Hari')
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('permit')
-                    ->label('Izin')
-                    ->numeric()
-                    ->suffix(' Hari')
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('absences')
-                    ->label('Absen')
-                    ->numeric()
-                    ->suffix(' Hari')
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('employee.department.allowance')
-                    ->numeric()
-                    ->label('Kesehatan')
-                    ->prefix('Rp. '),
-
-                Tables\Columns\TextColumn::make('other')
-                    ->label('PJ')
-                    ->numeric()
-                    ->prefix('Rp. ')
-                    ->toggleable(),
-
-                // Tambahkan kolom indicator untuk manual THP
-                Tables\Columns\IconColumn::make('is_manual_thp')
-                    ->label('Manual')
-                    ->boolean()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('total_thp')
-                    ->label('Total THP')
-                    ->summarize(Sum::make()
-                        ->label('Total')
-                        ->prefix('Rp. '))
-                    ->numeric()
-                    ->prefix('Rp. '),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('employee.name')->label('Nama')->searchable(),
+                Tables\Columns\TextColumn::make('employee.department.name')->label('Posisi')->badge(),
+                Tables\Columns\TextColumn::make('month')->label('Bulan')->date('M Y'),
+                Tables\Columns\TextColumn::make('start_date')->date('d M')->label('Dari'),
+                Tables\Columns\TextColumn::make('end_date')->label('Sampai')->date('d M'),
+                Tables\Columns\TextColumn::make('work_days')->label('Masuk')->numeric()->suffix(' Hari')->toggleable(),
+                Tables\Columns\TextColumn::make('off_day')->label('Libur')->numeric()->suffix(' Hari')->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('permit')->label('Izin')->numeric()->suffix(' Hari')->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('absences')->label('Absen')->numeric()->suffix(' Hari')->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('employee.department.allowance')->numeric()->label('Kesehatan')->prefix('Rp. '),
+                Tables\Columns\IconColumn::make('is_manual_thp')->label('Manual')->boolean()->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('total_thp')->label('Total THP')->summarize(Sum::make()->label('Total')->prefix('Rp. '))->numeric()->prefix('Rp. '),
+                Tables\Columns\TextColumn::make('created_at')->dateTime()->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')->dateTime()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('employee_id')
-                    ->label('Nama Relawan')
-                    ->relationship('employee', 'name')
-                    ->searchable()
-                    ->preload(),
-
+                Tables\Filters\SelectFilter::make('employee_id')->label('Nama Relawan')->relationship('employee', 'name')->searchable()->preload(),
                 Tables\Filters\Filter::make('month')
                     ->label('Bulan & Tahun')
                     ->form([
@@ -411,184 +216,15 @@ class PayrollResource extends Resource
                             ->required(),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
-                        if (! isset($data['month'])) {
-                            return $query;
-                        }
+                        if (empty($data['month'])) return $query;
                         $monthDate = Carbon::createFromFormat('Y-m', $data['month']);
-                        return $query
-                            ->whereYear('month', $monthDate->year)
+                        return $query->whereYear('month', $monthDate->year)
                             ->whereMonth('month', $monthDate->month);
                     }),
-
-                // Filter untuk melihat yang manual vs otomatis
-                Tables\Filters\TernaryFilter::make('is_manual_thp')
-                    ->label('Mode THP')
-                    ->placeholder('Semua')
-                    ->trueLabel('Manual')
-                    ->falseLabel('Otomatis'),
+                Tables\Filters\TernaryFilter::make('is_manual_thp')->label('Mode THP')
+                    ->placeholder('Semua')->trueLabel('Manual')->falseLabel('Otomatis'),
             ])
             ->actions([
-                Action::make('bulk_create')
-                    ->label('Buat Payroll Massal')
-                    ->icon('heroicon-o-plus-circle')
-                    ->color('primary')
-                    ->form([
-                        Forms\Components\Section::make('Pilih Karyawan')
-                            ->schema([
-                                Forms\Components\Select::make('department_ids')
-                                    ->label('Filter Berdasarkan Departemen')
-                                    ->multiple()
-                                    ->options(\App\Models\Department::pluck('name', 'id')->toArray())
-                                    ->placeholder('Pilih departemen (kosongkan untuk semua)')
-                                    ->preload()
-                                    ->live()
-                                    ->afterStateUpdated(fn(Set $set) => $set('employee_ids', [])),
-
-                                Forms\Components\CheckboxList::make('employee_ids')
-                                    ->label('Pilih Karyawan')
-                                    ->options(function (Get $get) {
-                                        $query = \App\Models\Employee::with('department');
-
-                                        if (!empty($get('department_ids'))) {
-                                            $query->whereIn('department_id', $get('department_ids'));
-                                        }
-
-                                        return $query->get()->mapWithKeys(function ($employee) {
-                                            $deptName = $employee->department ? $employee->department->name : 'No Dept';
-                                            return [$employee->id => "{$employee->name} ({$deptName})"];
-                                        })->toArray();
-                                    })
-                                    ->columns(2)
-                                    ->searchable()
-                                    ->bulkToggleable()
-                                    ->required()
-                                    ->live(),
-                            ]),
-
-                        Forms\Components\Section::make('Periode Payroll')
-                            ->columns(3)
-                            ->schema([
-                                \Coolsam\Flatpickr\Forms\Components\Flatpickr::make('month')
-                                    ->required()
-                                    ->label('Bulan')
-                                    ->monthPicker()
-                                    ->format('Y-m')
-                                    ->displayFormat('F Y')
-                                    ->default(now()->format('Y-m')),
-
-                                Forms\Components\DatePicker::make('start_date')
-                                    ->label('Tanggal Mulai')
-                                    ->required()
-                                    ->default(now()->startOfMonth())
-                                    ->live(),
-
-                                Forms\Components\DatePicker::make('end_date')
-                                    ->label('Tanggal Akhir')
-                                    ->required()
-                                    ->default(now()->endOfMonth())
-                                    ->live(),
-                            ]),
-
-                        Forms\Components\Section::make('Opsi Tambahan')
-                            ->columns(2)
-                            ->schema([
-                                Forms\Components\Toggle::make('auto_calculate_attendance')
-                                    ->label('Otomatis Hitung Absensi')
-                                    ->helperText('Sistem akan mengambil data absensi dari database')
-                                    ->default(true),
-
-                                Forms\Components\Toggle::make('skip_existing')
-                                    ->label('Lewati yang Sudah Ada')
-                                    ->helperText('Tidak akan membuat payroll jika sudah ada untuk periode yang sama')
-                                    ->default(true),
-                            ]),
-                    ])
-                    ->action(function (array $data) {
-                        $employeeIds = $data['employee_ids'];
-                        $month = $data['month'];
-                        $startDate = Carbon::parse($data['start_date']);
-                        $endDate = Carbon::parse($data['end_date']);
-
-                        $created = 0;
-                        $skipped = 0;
-                        $errors = [];
-
-                        foreach ($employeeIds as $employeeId) {
-                            try {
-                                $employee = Employee::with('department')->find($employeeId);
-
-                                if (!$employee) {
-                                    $errors[] = "Employee ID {$employeeId} tidak ditemukan";
-                                    continue;
-                                }
-
-                                // Check if payroll already exists
-                                if ($data['skip_existing']) {
-                                    $exists = Payroll::where('employee_id', $employeeId)
-                                        ->where('month', $month)
-                                        ->exists();
-
-                                    if ($exists) {
-                                        $skipped++;
-                                        continue;
-                                    }
-                                }
-
-                                // Calculate attendance if enabled
-                                $attendanceData = [
-                                    'total_day' => $startDate->diffInDays($endDate) + 1,
-                                    'work_days' => 0,
-                                    'permit' => 0,
-                                    'off_day' => 0,
-                                    'absences' => 0,
-                                ];
-
-                                if ($data['auto_calculate_attendance']) {
-                                    $attendanceData = static::calculateAttendanceForEmployee($employeeId, $startDate, $endDate);
-                                }
-
-                                // Calculate THP
-                                $totalThp = static::calculateTHPForEmployee($employee, $attendanceData);
-
-                                // Create payroll
-                                Payroll::create([
-                                    'employee_id' => $employeeId,
-                                    'month' => $month,
-                                    'start_date' => $startDate,
-                                    'end_date' => $endDate,
-                                    'total_day' => $attendanceData['total_day'],
-                                    'work_days' => $attendanceData['work_days'],
-                                    'permit' => $attendanceData['permit'],
-                                    'off_day' => $attendanceData['off_day'],
-                                    'absences' => $attendanceData['absences'],
-                                    'other' => 0,
-                                    'total_thp' => $totalThp,
-                                    'is_manual_thp' => false,
-                                    'note' => 'Generated via bulk create',
-                                ]);
-
-                                $created++;
-                            } catch (\Exception $e) {
-                                $errors[] = "Error untuk {$employee->name}: " . $e->getMessage();
-                            }
-                        }
-
-                        // Show notification
-                        $message = "Berhasil membuat {$created} payroll";
-                        if ($skipped > 0) {
-                            $message .= ", {$skipped} dilewati (sudah ada)";
-                        }
-                        if (!empty($errors)) {
-                            $message .= ". Errors: " . implode(', ', array_slice($errors, 0, 3));
-                        }
-
-                        Notification::make()
-                            ->title($created > 0 ? 'Bulk Create Berhasil' : 'Bulk Create Gagal')
-                            ->body($message)
-                            ->color($created > 0 ? 'success' : 'warning')
-                            ->send();
-                    })
-                    ->modalWidth('4xl'),
                 ActionGroup::make([
                     Tables\Actions\Action::make('cetak_slip')
                         ->label('Cetak Slip')
@@ -608,111 +244,157 @@ class PayrollResource extends Resource
             ]);
     }
 
-
-    /**
-     * Calculate attendance data for specific employee and date range
-     */
-    protected static function calculateAttendanceForEmployee($employeeId, $startDate, $endDate): array
-    {
-        $rows = \App\Models\Attendance::query()
-            ->select(['date', 'status'])
-            ->where('employee_id', $employeeId)
-            ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
-            ->get();
-
-        $totalDays = $startDate->copy()->diffInDays($endDate->copy()) + 1;
-
-        // Status categories
-        $present = ['present', 'masuk', 'hadir'];
-        $permit  = ['permit', 'izin'];
-        $off     = ['off', 'libur'];
-        $absent  = ['absent', 'alpa', 'tidakhadir'];
-
-        // Normalize and count unique by date
-        $byDate = $rows->map(function ($a) {
-            $a->status = $a->status ? mb_strtolower(trim($a->status)) : null;
-            return $a;
-        })->unique('date');
-
-        $workDays = $byDate->filter(fn($a) => in_array($a->status, $present, true))->count();
-        $permitCt = $byDate->filter(fn($a) => in_array($a->status, $permit, true))->count();
-        $offDay   = $byDate->filter(fn($a) => in_array($a->status, $off, true))->count();
-        $absences = $byDate->filter(fn($a) => in_array($a->status, $absent, true))->count();
-
-        return [
-            'total_day' => $totalDays,
-            'work_days' => $workDays,
-            'permit' => $permitCt,
-            'off_day' => $offDay,
-            'absences' => $absences,
-        ];
-    }
-
-    /**
-     * Calculate THP for employee with attendance data
-     */
-    protected static function calculateTHPForEmployee($employee, $attendanceData): float
-    {
-        if (!$employee->department) {
-            return 0;
-        }
-
-        $workDays = $attendanceData['work_days'];
-        $permitDays = $attendanceData['permit'];
-        $absences = $attendanceData['absences'];
-
-        $salaryPerDay = $employee->department->salary ?? 0;
-        $allowance = $employee->department->allowance ?? 0;
-        $absenceDeduction = $employee->department->absence_deduction ?? 0;
-
-        // Calculate based on the same formula as manual input
-        $presentPay = $workDays * $salaryPerDay;
-        $permitPay = $permitDays * $salaryPerDay * (static::PERMIT_RATE ?? 0.5);
-        $totalDeduction = $absences * $absenceDeduction;
-
-        $totalTHP = $presentPay + $permitPay + $allowance - $totalDeduction;
-
-        return max(0, $totalTHP);
-    }
-
-    /**
-     * Bulk update THP for multiple payrolls
-     */
-    public static function bulkRecalculateTHP(array $payrollIds): int
-    {
-        $updated = 0;
-
-        foreach ($payrollIds as $payrollId) {
-            try {
-                $payroll = Payroll::with('employee.department')->find($payrollId);
-
-                if ($payroll && !$payroll->is_manual_thp) {
-                    $attendanceData = [
-                        'work_days' => $payroll->work_days,
-                        'permit' => $payroll->permit,
-                        'absences' => $payroll->absences,
-                    ];
-
-                    $newTHP = static::calculateTHPForEmployee($payroll->employee, $attendanceData);
-
-                    $payroll->update(['total_thp' => $newTHP]);
-                    $updated++;
-                }
-            } catch (\Exception $e) {
-                // Log error but continue
-                \Log::error("Failed to recalculate THP for payroll {$payrollId}: " . $e->getMessage());
-            }
-        }
-
-        return $updated;
-    }
-
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListPayrolls::route('/'),
+            'index'  => Pages\ListPayrolls::route('/'),
             'create' => Pages\CreatePayroll::route('/create'),
-            'edit' => Pages\EditPayroll::route('/{record}/edit'),
+            'edit'   => Pages\EditPayroll::route('/{record}/edit'),
         ];
+    }
+
+    // =========================
+    // Helpers
+    // =========================
+
+    protected static function loadEmployeeData(int $employeeId, Set $set): void
+    {
+        $emp = Employee::with('department')->find($employeeId);
+
+        $deptName   = $emp?->department?->name ?? '-';
+        $salary     = (int) ($emp?->department?->salary ?? 0);
+        $allowance  = (int) ($emp?->department?->allowance ?? 0);          // insentif kesehatan
+        $deduction  = (int) ($emp?->department?->absence_deduction ?? 0);
+        $permitAmt  = (int) ($emp?->department?->permit_amount ?? 0);      // nominal izin per hari
+        $deptBonus  = (int) ($emp?->department?->bonus ?? 0);              // PJ / bonus leader
+
+        $set('department_name', $deptName);
+        $set('salary_per_day', $salary);
+        $set('allowance', $allowance);
+        $set('absence_deduction', $deduction);
+        $set('permit_amount', $permitAmt);
+        $set('dept_bonus', $deptBonus);
+    }
+
+
+    protected static function clearEmployeeDerived(Set $set): void
+    {
+        $set('department_name', '-');
+        $set('salary_per_day', 0);
+        $set('allowance', 0);
+        $set('absence_deduction', 0);
+        $set('permit_amount', 0);
+        $set('dept_bonus', 0);
+
+        // juga kosongkan angka absensi
+        $set('work_days', 0);
+        $set('permit', 0);
+        $set('off_day', 0);
+        $set('absences', 0);
+        $set('total_thp', 0);
+        $set('total_day', 0);
+    }
+
+    protected static function recalcTotalDay(Get $get, Set $set): void
+    {
+        $start = $get('start_date');
+        $end   = $get('end_date');
+
+        if (!$start || !$end) {
+            $set('total_day', 0);
+            return;
+        }
+
+        try {
+            $s = Carbon::parse($start)->startOfDay();
+            $e = Carbon::parse($end)->startOfDay();
+            $days = $s->diffInDays($e) + 1;
+            $set('total_day', max(0, $days));
+        } catch (\Throwable $e) {
+            $set('total_day', 0);
+        }
+    }
+
+    /**
+     * Tarik statistik absensi dari tabel attendances berdasar status.
+     * - masuk -> work_days
+     * - izin  -> permit
+     * - libur -> off_day
+     * - alpa  -> absences
+     */
+    protected static function pullAttendanceStats(Get $get, Set $set): void
+    {
+        $employeeId = (int) ($get('employee_id') ?? 0);
+        $start      = $get('start_date');
+        $end        = $get('end_date');
+
+        if (!$employeeId || !$start || !$end) {
+            $set('work_days', 0);
+            $set('permit', 0);
+            $set('off_day', 0);
+            $set('absences', 0);
+            return;
+        }
+
+        try {
+            $from = \Illuminate\Support\Carbon::parse($start)->toDateString();
+            $to   = \Illuminate\Support\Carbon::parse($end)->toDateString();
+
+            $q = Attendance::query()
+                ->where('employee_id', $employeeId)
+                ->whereBetween('date', [$from, $to]);
+
+            $workDays = (clone $q)->where('status', 'masuk')->count();
+            $permit   = (clone $q)->where('status', 'izin')->count();
+            $off      = (clone $q)->where('status', 'libur')->count();
+            $absent   = (clone $q)->where('status', 'alpa')->count();
+
+            $set('work_days', $workDays);
+            $set('permit', $permit);
+            $set('off_day', $off);
+            $set('absences', $absent);
+        } catch (\Throwable $e) {
+            $set('work_days', 0);
+            $set('permit', 0);
+            $set('off_day', 0);
+            $set('absences', 0);
+        }
+    }
+
+    /**
+     * THP otomatis (jika BUKAN manual):
+     *   THP = (work_days × salary_per_day)
+     *       + (permit × permit_amount)
+     *       + allowance                      // NEW
+     *       + dept_bonus                     // NEW (PJ)
+     *       − (absences × absence_deduction)
+     * Catatan:
+     *   - off_day tidak dibayar
+     *   - other/cashbon BELUM dihitung sekarang
+     */
+    protected static function recalcThp(Get $get, Set $set): void
+    {
+        if ((bool) ($get('is_manual_thp') ?? false)) {
+            // Mode manual murni: jangan ubah total_thp sama sekali
+            return;
+        }
+
+        $workDays   = (int) ($get('work_days') ?? 0);
+        $permitDays = (int) ($get('permit') ?? 0);
+        $absences   = (int) ($get('absences') ?? 0);
+
+        $daily      = (int) ($get('salary_per_day') ?? 0);
+        $permitAmt  = (int) ($get('permit_amount') ?? 0);
+        $deduction  = (int) ($get('absence_deduction') ?? 0);
+
+        $allowance  = (int) ($get('allowance') ?? 0);     // NEW
+        $deptBonus  = (int) ($get('dept_bonus') ?? 0);    // NEW
+
+        $presentPay = $workDays * $daily;
+        $permitPay  = $permitDays * $permitAmt;
+        $penalty    = $absences * $deduction;
+
+        $thp = max(0, (int) ($presentPay + $permitPay + $allowance + $deptBonus - $penalty));
+        $set('total_thp', $thp);
     }
 }

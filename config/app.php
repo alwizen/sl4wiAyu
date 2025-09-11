@@ -124,6 +124,6 @@ return [
     ],
 
     'kitchen_code' => env('SPPG_CODE', 'SPPG-'),
-
-
+    'address' => env('APP_ADDRESS', 'Alamat belum diatur'),
+    'city'    => env('APP_CITY', 'Kota'),
 ];

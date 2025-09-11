@@ -6,8 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Department extends Model
 {
-    //
-
-    // add fillable
-    protected $fillable = ['name', 'allowance', 'salary', 'bonus', 'absence_deduction'];
+    protected $fillable = [
+        'name',
+        'allowance',
+        'salary',
+        'bonus', //PJ
+        'absence_deduction',
+        'permit_amount'
+    ];
+    protected $casts = [
+        'permit_amount' => 'integer',
+    ];
 }
