@@ -60,15 +60,6 @@
             font-weight: 700;
         }
 
-        .sub {
-            font-size: 10px;
-            margin-top: 2px;
-        }
-
-        .label-sm {
-            font-size: 10px;
-        }
-
         .info-section,
         .calculation-section {
             margin-bottom: 14px;
@@ -167,40 +158,32 @@
 
 <body>
     @php
-        // ----- SAFE CASTS -----
         $deptSalary = (int) ($department->salary ?? 0);
-        $deptAllowance = (int) ($department->allowance ?? 0); // insentif kesehatan (flat)
-        $deptBonus = (int) ($department->bonus ?? 0); // PJ (leader)
+        $deptAllowance = (int) ($department->allowance ?? 0);
+        $deptBonus = (int) ($department->bonus ?? 0);
         $deptAbsDeduct = (int) ($department->absence_deduction ?? 0);
-        $deptPermitAmt = (int) ($department->permit_amount ?? 0); // NOMINAL IZIN / HARI (fixed)
+        $deptPermitAmt = (int) ($department->permit_amount ?? 0);
 
         $workDays = (int) ($payroll->work_days ?? 0);
         $permitDays = (int) ($payroll->permit ?? 0);
-        $offDays = (int) ($payroll->off_day ?? 0);
         $absences = (int) ($payroll->absences ?? 0);
-        $cashbon = (int) ($payroll->other ?? 0); // dipakai sbg kasbon (potongan) jika > 0
+        $cashbon = max(0, (int) ($payroll->other ?? 0)); // potongan lain
 
-        // ----- COMPONENTS -----
         $gajiHarianTotal = $deptSalary * $workDays;
-        $izinTotal = $deptPermitAmt * $permitDays; // IZIN = nominal tetap per hari
+        $izinTotal = $deptPermitAmt * $permitDays;
         $potAbsen = $deptAbsDeduct * $absences;
 
-        // Pendapatan & Potongan (untuk tampilan breakdown)
         $totalPendapatan = $gajiHarianTotal + $izinTotal + $deptAllowance + $deptBonus;
-        $totalPotongan = $potAbsen + max(0, $cashbon);
+        $totalPotongan = $potAbsen + $cashbon;
 
-        // TOTAL untuk ditampilkan:
-        // - jika manual -> pakai total_thp apa adanya (murni)
-        // - jika otomatis -> pendapatan - potongan
         $isManualThp = (bool) ($payroll->is_manual_thp ?? false);
         $totalTampil = $isManualThp ? (int) ($payroll->total_thp ?? 0) : max(0, $totalPendapatan - $totalPotongan);
 
-        // Periode & tanggal cetak
         $periodeText =
             \Carbon\Carbon::parse($payroll->start_date)->translatedFormat('d F Y') .
             ' - ' .
             \Carbon\Carbon::parse($payroll->end_date)->translatedFormat('d F Y');
-        $tanggalCetak = isset($tanggal_cetak) ? $tanggal_cetak : now()->translatedFormat('d F Y');
+        $tanggalCetak = $tanggal_cetak ?? now()->translatedFormat('d F Y');
     @endphp
 
     <div class="container">
@@ -210,24 +193,18 @@
                 <div class="title">SATUAN PELAYANAN PEMENUHAN GIZI (SPPG)</div>
                 <div class="addr">{{ $app_address }}</div>
                 <div class="slip">Slip Gaji Periode {{ $periodeText }}</div>
-                {{-- <div class="sub label-sm">NOMOR : —</div> --}}
             </div>
         </div>
 
-        {{-- Informasi dasar --}}
         <div class="info-section">
-            <div class="info-row"><span class="info-label">Nama</span> <span class="info-value">:
+            <div class="info-row"><span class="info-label">Nama</span><span class="info-value">:
                     {{ $employee->name }}</span></div>
-            <div class="info-row"><span class="info-label">Jabatan</span> <span class="info-value">:
+            <div class="info-row"><span class="info-label">Jabatan</span><span class="info-value">:
                     {{ $department->name }}</span></div>
-            {{-- <div class="info-row"><span class="info-label">Keterangan</span> <span class="info-value">: Upah Harian
-                    Relawan</span></div> --}}
         </div>
 
-        {{-- Rincian perhitungan --}}
         <div class="calculation-section">
             <div class="center" style="font-weight:bold; margin-bottom:6px;">DENGAN RINCIAN SEBAGAI BERIKUT</div>
-
             <table class="calc-table">
                 <thead>
                     <tr>
@@ -236,7 +213,6 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {{-- Pendapatan --}}
                     <tr>
                         <td>Jumlah Hari Masuk Kerja</td>
                         <td class="amount">{{ $workDays }}</td>
@@ -271,7 +247,6 @@
                         </tr>
                     @endif
 
-                    {{-- Potongan --}}
                     @if ($absences > 0)
                         <tr>
                             <td class="text-danger">Potongan Absen ({{ $absences }} × Rp
@@ -282,7 +257,7 @@
 
                     @if ($cashbon > 0)
                         <tr>
-                            <td class="text-danger">Kasbon</td>
+                            <td class="text-danger">Potongan (Cashbon / Lainnya)</td>
                             <td class="amount text-danger">- Rp {{ number_format($cashbon, 0, ',', '.') }}</td>
                         </tr>
                     @endif
@@ -293,36 +268,33 @@
                                 @endif
                             </strong></td>
                         <td class="amount text-success"><strong>Rp
-                                {{ number_format($totalTampil, 0, ',', '.') }}</strong></td>
+                                {{ number_format($totalTampil, 0, ',', '.') }}</strong>
+                        </td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
-        {{-- Catatan --}}
         @if (!empty($payroll->note))
             <div class="info-section">
-                <div class="info-row">
-                    <span class="info-label">Catatan</span>
-                    <span class="info-value">: {{ $payroll->note }}</span>
-                </div>
+                <div class="info-row"><span class="info-label">Catatan</span><span class="info-value">:
+                        {{ $payroll->note }}</span></div>
             </div>
         @endif
 
-        {{-- Footer / tanda tangan --}}
         <div class="signature">
             <table>
                 <tr>
-                    <td class="center">{{ $app_city }}, {{ $tanggal_cetak }}</td>
+                    <td class="center">{{ $app_city }}, {{ $tanggalCetak }}</td>
                 </tr>
                 <tr>
                     <td>
-                        <div style="float:left; width:50%; text-align:center; margin-top:28px;">
+                        <div style="float:left;width:50%;text-align:center;margin-top:28px;">
                             Staff Akuntan
                             <div style="height:50px;"></div>
                             <u>{{ $accountantName ?? '______________________' }}</u>
                         </div>
-                        <div style="float:right; width:50%; text-align:center; margin-top:28px;">
+                        <div style="float:right;width:50%;text-align:center;margin-top:28px;">
                             Menerima
                             <div style="height:50px;"></div>
                             <u>{{ $employee->name }}</u>

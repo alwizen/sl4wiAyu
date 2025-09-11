@@ -151,7 +151,7 @@ class ListPayrolls extends ListRecords
                                 'permit'        => $attendanceData['permit'],
                                 'off_day'       => $attendanceData['off_day'],
                                 'absences'      => $attendanceData['absences'],
-                                'other'         => 0,           // cashbon belum dipakai
+                                'other'         => 0,
                                 'total_thp'     => $totalThp,   // hasil kalkulasi auto
                                 'is_manual_thp' => false,
                                 'note'          => 'Generated via bulk create',
@@ -230,31 +230,30 @@ class ListPayrolls extends ListRecords
      *       + bonus                            // PJ / bonus departemen (jika ada)
      *       − (absences × absence_deduction)
      */
-    protected static function calculateTHPForEmployee(Employee $employee, array $attendanceData): float|int
+    protected static function calculateTHPForEmployee(Employee $employee, array $attendanceData, int $other = 0): int
     {
         $dept = $employee->department;
-        if (!$dept) {
-            return 0;
-        }
+        if (!$dept) return 0;
 
-        $workDays    = (int) ($attendanceData['work_days']   ?? 0);
-        $permitDays  = (int) ($attendanceData['permit']      ?? 0);
-        $absences    = (int) ($attendanceData['absences']    ?? 0);
+        $workDays   = (int) ($attendanceData['work_days'] ?? 0);
+        $permitDays = (int) ($attendanceData['permit'] ?? 0);
+        $absences   = (int) ($attendanceData['absences'] ?? 0);
 
-        $salaryPerDay      = (int) ($dept->salary             ?? 0);
-        $allowance         = (int) ($dept->allowance          ?? 0);
-        $absenceDeduction  = (int) ($dept->absence_deduction  ?? 0);
-        $permitAmount      = (int) ($dept->permit_amount      ?? 0); // ← FIXED
-        $deptBonus         = (int) ($dept->bonus              ?? 0); // ← PJ/bonus
+        $salaryPerDay     = (int) ($dept->salary ?? 0);
+        $allowance        = (int) ($dept->allowance ?? 0);
+        $absenceDeduction = (int) ($dept->absence_deduction ?? 0);
+        $permitAmount     = (int) ($dept->permit_amount ?? 0);
+        $deptBonus        = (int) ($dept->bonus ?? 0);
 
-        $presentPay   = $workDays   * $salaryPerDay;
-        $permitPay    = $permitDays * $permitAmount;
-        $deductions   = $absences   * $absenceDeduction;
+        $presentPay = $workDays * $salaryPerDay;
+        $permitPay  = $permitDays * $permitAmount;
+        $deductions = ($absences * $absenceDeduction) + max(0, $other); // ← potongan other
 
         $totalTHP = $presentPay + $permitPay + $allowance + $deptBonus - $deductions;
 
         return max(0, (int) $totalTHP);
     }
+
 
     /**
      * Recalc THP massal (hanya untuk payroll auto).
@@ -274,7 +273,11 @@ class ListPayrolls extends ListRecords
                         'absences'  => (int) $payroll->absences,
                     ];
 
-                    $newTHP = static::calculateTHPForEmployee($payroll->employee, $attendanceData);
+                    $newTHP = static::calculateTHPForEmployee(
+                        $payroll->employee,
+                        $attendanceData,
+                        (int) ($payroll->other ?? 0) // ← ikut potongan other saat recalc
+                    );
 
                     $payroll->update(['total_thp' => $newTHP]);
                     $updated++;

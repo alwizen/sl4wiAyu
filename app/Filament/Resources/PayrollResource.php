@@ -94,14 +94,14 @@ class PayrollResource extends Resource
                 ]),
 
             Section::make('Absensi')
-                ->columns(5)
+                ->columns(4)
                 ->schema([
-                    Forms\Components\TextInput::make('total_day')
-                        ->label('Jumlah Hari')
-                        ->numeric()
-                        ->readOnly()
-                        ->dehydrated(false)
-                        ->default(0),
+                    // Forms\Components\TextInput::make('total_day')
+                    //     ->label('Jumlah Hari')
+                    //     ->numeric()
+                    //     ->readOnly()
+                    //     ->dehydrated(false)
+                    //     ->default(0),
 
                     Forms\Components\TextInput::make('work_days')
                         ->label('Jumlah Hari Masuk')
@@ -140,7 +140,24 @@ class PayrollResource extends Resource
                 ->columns(3)
                 ->schema([
                     Forms\Components\TextInput::make('other')
-                        ->label('Other / Cashbon (belum dipakai)')
+                        ->label('Potongan (Cashbon / Other)')
+                        ->numeric()
+                        ->minValue(0)
+                        ->prefix('Rp')
+                        ->default(0)
+                        ->live(onBlur: true)
+                        ->afterStateUpdated(fn(Get $get, Set $set) => self::recalcThp($get, $set)),
+
+                    // Forms\Components\TextInput::make('other')
+                    //     ->label('Other / Cashbon (belum dipakai)')
+                    //     ->numeric()
+                    //     ->minValue(0)
+                    //     ->prefix('Rp')
+                    //     ->default(0)
+                    //     ->live(),
+
+                    Forms\Components\TextInput::make('total_thp')
+                        ->label('Total THP')
                         ->numeric()
                         ->minValue(0)
                         ->prefix('Rp')
@@ -158,14 +175,6 @@ class PayrollResource extends Resource
                             }
                         })
                         ->helperText('Jika aktif, total THP tidak dihitung otomatis.'),
-
-                    Forms\Components\TextInput::make('total_thp')
-                        ->label('Total THP')
-                        ->numeric()
-                        ->minValue(0)
-                        ->prefix('Rp')
-                        ->default(0)
-                        ->live(),
 
                     Forms\Components\TextInput::make('note')
                         ->label('Catatan')
@@ -375,8 +384,7 @@ class PayrollResource extends Resource
     protected static function recalcThp(Get $get, Set $set): void
     {
         if ((bool) ($get('is_manual_thp') ?? false)) {
-            // Mode manual murni: jangan ubah total_thp sama sekali
-            return;
+            return; // manual: jangan sentuh total_thp
         }
 
         $workDays   = (int) ($get('work_days') ?? 0);
@@ -387,14 +395,15 @@ class PayrollResource extends Resource
         $permitAmt  = (int) ($get('permit_amount') ?? 0);
         $deduction  = (int) ($get('absence_deduction') ?? 0);
 
-        $allowance  = (int) ($get('allowance') ?? 0);     // NEW
-        $deptBonus  = (int) ($get('dept_bonus') ?? 0);    // NEW
+        $allowance  = (int) ($get('allowance') ?? 0);
+        $deptBonus  = (int) ($get('dept_bonus') ?? 0);
+        $otherDed   = (int) ($get('other') ?? 0);
 
         $presentPay = $workDays * $daily;
         $permitPay  = $permitDays * $permitAmt;
         $penalty    = $absences * $deduction;
 
-        $thp = max(0, (int) ($presentPay + $permitPay + $allowance + $deptBonus - $penalty));
-        $set('total_thp', $thp);
+        $thp = $presentPay + $permitPay + $allowance + $deptBonus - $penalty - $otherDed; // ← kurangi other
+        $set('total_thp', max(0, (int) $thp));
     }
 }

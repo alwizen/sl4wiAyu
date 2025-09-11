@@ -54,7 +54,7 @@ class DepartmentResource extends Resource
                     ->required()
                     ->prefix('Rp.')
                     ->numeric()
-                    ->default(0),
+                    ->default(50000),
                 Forms\Components\TextInput::make('absence_deduction')
                     ->required()
                     ->label('Denda Harian')
