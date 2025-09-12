@@ -58,6 +58,12 @@
             font-weight: 700;
         }
 
+        .info-section .slip {
+            margin-top: 6px;
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+
         .info-section,
         .calculation-section {
             margin-bottom: 14px;
@@ -183,11 +189,11 @@
                 <div class="header-content">
                     <div class="title">SATUAN PELAYANAN PEMENUHAN GIZI (SPPG)</div>
                     <div class="addr">{{ $app_address }}</div>
-                    <div class="slip">Slip Gaji Periode {{ $periodeText }}</div>
                 </div>
             </div>
 
             <div class="info-section">
+                <div class="slip">Slip Gaji Periode : {{ $periodeText }}</div>
                 <div class="info-row"><span class="info-label">Nama</span><span class="info-value">:
                         {{ $employee->name }}</span></div>
                 <div class="info-row"><span class="info-label">Jabatan</span><span class="info-value">:
@@ -219,7 +225,8 @@
 
                         @if ($permitDays > 0)
                             <tr>
-                                <td>Izin ({{ $permitDays }} × Rp {{ number_format($deptPermitAmt, 0, ',', '.') }})</td>
+                                <td>Izin ({{ $permitDays }} × Rp {{ number_format($deptPermitAmt, 0, ',', '.') }})
+                                </td>
                                 <td class="amount">Rp {{ number_format($izinTotal, 0, ',', '.') }}</td>
                             </tr>
                         @endif

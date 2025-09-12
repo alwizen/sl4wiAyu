@@ -44,6 +44,14 @@ class PayrollResource extends Resource
                         ->searchable()
                         ->preload()
                         ->live()
+                        ->afterStateHydrated(function ($state, Get $get, Set $set) {
+                            if ($state) {
+                                self::loadEmployeeData($state, $set);
+                                self::recalcTotalDay($get, $set);
+                                self::pullAttendanceStats($get, $set); // optional kalau mau refresh juga saat buka edit
+                                self::recalcThp($get, $set);
+                            }
+                        })
                         ->afterStateUpdated(function ($state, Get $get, Set $set) {
                             if (!$state) {
                                 self::clearEmployeeDerived($set);
@@ -51,7 +59,7 @@ class PayrollResource extends Resource
                             }
                             self::loadEmployeeData($state, $set);
                             self::recalcTotalDay($get, $set);
-                            self::pullAttendanceStats($get, $set);  // ← tarik status absensi
+                            self::pullAttendanceStats($get, $set);
                             self::recalcThp($get, $set);
                         }),
 
@@ -143,12 +151,19 @@ class PayrollResource extends Resource
                 ->schema([
                     Forms\Components\TextInput::make('other')
                         ->label('Potongan (Cashbon / Other)')
-                        ->numeric()
-                        ->minValue(0)
-                        ->prefix('Rp')
+                        ->numeric()->prefix('Rp')
                         ->default(0)
                         ->live(onBlur: true)
                         ->afterStateUpdated(fn(Get $get, Set $set) => self::recalcThp($get, $set)),
+
+                    // Forms\Components\TextInput::make('other')
+                    //     ->label('Potongan (Cashbon / Other)')
+                    //     ->numeric()
+                    //     ->minValue(0)
+                    //     ->prefix('Rp')
+                    //     ->default(0)
+                    //     ->live(onBlur: true)
+                    //     ->afterStateUpdated(fn(Get $get, Set $set) => self::recalcThp($get, $set)),
 
                     // Forms\Components\TextInput::make('other')
                     //     ->label('Other / Cashbon (belum dipakai)')
@@ -158,12 +173,15 @@ class PayrollResource extends Resource
                     //     ->default(0)
                     //     ->live(),
 
+
                     Forms\Components\TextInput::make('total_thp')
                         ->label('Total THP')
                         ->numeric()
                         ->minValue(0)
                         ->prefix('Rp')
-                        ->default(0)
+                        ->required(fn(Get $get) => (bool) $get('is_manual_thp'))  // ⇐ WAJIB saat manual
+                        ->disabled(fn(Get $get) => ! (bool) $get('is_manual_thp')) // ⇐ nonaktif saat auto
+                        ->dehydrated(true)
                         ->live(),
 
                     Forms\Components\Toggle::make('is_manual_thp')
@@ -171,12 +189,11 @@ class PayrollResource extends Resource
                         ->default(false)
                         ->live()
                         ->afterStateUpdated(function ($state, Get $get, Set $set) {
-                            // kalau manual dimatikan, trigger hitung otomatis
                             if (!$state) {
                                 self::recalcThp($get, $set);
                             }
-                        })
-                        ->helperText('Jika aktif, total THP tidak dihitung otomatis.'),
+                        }),
+
 
                     Forms\Components\TextInput::make('note')
                         ->label('Catatan')
@@ -398,26 +415,42 @@ class PayrollResource extends Resource
     protected static function recalcThp(Get $get, Set $set): void
     {
         if ((bool) ($get('is_manual_thp') ?? false)) {
-            return; // manual: jangan sentuh total_thp
+            return; // manual: jangan sentuh THP
         }
 
         $workDays   = (int) ($get('work_days') ?? 0);
         $permitDays = (int) ($get('permit') ?? 0);
         $absences   = (int) ($get('absences') ?? 0);
-
-        $daily      = (int) ($get('salary_per_day') ?? 0);
-        $permitAmt  = (int) ($get('permit_amount') ?? 0);
-        $deduction  = (int) ($get('absence_deduction') ?? 0);
-
-        $allowance  = (int) ($get('allowance') ?? 0);
-        $deptBonus  = (int) ($get('dept_bonus') ?? 0);
         $otherDed   = (int) ($get('other') ?? 0);
+
+        // Ambil dari hidden terlebih dulu
+        $daily     = (int) ($get('salary_per_day') ?? 0);
+        $permitAmt = (int) ($get('permit_amount') ?? 0);
+        $deduct    = (int) ($get('absence_deduction') ?? 0);
+        $allow     = (int) ($get('allowance') ?? 0);
+        $bonus     = (int) ($get('dept_bonus') ?? 0);
+
+        // FALLBACK: jika ada yang 0, ambil dari DB berdasarkan employee_id
+        if (($daily === 0) || ($permitAmt === 0 && $permitDays > 0) || ($deduct === 0) || ($allow === 0) || ($bonus === 0)) {
+            $empId = (int) ($get('employee_id') ?? 0);
+            if ($empId) {
+                $emp = \App\Models\Employee::with('department')->find($empId);
+                $dept = $emp?->department;
+                if ($dept) {
+                    $daily     = $daily     ?: (int) ($dept->salary ?? 0);
+                    $permitAmt = $permitAmt ?: (int) ($dept->permit_amount ?? 0);
+                    $deduct    = $deduct    ?: (int) ($dept->absence_deduction ?? 0);
+                    $allow     = $allow     ?: (int) ($dept->allowance ?? 0);
+                    $bonus     = $bonus     ?: (int) ($dept->bonus ?? 0);
+                }
+            }
+        }
 
         $presentPay = $workDays * $daily;
         $permitPay  = $permitDays * $permitAmt;
-        $penalty    = $absences * $deduction;
+        $penalty    = $absences * $deduct;
 
-        $thp = $presentPay + $permitPay + $allowance + $deptBonus - $penalty - $otherDed; // ← kurangi other
+        $thp = $presentPay + $permitPay + $allow + $bonus - $penalty - max(0, $otherDed);
         $set('total_thp', max(0, (int) $thp));
     }
 }
