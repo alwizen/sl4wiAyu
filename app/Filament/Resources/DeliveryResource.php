@@ -77,6 +77,15 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                     ->label('Tanggal Pengiriman')
                     ->default(now())
                     ->required(),
+
+                Forms\Components\TimePicker::make('time_delivery')
+                    ->label('Jam Pengiriman')
+                    ->default('07:00')
+                    ->native(false)
+                    ->format('H:i')
+                    ->seconds(false)
+                    ->required(),
+
                 Forms\Components\Select::make('recipient_id')
                     ->label('Nama Penerima')
                     ->relationship('recipient', 'name')
@@ -155,6 +164,12 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                 Tables\Columns\TextColumn::make('delivery_date')
                     ->date()
                     ->label('Tanggal'),
+
+                Tables\Columns\TextColumn::make('time_delivery')
+                    ->time('H:i')
+                    ->suffix(' Wib')
+                    ->label('Jam'),
+
                 Tables\Columns\TextColumn::make('car.car_number')
                     ->searchable()
                     ->label('Mobil'),
@@ -423,7 +438,7 @@ class DeliveryResource extends Resource implements HasShieldPermissions
                     ->label('Tindakan')
                     ->icon('heroicon-o-paper-clip')
                     ->size(ActionSize::Small)
-                    ->outlined(),
+                // ->outlined(),
 
             ])
 

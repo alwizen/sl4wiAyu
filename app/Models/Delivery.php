@@ -21,7 +21,8 @@ class Delivery extends Model
         'proof_delivery',
         'returned_qty',
         'car_id',
-        'short_code'
+        'short_code',
+        'time_delivery'
     ];
 
     public function user(): BelongsTo
