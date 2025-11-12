@@ -31,4 +31,9 @@ class Attendance extends Model
     {
         return $this->belongsTo(Employee::class);
     }
+
+    public function department()
+    {
+        return $this->belongsTo(Employee::class);
+    }
 }

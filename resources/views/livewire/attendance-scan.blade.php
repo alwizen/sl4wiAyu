@@ -449,11 +449,11 @@
             }
 
             // Event handlers
-            currentUtterance.onstart = function() {
+            currentUtterance.onstart = function () {
                 console.log('TTS started:', text);
             };
 
-            currentUtterance.onend = function() {
+            currentUtterance.onend = function () {
                 console.log('TTS ended');
                 if (indicator) {
                     indicator.classList.remove('speaking');
@@ -461,7 +461,7 @@
                 currentUtterance = null;
             };
 
-            currentUtterance.onerror = function(event) {
+            currentUtterance.onerror = function (event) {
                 console.error('TTS error:', event);
                 if (indicator) {
                     indicator.classList.remove('speaking');
@@ -585,10 +585,10 @@
             }
         });
 
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             const input = document.getElementById('rfid-input');
             if (e.target !== input && input && !e.target.closest('.mode-button') && !e.target.closest(
-                    '.submit-button')) {
+                '.submit-button')) {
                 setTimeout(() => {
                     input.focus();
                 }, 50);
@@ -609,7 +609,7 @@
         });
 
         // Enhanced debugging - remove this in production
-        window.debugTTS = function() {
+        window.debugTTS = function () {
             console.log('=== TTS DEBUG INFO ===');
             console.log('speechSynthesis supported:', !!window.speechSynthesis);
             console.log('speechSynth initialized:', !!speechSynth);
@@ -655,20 +655,19 @@
             <!-- Mode Toggle - INI YANG PENTING! -->
             <div class="mode-toggle">
                 <button type="button" class="mode-button active" id="auto-mode-btn" onclick="toggleInputMode('auto')">
-                 Mode Otomatis
+                    Mode Otomatis
                 </button>
                 <button type="button" class="mode-button" id="manual-mode-btn" onclick="toggleInputMode('manual')">
-                     Input Manual
+                    Input Manual
                 </button>
             </div>
 
             <!-- Alert menggunakan Livewire property -->
             @if ($showAlert && $alertMessage)
-                <div
-                    class="alert-modern 
-                    @if ($alertType === 'success') success 
-                    @elseif($alertType === 'error') error 
-                    @else warning @endif">
+                <div class="alert-modern 
+                                        @if ($alertType === 'success') success 
+                                        @elseif($alertType === 'error') error 
+                                        @else warning @endif">
 
                     @if ($alertType === 'success')
                         <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
@@ -706,12 +705,12 @@
 
             <div class="instructions" style="text-align:center; font-size:16px;">
                 <strong style="color:#667eea; display:block; font-size:18px; margin-bottom:6px;">
-                    Sistem Siap 🔊
+                    Tempelkan kartu Absensi Anda.<br>
                 </strong>
-                <span style="color:#4a5568;" id="mode-instruction">
+                {{-- <span style="color:#4a5568;" id="mode-instruction">
                     Mohon tap kartu RFID (absensi) Anda...<br>
                     <small style="color:#9ca3af;">Dengan dukungan suara</small>
-                </span>
+                </span> --}}
             </div>
 
             <div class="instructions">

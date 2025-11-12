@@ -32,14 +32,19 @@ class AttendanceResource extends Resource
             ->schema([
                 Forms\Components\Select::make('employee_id')
                     ->required()
+                    ->label('Nama Relawan')
                     ->relationship('employee', 'name'),
                 Forms\Components\DatePicker::make('date')
-                    ->required(),
+                    ->required()
+                    ->default(now())
+                    ->label('Tanggal'),
                 Forms\Components\TimePicker::make('check_in')
                     ->label('Jam Masuk')
                     ->locale('id')
+                    ->default(now())
                     ->displayFormat('H:i'),
-                Forms\Components\TimePicker::make('check_out'),
+                Forms\Components\TimePicker::make('check_out')
+                    ->label('Keluar (Opsional)'),
                 Forms\Components\Select::make('status')
                     ->options([
                         'masuk' => 'Masuk',
@@ -47,6 +52,7 @@ class AttendanceResource extends Resource
                         'izin' => 'Izin',
                         'alpa' => 'Alpa'
                     ])
+                    ->default('masuk')
             ]);
     }
 
@@ -62,13 +68,19 @@ class AttendanceResource extends Resource
                     ->sortable()
                     ->searchable(),
 
+                Tables\Columns\TextColumn::make('employee.department.name')
+                    ->label('Posisi')
+                    ->badge(),
+
                 Tables\Columns\TextColumn::make('date')
                     ->date('d-m-Y')
+                    ->sortable()
                     ->label('Tanggal'),
 
 
                 Tables\Columns\TextColumn::make('check_in')
                     ->label('Jam Masuk')
+                    ->sortable()
                     ->date('H:i'),
 
                 Tables\Columns\TextColumn::make('check_out')
@@ -83,8 +95,7 @@ class AttendanceResource extends Resource
                         'primary' => 'libur',
                         'warning' => 'izin',
                         'danger'  => 'alpa'
-                    ])
-                    ->sortable(),
+                    ]),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -96,12 +107,14 @@ class AttendanceResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                // Filter berdasarkan nama karyawan
                 Tables\Filters\SelectFilter::make('employee_id')
                     ->label('Karyawan')
                     ->relationship('employee', 'name'),
 
-                // Filter rentang tanggal
+                Tables\Filters\SelectFilter::make('department_id')
+                    ->label('Departemen')
+                    ->relationship('employee.department', 'name'),
+
                 Tables\Filters\Filter::make('date_range')
                     ->label('Rentang Tanggal')
                     ->form([
@@ -110,11 +123,11 @@ class AttendanceResource extends Resource
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
-                            // ->whereNotNull('check_in') // Hanya yang masuk
                             ->when($data['from'], fn($q) => $q->whereDate('date', '>=', $data['from']))
                             ->when($data['until'], fn($q) => $q->whereDate('date', '<=', $data['until']));
                     }),
             ])
+
 
             ->actions([
                 Tables\Actions\EditAction::make(),
