@@ -96,41 +96,56 @@ class AttendanceResource extends Resource
                         'warning' => 'izin',
                         'danger'  => 'alpa'
                     ]),
-
                 Tables\Columns\TextColumn::make('status_in')
                     ->badge()
                     ->label('Keterlambatan')
-                    ->formatStateUsing(function ($state, $record) {
+                    ->getStateUsing(function ($record) {
                         // $record adalah instance Attendance
-                        if (! $record->check_in) {
-                            return '—';
+                        if (!$record->check_in) {
+                            return 'no_checkin';
                         }
 
                         $employee = $record->employee;
                         $dept = $employee?->department;
 
-                        if (! $dept || ! $dept->start_time) {
-                            return 'Belum diatur';
+                        if (!$dept || !$dept->start_time) {
+                            return 'not_configured';
                         }
 
                         // Tentukan tanggal attendance (menggunakan method di Department)
                         $attendanceDate = $dept->getAttendanceDate($record->check_in);
-
                         $shiftStart = Carbon::parse($attendanceDate . ' ' . $dept->start_time);
 
+                        // shiftStart->diffInMinutes(check_in, false)
                         // positif = terlambat, negatif = lebih awal
-                        $diffInMinutes = $record->check_in->diffInMinutes($shiftStart, false);
+                        $diffInMinutes = $shiftStart->diffInMinutes($record->check_in, false);
+                        $tolerance = $dept->tolerance_late_minutes ?? 0;
 
-                        // on-time jika <= tolerance_late_minutes
-                        return ($diffInMinutes <= $dept->tolerance_late_minutes) ? 'Tepat Waktu' : 'Terlambat';
+                        // Jika datang terlalu awal (> 6 jam)
+                        if ($diffInMinutes < -360) {
+                            return 'too_early';
+                        }
+
+                        // On-time jika keterlambatan <= tolerance
+                        return $diffInMinutes <= $tolerance ? 'on_time' : 'late';
                     })
-                    ->colors([
-                        'success'   => 'Tepat Waktu',
-                        'danger'    => 'Terlambat',
-                        'secondary' => '—',
-                    ])
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
+                        'on_time' => 'Tepat Waktu',
+                        'late' => 'Terlambat',
+                        'too_early' => 'Terlalu Awal',
+                        'not_configured' => 'Belum Diatur',
+                        'no_checkin' => '—',
+                        default => '—',
+                    })
+                    ->color(fn(string $state): string => match ($state) {
+                        'on_time' => 'success',
+                        'late' => 'danger',
+                        'too_early' => 'warning',
+                        'not_configured' => 'gray',
+                        'no_checkin' => 'gray',
+                        default => 'gray',
+                    })
                     ->sortable(),
-
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()

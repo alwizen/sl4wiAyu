@@ -63,66 +63,62 @@ class Department extends Model
 
     /**
      * Cek apakah waktu tap masih dalam toleransi keterlambatan
+     * 
+     * PERBAIKAN: Menghitung selisih waktu dengan benar
      */
-    public function isOnTime(\Illuminate\Support\Carbon $checkInTime): bool
+    public function isOnTime(Carbon $checkInTime): bool
     {
-        // Jika tidak ada jam kerja, anggap on time
-        if (! $this->start_time) {
+        if (!$this->start_time) {
             return true;
         }
 
-        // Pastikan tolerance terisi (fallback 0)
         $tolerance = (int) ($this->tolerance_late_minutes ?? 0);
-
-        // Tentukan tanggal attendance (menggunakan method existing)
         $attendanceDate = $this->getAttendanceDate($checkInTime);
 
-        // Jika attendanceDate gagal/tidak valid, anggap tidak on time (safety)
-        if (! $attendanceDate) {
+        // Parse waktu shift start berdasarkan attendance date
+        $shiftStart = Carbon::parse($attendanceDate . ' ' . $this->start_time);
+
+        // PERBAIKAN BENAR: 
+        // diffInMinutes($dt, false) dengan false = signed difference
+        // Jika $checkInTime LEBIH BARU dari $shiftStart -> hasil NEGATIF
+        // Jadi kita perlu BALIK logikanya atau gunakan abs()
+
+        // Hitung berapa menit terlambat (positif = terlambat, negatif = lebih awal)
+        $minutesDiff = $shiftStart->diffInMinutes($checkInTime, false);
+
+        // Debug log
+        // \Log::info("isOnTime Check", [
+        //     'department' => $this->name,
+        //     'checkInTime' => $checkInTime->format('Y-m-d H:i:s'),
+        //     'shiftStart' => $shiftStart->format('Y-m-d H:i:s'),
+        //     'minutesDiff' => $minutesDiff,
+        //     'tolerance' => $tolerance,
+        //     'calculation' => 'shiftStart->diffInMinutes(checkInTime, false)',
+        //     'isOnTime' => ($minutesDiff >= 0 && $minutesDiff <= $tolerance) || ($minutesDiff < 0 && $minutesDiff >= -360)
+        // ]);
+
+        // Jika datang terlalu awal (> 6 jam sebelum shift), anggap tidak valid
+        $maxEarlyMinutes = 6 * 60; // 360 menit
+        if ($minutesDiff < -$maxEarlyMinutes) {
             return false;
         }
 
-        // Build shiftStart & shiftEnd dari attendanceDate + start/end time
-        try {
-            $shiftStart = \Carbon\Carbon::parse($attendanceDate . ' ' . $this->start_time);
-        } catch (\Throwable $e) {
-            return false;
-        }
+        // On time jika:
+        // 1. Datang lebih awal (minutesDiff negatif) -> on_time
+        // 2. Datang tepat waktu (minutesDiff = 0) -> on_time  
+        // 3. Terlambat tapi masih dalam toleransi (0 < minutesDiff <= tolerance) -> on_time
+        // 4. Terlambat melebihi toleransi (minutesDiff > tolerance) -> LATE
 
-        // Jika end_time tersedia, buat shiftEnd
-        $shiftEnd = null;
-        if ($this->end_time) {
-            $shiftEnd = \Carbon\Carbon::parse($attendanceDate . ' ' . $this->end_time);
+        // Contoh dengan shift 04:00, tolerance 15 menit:
+        // - Datang jam 03:30: minutesDiff = -30 ✓ on_time (datang lebih awal)
+        // - Datang jam 04:00: minutesDiff = 0 ✓ on_time (tepat waktu)
+        // - Datang jam 04:10: minutesDiff = 10 ✓ on_time (dalam toleransi)
+        // - Datang jam 04:15: minutesDiff = 15 ✓ on_time (batas toleransi)
+        // - Datang jam 04:16: minutesDiff = 16 ✗ LATE
+        // - Datang jam 05:08: minutesDiff = 68 ✗ LATE
 
-            // Jika shift melewati tengah malam, shiftEnd harus berada setelah shiftStart
-            if ($this->is_overnight && $shiftEnd->lessThanOrEqualTo($shiftStart)) {
-                $shiftEnd->addDay();
-            }
-        }
-
-        // Hitung selisih dalam menit (positif = terlambat, negatif = lebih awal)
-        $diffInMinutes = $checkInTime->diffInMinutes($shiftStart, false);
-
-        // --- tambahan safety checks ---
-        // 1) Jika check-in terlalu jauh lebih awal dari shiftStart => bukan on time untuk shift ini.
-        //    Contoh: check-in 20:28 untuk shift start 02:30 → diff sangat besar positif atau besar negatif tergantung tanggal.
-        //    Kita definisikan ambang "maks early" (mis. 6 jam) — sesuaikan bila perlu.
-        $maxEarlyMinutes = 6 * 60; // 6 jam
-
-        if ($diffInMinutes < -$maxEarlyMinutes) {
-            // terlalu awal (mis. check-in beberapa hari atau jam sebelum shift)
-            return false;
-        }
-
-        // 2) Jika check-in sangat jauh setelah shiftEnd (mis. > 24 jam), jangan anggap on time
-        if ($shiftEnd && $checkInTime->greaterThan($shiftEnd->copy()->addHours(24))) {
-            return false;
-        }
-
-        // Terakhir: on time jika diffInMinutes <= tolerance
-        return $diffInMinutes <= $tolerance;
+        return $minutesDiff <= $tolerance;
     }
-
 
     /**
      * Get formatted shift time untuk display
