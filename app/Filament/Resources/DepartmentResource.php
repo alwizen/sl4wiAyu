@@ -8,7 +8,10 @@ use App\Models\Department;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\Alignment;
 use Filament\Tables;
+use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Columns\ColumnGroup;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -67,6 +70,26 @@ class DepartmentResource extends Resource
                     ->numeric()
                     ->prefix('Rp.')
                     ->default(0),
+
+                Forms\Components\TimePicker::make('start_time')
+                    ->label('Jam Masuk')
+                    ->native(false)
+                    ->default('16:00')
+                    ->seconds(false),
+
+                Forms\Components\TimePicker::make('end_time')
+                    ->label('Jam Pulang')
+                    ->native(false)
+                    ->seconds(false),
+
+                Forms\Components\Toggle::make('is_overnight')
+                    ->label('Melewati Tengah Malam?')
+                    ->helperText('Centang jika shift melewati jam 00:00'),
+
+                Forms\Components\TextInput::make('tolerance_late_minutes')
+                    ->label('Toleransi Telat (Menit)')
+                    ->numeric()
+                    ->default(15),
             ]);
     }
 
@@ -75,33 +98,53 @@ class DepartmentResource extends Resource
         return $table
             ->defaultPaginationPageOption(50)
             ->columns([
-                Tables\Columns\TextColumn::make('name')
-                    ->label('Nama Posisi')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('salary')
-                    ->label('Gaji Harian')
-                    ->numeric()
-                    ->suffix(' /Hari')
-                    ->prefix('Rp. '),
-                Tables\Columns\TextColumn::make('allowance')
-                    ->numeric()
-                    ->label('Tunjangan Kesehatan')
-                    ->prefix('Rp. '),
-                Tables\Columns\TextColumn::make('absence_deduction')
-                    ->numeric()
-                    ->label('Denda Ketidakhadiran')
-                    ->suffix(' /Hari')
-                    ->prefix('Rp. '),
-                Tables\Columns\TextColumn::make('permit_amount')
-                    ->numeric()
-                    ->label('Gaji /Izin')
-                    ->suffix(' /Hari')
-                    ->prefix('Rp. '),
+                ColumnGroup::make('Gaji', [
+                    Tables\Columns\TextColumn::make('name')
+                        ->label('Nama Posisi')
+                        ->searchable(),
+                    Tables\Columns\TextColumn::make('salary')
+                        ->label('Gaji')
+                        ->numeric()
+                        ->suffix(' /Hari')
+                        ->prefix('Rp. '),
+                    Tables\Columns\TextColumn::make('allowance')
+                        ->numeric()
+                        ->label('Tunj. Kesehatan')
+                        ->prefix('Rp. '),
+                    Tables\Columns\TextColumn::make('absence_deduction')
+                        ->numeric()
+                        ->label('Denda Absen')
+                        ->suffix(' /Hari')
+                        ->prefix('Rp. '),
+                    Tables\Columns\TextColumn::make('permit_amount')
+                        ->numeric()
+                        ->label('Gaji /Izin')
+                        ->suffix(' /Hari')
+                        ->prefix('Rp. '),
 
-                Tables\Columns\TextColumn::make('bonus')
-                    ->numeric()
-                    ->label('PJ')
-                    ->prefix('Rp. '),
+                    Tables\Columns\TextColumn::make('bonus')
+                        ->numeric()
+                        ->label('PJ')
+                        ->prefix('Rp. '),
+                ]),
+
+                ColumnGroup::make('Jam Kerja', [
+                    Tables\Columns\TextColumn::make('start_time')
+                        ->label('Masuk')
+                        ->time('H:i'),
+                    Tables\Columns\TextColumn::make('end_time')
+                        ->label('Pulang')
+                        ->time('H:i'),
+                    Tables\Columns\TextColumn::make('is_overnight')
+                        ->label('Tengah Malam'),
+                    Tables\Columns\TextColumn::make('tolerance_late_minutes')
+                        ->label('Toleransi')
+                        ->suffix(' Menit'),
+
+                ])
+                    ->alignment(Alignment::Center)
+                    ->wrapHeader(),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -115,9 +158,11 @@ class DepartmentResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-
+                ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                ])
+                    ->icon('heroicon-o-adjustments-horizontal')
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

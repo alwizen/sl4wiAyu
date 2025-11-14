@@ -74,7 +74,7 @@ class EmployeeResource extends Resource
 
                 Forms\Components\TextInput::make('phone')
                     ->label('Telepon')
-                    ->tel()
+                    ->default(0)
                     ->required()
                     ->maxLength(255),
 

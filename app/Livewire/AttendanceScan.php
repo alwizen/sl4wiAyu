@@ -13,6 +13,8 @@ class AttendanceScan extends Component
 {
     use WithPagination;
 
+    public $allowEarlyMinutes = 30; // izinkan 30 menit sebelum shift mulai
+
     public $rfid_uid = '';
     public $search = '';
     public $filterDate;
@@ -21,14 +23,13 @@ class AttendanceScan extends Component
     public $alertType = '';
     public $showAlert = false;
 
-    protected $minimumWorkHours = 0.0833333; // jam
+    protected $minimumWorkHours = 0.0833333; // 5 menit dalam jam
     protected $paginationTheme = 'bootstrap';
 
     public function mount(): void
     {
         $this->filterDate = now()->toDateString();
     }
-
     public function submitRfid(): void
     {
         $value = trim((string) $this->rfid_uid);
@@ -38,7 +39,7 @@ class AttendanceScan extends Component
             return;
         }
 
-        $employee = Employee::where('rfid_uid', $value)->first();
+        $employee = Employee::with('department')->where('rfid_uid', $value)->first();
 
         if (! $employee) {
             $this->showAlert('Kartu tidak dikenali.', 'error');
@@ -47,81 +48,150 @@ class AttendanceScan extends Component
             return;
         }
 
-        $today = now()->toDateString();
-        $now   = now();
+        // Validasi departemen
+        if (! $employee->department) {
+            $this->showAlert('Karyawan belum memiliki departemen. Hubungi admin.', 'error');
+            $this->reset('rfid_uid');
+            $this->dispatch('focusInput');
+            return;
+        }
 
-        DB::transaction(function () use ($employee, $today, $now) {
-            // kunci baris attendance hari ini untuk karyawan tsb
+        $now = now();
+        $department = $employee->department;
+
+        // Tentukan tanggal attendance berdasarkan jam kerja departemen (method di model Department)
+        $attendanceDate = $department->getAttendanceDate($now);
+
+        // === VALIDASI: hanya boleh absen di dalam jam shift yang ditetapkan ===
+        if ($department->start_time && $department->end_time) {
+
+            $shiftStart = Carbon::parse($attendanceDate . ' ' . $department->start_time);
+            $shiftEnd = Carbon::parse($attendanceDate . ' ' . $department->end_time);
+
+            // Handle overnight shift
+            if ($department->is_overnight && $shiftEnd->lessThanOrEqualTo($shiftStart)) {
+                $shiftEnd->addDay();
+            }
+
+            // Izinkan absen sebelum shiftStart (early window)
+            $allowedStart = $shiftStart->copy()->subMinutes($this->allowEarlyMinutes);
+
+            // Validasi waktu scan
+            if ($now->lt($allowedStart) || $now->gt($shiftEnd)) {
+
+                $startLabel = $shiftStart->format('H:i');
+                $endLabel = $shiftEnd->format('H:i');
+
+                $this->showAlert(
+                    "⛔ Di luar jam kerja. Jam aktif departemen {$department->name}: {$startLabel} - {$endLabel}.",
+                    'error'
+                );
+
+                $this->dispatch('playTTS', [
+                    'text' => "Maaf, Anda di luar jam kerja. Jam aktif {$department->name} adalah {$startLabel} sampai {$endLabel}.",
+                    'type' => 'error'
+                ]);
+
+                $this->reset('rfid_uid');
+                $this->dispatch('focusInput');
+                return;
+            }
+        }
+
+        DB::transaction(function () use ($employee, $department, $attendanceDate, $now) {
+            // Kunci baris attendance untuk tanggal ini
             $attendance = Attendance::where('employee_id', $employee->id)
-                ->whereDate('date', $today)
+                ->whereDate('date', $attendanceDate)
                 ->lockForUpdate()
                 ->first();
 
-            // belum ada record → check-in
+            // CASE 1: Belum ada record → Check-in
             if (! $attendance) {
-                Attendance::create([
+                $attendance = Attendance::create([
                     'employee_id' => $employee->id,
-                    'date'        => $today,
-                    'check_in'    => $now,
-                    'status'      => 'masuk',
-                    'status_in'   => 'on_time', // opsional
+                    'date' => $attendanceDate,
+                    'check_in' => $now,
+                    'status' => 'masuk',
+                    'status_in' => $department->isOnTime($now) ? 'on_time' : 'late',
+                    // status_out tetap null sampai checkout
                 ]);
 
-                $alertMessage = "✅ {$employee->name} berhasil absen masuk pada " . $now->format('H:i');
+                $statusText = $attendance->status_in === 'on_time' ? 'tepat waktu' : 'terlambat';
+                $shiftInfo = $department->start_time ? " (Shift: {$department->shift_time})" : "";
+                $alertMessage = "✅ {$employee->name} - {$department->name}{$shiftInfo} berhasil absen masuk {$statusText} pada " . $now->format('H:i');
                 $this->showAlert($alertMessage, 'success');
 
-                // Dispatch TTS event untuk check-in
                 $this->dispatch('playTTS', [
-                    'text' => "Selamat datang {$employee->name}",
+                    'text' => "Selamat datang {$employee->name}, departemen {$department->name}",
                     'type' => 'checkin'
                 ]);
                 return;
             }
 
-            // safety: ada row tapi belum check_in
+            // CASE 2: Ada record tapi belum check_in (safety case)
             if (! $attendance->check_in) {
-                $attendance->check_in  = $now;
-                $attendance->status    = 'masuk';
-                $attendance->status_in = 'on_time';
+                $attendance->check_in = $now;
+                $attendance->status = 'masuk';
+                $attendance->status_in = $department->isOnTime($now) ? 'on_time' : 'late';
                 $attendance->save();
 
-                $alertMessage = "✅ {$employee->name} berhasil absen masuk pada " . $now->format('H:i');
+                $statusText = $attendance->status_in === 'on_time' ? 'tepat waktu' : 'terlambat';
+                $shiftInfo = $department->start_time ? " (Shift: {$department->shift_time})" : "";
+                $alertMessage = "✅ {$employee->name} - {$department->name}{$shiftInfo} berhasil absen masuk {$statusText} pada " . $now->format('H:i');
                 $this->showAlert($alertMessage, 'success');
 
-                // Dispatch TTS event untuk check-in
                 $this->dispatch('playTTS', [
-                    'text' => "Selamat datang {$employee->name}",
+                    'text' => "Selamat datang {$employee->name}, departemen {$department->name}",
                     'type' => 'checkin'
                 ]);
                 return;
             }
 
-            // sudah check-in, belum check-out → coba checkout
+            // CASE 3: Sudah check-in, belum check-out → Coba checkout
             if (! $attendance->check_out) {
                 $workedMinutes = Carbon::parse($attendance->check_in)->diffInMinutes($now);
-                $minMinutes    = $this->minimumWorkHours * 60; // atau pakai $this->minimumWorkMinutes jika pakai menit
+                $minMinutes = (int) round($this->minimumWorkHours * 60);
 
                 if ($workedMinutes < $minMinutes) {
                     $remaining = $minMinutes - $workedMinutes;
                     $this->showAlert(
-                        "⏰ {$employee->name}, belum bisa check-out. Minimal {$this->minimumWorkHours} jam. Sisa: " .
+                        "⏰ {$employee->name}, belum bisa check-out. Minimal " .
+                            $minMinutes . " menit. Sisa: " .
                             $this->formatWorkDuration($remaining),
                         'warning'
                     );
                     return;
                 }
 
-                // ✅ simpan jam pulang saja
-                $attendance->check_out  = $now;
-                // $attendance->status  = 'pulang';   // ❌ HAPUS / JANGAN SET
-                $attendance->status_out = 'normal';   // opsional
+                // Simpan checkout
+                $attendance->check_out = $now;
+
+                // Tentukan status_out: 'normal' atau 'early'
+                $attendance->status_out = 'normal';
+
+                if ($department->end_time) {
+                    // Build shift start & end berdasarkan attendanceDate
+                    $shiftStart = Carbon::parse($attendanceDate . ' ' . $department->start_time);
+                    $shiftEnd = Carbon::parse($attendanceDate . ' ' . $department->end_time);
+
+                    // Jika shift melewati tengah malam, pastikan shiftEnd berada setelah shiftStart
+                    if ($department->is_overnight && $shiftEnd->lessThanOrEqualTo($shiftStart)) {
+                        $shiftEnd->addDay();
+                    }
+
+                    // Jika checkout terjadi sebelum shift end => dianggap pulang lebih awal
+                    if ($now->lessThan($shiftEnd)) {
+                        $attendance->status_out = 'early';
+                    }
+                }
+
                 $attendance->save();
 
-                $alertMessage = "✅ {$employee->name} check-out " . $now->format('H:i') .
-                    ". Durasi: " . $this->formatWorkDuration($workedMinutes);
+                $alertMessage = "✅ {$employee->name} - {$department->name} check-out " . $now->format('H:i') .
+                    ". Durasi kerja: " . $this->formatWorkDuration($workedMinutes) .
+                    ($attendance->status_out === 'early' ? ' (Pulang lebih awal)' : '');
                 $this->showAlert($alertMessage, 'success');
 
-                // Dispatch TTS event untuk check-out
                 $this->dispatch('playTTS', [
                     'text' => "Terima kasih {$employee->name}, hati-hati di jalan",
                     'type' => 'checkout'
@@ -129,13 +199,12 @@ class AttendanceScan extends Component
                 return;
             }
 
-            // sudah penuh (masuk & pulang)
-            $in  = Carbon::parse($attendance->check_in)->format('H:i');
+            // CASE 4: Sudah penuh (check-in & check-out)
+            $in = Carbon::parse($attendance->check_in)->format('H:i');
             $out = Carbon::parse($attendance->check_out)->format('H:i');
-            $alertMessage = "ℹ️ {$employee->name} sudah absen penuh. Masuk: {$in}, Pulang: {$out}";
+            $alertMessage = "ℹ️ {$employee->name} - {$department->name} sudah absen penuh. Masuk: {$in}, Pulang: {$out}";
             $this->showAlert($alertMessage, 'warning');
 
-            // Dispatch TTS event untuk sudah absen penuh
             $this->dispatch('playTTS', [
                 'text' => "Sudah melakukan absen penuh {$employee->name}",
                 'type' => 'complete'
@@ -169,43 +238,38 @@ class AttendanceScan extends Component
             ->when($this->filterDate, function ($query) {
                 $query->whereDate('date', $this->filterDate);
             })
-            ->orderBy('created_at', 'desc')
+            ->orderBy('date', 'desc')
+            ->orderBy('check_in', 'desc')
             ->paginate(10);
 
         return view('livewire.attendance-scan', compact('attendances'))
             ->layout('components.layouts.app');
     }
 
-    /* =======================
-     * Helpers (alerts & waktu)
-     * ======================= */
-
     private function showAlert(string $message, string $type = 'info'): void
     {
         $this->alertMessage = $message;
-        $this->alertType    = $type;
-        $this->showAlert    = true;
-
-        // auto-hide di frontend
+        $this->alertType = $type;
+        $this->showAlert = true;
         $this->dispatch('autoHideAlert');
     }
 
     public function hideAlert(): void
     {
-        $this->showAlert    = false;
+        $this->showAlert = false;
         $this->alertMessage = '';
-        $this->alertType    = '';
+        $this->alertType = '';
         $this->dispatch('focusInput');
     }
 
     private function formatWorkDuration(int $minutes): string
     {
         $hours = intdiv($minutes, 60);
-        $mins  = $minutes % 60;
+        $mins = $minutes % 60;
 
         $parts = [];
         if ($hours > 0) $parts[] = $hours . ' jam';
-        if ($mins  > 0) $parts[] = $mins . ' menit';
+        if ($mins > 0) $parts[] = $mins . ' menit';
 
         return $parts ? implode(' ', $parts) : '0 menit';
     }

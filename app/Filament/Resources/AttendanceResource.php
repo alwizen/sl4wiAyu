@@ -5,10 +5,12 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\AttendanceResource\Pages;
 use App\Filament\Resources\AttendanceResource\RelationManagers;
 use App\Models\Attendance;
+use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -59,9 +61,8 @@ class AttendanceResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->poll('5s')
             ->paginationPageOptions(['50', '100'])
-            ->defaultSort('date', 'desc')
+            ->defaultSort('updated_at', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('employee.name')
                     ->label('Nama')
@@ -76,7 +77,6 @@ class AttendanceResource extends Resource
                     ->date('d-m-Y')
                     ->sortable()
                     ->label('Tanggal'),
-
 
                 Tables\Columns\TextColumn::make('check_in')
                     ->label('Jam Masuk')
@@ -97,10 +97,46 @@ class AttendanceResource extends Resource
                         'danger'  => 'alpa'
                     ]),
 
+                Tables\Columns\TextColumn::make('status_in')
+                    ->badge()
+                    ->label('Keterlambatan')
+                    ->formatStateUsing(function ($state, $record) {
+                        // $record adalah instance Attendance
+                        if (! $record->check_in) {
+                            return '—';
+                        }
+
+                        $employee = $record->employee;
+                        $dept = $employee?->department;
+
+                        if (! $dept || ! $dept->start_time) {
+                            return 'Belum diatur';
+                        }
+
+                        // Tentukan tanggal attendance (menggunakan method di Department)
+                        $attendanceDate = $dept->getAttendanceDate($record->check_in);
+
+                        $shiftStart = Carbon::parse($attendanceDate . ' ' . $dept->start_time);
+
+                        // positif = terlambat, negatif = lebih awal
+                        $diffInMinutes = $record->check_in->diffInMinutes($shiftStart, false);
+
+                        // on-time jika <= tolerance_late_minutes
+                        return ($diffInMinutes <= $dept->tolerance_late_minutes) ? 'Tepat Waktu' : 'Terlambat';
+                    })
+                    ->colors([
+                        'success'   => 'Tepat Waktu',
+                        'danger'    => 'Terlambat',
+                        'secondary' => '—',
+                    ])
+                    ->sortable(),
+
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
