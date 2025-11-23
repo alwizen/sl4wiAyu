@@ -71,13 +71,52 @@ class PayrollResource extends Resource
                 ]),
 
             Section::make('Info Range Tanggal')
-                ->columns(3)
+                ->columns(4)
                 ->schema([
+                    // tambahan: preset jumlah hari kerja (7,10,12 dst.)
+                    Forms\Components\Select::make('preset_work_days')
+                        ->label('Pilih Jumlah Hari Kerja')
+                        ->options([
+                            7 => '7 Hari',
+                            10 => '10 Hari',
+                            12 => '12 Hari',
+                            20 => '20 Hari',
+                            30 => '30 Hari',
+                        ])
+                        ->placeholder('Pilih Jumlah Hari Kerja')
+                        ->reactive()
+                        ->live()
+                        ->afterStateUpdated(function ($state, Get $get, Set $set) {
+                            // jika tidak dipilih, jangan ubah tanggal
+                            if (empty($state)) return;
+
+                            try {
+                                $days = (int) $state;
+                                // end_date = hari ini, start_date = hari ini - (days-1)
+                                $end = Carbon::now()->startOfDay();
+                                $start = Carbon::now()->startOfDay()->subDays($days - 1);
+
+                                $set('start_date', $start->toDateString());
+                                $set('end_date', $end->toDateString());
+
+                                // set bulan agar sinkron dengan pilihan
+                                $set('month', $start->format('Y-m'));
+
+                                // refresh semua turunan
+                                self::recalcTotalDay($get, $set);
+                                self::pullAttendanceStats($get, $set);
+                                self::recalcThp($get, $set);
+                            } catch (\Throwable $e) {
+                                // jika error, abaikan
+                            }
+                        }),
+
                     \Coolsam\Flatpickr\Forms\Components\Flatpickr::make('month')
                         ->required()
                         ->label('Bulan')
                         ->placeholder('Pilih bulan')
                         ->monthPicker()
+                        ->default(now()->format('Y-m'))
                         ->format('Y-m')
                         ->displayFormat('F Y'),
 
@@ -86,6 +125,8 @@ class PayrollResource extends Resource
                         ->required()
                         ->live()
                         ->afterStateUpdated(function (Get $get, Set $set) {
+                            // kalau user ubah manual tanggal, clear preset agar tidak kelihatan bertentangan
+                            $set('preset_work_days', null);
                             self::recalcTotalDay($get, $set);
                             self::pullAttendanceStats($get, $set); // ← auto-ambil absensi
                             self::recalcThp($get, $set);
@@ -97,6 +138,7 @@ class PayrollResource extends Resource
                         ->default(now())
                         ->live()
                         ->afterStateUpdated(function (Get $get, Set $set) {
+                            $set('preset_work_days', null);
                             self::recalcTotalDay($get, $set);
                             self::pullAttendanceStats($get, $set); // ← auto-ambil absensi
                             self::recalcThp($get, $set);
