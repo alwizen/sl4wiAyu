@@ -135,8 +135,9 @@ class DepartmentResource extends Resource
                     Tables\Columns\TextColumn::make('end_time')
                         ->label('Pulang')
                         ->time('H:i'),
-                    Tables\Columns\TextColumn::make('is_overnight')
-                        ->label('Tengah Malam'),
+                    Tables\Columns\IconColumn::make('is_overnight')
+                        ->label('Tengah Malam')
+                        ->boolean(),
                     Tables\Columns\TextColumn::make('tolerance_late_minutes')
                         ->label('Toleransi')
                         ->suffix(' Menit'),
